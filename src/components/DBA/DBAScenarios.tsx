@@ -1,10 +1,11 @@
-﻿import { useState, useEffect, useRef } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Database, Zap, FileWarning, ShieldCheck, HardDrive, Cpu, Code2, AlertTriangle, ChevronLeft, ChevronRight, Play, Pause, RotateCcw } from 'lucide-react';
+import { Database, Zap, FileWarning, ShieldCheck, HardDrive, Cpu, Code2, AlertTriangle } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { TSqlModal } from '../Shared/TSqlModal';
-import { REAL_CASES, CASE_BEST_PRACTICES, type SpidCard } from './realCasesData';
+import { REAL_CASES } from './realCasesData';
+import { RealCaseScenario } from './RealCaseScenario';
 
 // ── colour helpers ──────────────────────────────────────────────────────────
 const COLOR: Record<string, { ring: string; bg: string; text: string; glow: string }> = {
