@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { HardDrive, Zap, Cpu, Archive, LayoutDashboard, SearchCode, Code2, ShieldAlert, Sliders, PieChart } from 'lucide-react';
+import { HardDrive, Zap, Cpu, Archive, LayoutDashboard, SearchCode, Code2, ShieldAlert, Sliders, PieChart, AlertTriangle } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { TSqlModal } from '../Shared/TSqlModal';
@@ -32,6 +32,7 @@ export function MemoryOperations() {
     const [lpimEnabled, setLpimEnabled] = useState(false);
 
     const [isTsqlOpen, setIsTsqlOpen] = useState(false);
+    const [tsqlType, setTsqlType] = useState<'clerks' | 'lpim'>('clerks');
 
     const addLog = (msg: string) => {
         setLogs(prev => [msg, ...prev].slice(0, 5));
@@ -151,7 +152,7 @@ export function MemoryOperations() {
                                         <h3 className="text-xl font-bold text-white flex items-center gap-2">
                                             <Cpu className="w-5 h-5 text-purple-400" /> {t('sysRamArch')}
                                             <button
-                                                onClick={() => setIsTsqlOpen(true)}
+                                                onClick={() => { setTsqlType('clerks'); setIsTsqlOpen(true); }}
                                                 className="ml-4 px-2 py-1 bg-white/5 hover:bg-white/10 border border-white/10 rounded flex items-center gap-1.5 text-xs text-muted-foreground transition-colors"
                                             >
                                                 <Code2 className="w-3.5 h-3.5" /> {t('viewTsql')}
@@ -322,6 +323,12 @@ export function MemoryOperations() {
                                     <div className="flex justify-between items-center">
                                         <h3 className="text-xl font-bold flex items-center gap-2 text-amber-400">
                                             <ShieldAlert className="w-5 h-5" /> {t('lpimTitle')}
+                                            <button
+                                                onClick={() => { setTsqlType('lpim'); setIsTsqlOpen(true); }}
+                                                className="ml-4 px-2 py-1 bg-white/5 hover:bg-white/10 border border-white/10 rounded flex items-center gap-1.5 text-xs text-muted-foreground transition-colors"
+                                            >
+                                                <Code2 className="w-3.5 h-3.5" /> {t('viewTsql')}
+                                            </button>
                                         </h3>
                                         <button
                                             onClick={() => setLpimEnabled(!lpimEnabled)}
@@ -426,9 +433,13 @@ export function MemoryOperations() {
                                                     {systemMemory - maxMemory > 2000 && t('osMemoryLabel').split(' ')[0]}
                                                 </div>
                                             </div>
-                                            <p className="text-xs text-center text-muted-foreground mt-2">
+                                            <p className="text-xs text-center text-muted-foreground mt-2 mb-4">
                                                 OS Memory: {systemMemory - maxMemory} MB
                                             </p>
+                                            <div className="p-3 bg-rose-500/10 border border-rose-500/30 rounded-lg text-rose-300 text-xs text-left flex items-start gap-3 leading-relaxed mt-2">
+                                                <AlertTriangle className="w-5 h-5 shrink-0 mt-0.5" />
+                                                <span>{t('osMemoryWarning')}</span>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -441,18 +452,30 @@ export function MemoryOperations() {
             <TSqlModal
                 isOpen={isTsqlOpen}
                 onClose={() => setIsTsqlOpen(false)}
-                title={t('memTsqlTitle')}
-                description={t('memTsqlDesc')}
+                title={tsqlType === 'clerks' ? t('memTsqlTitle') : t('memLpimTsqlTitle')}
+                description={tsqlType === 'clerks' ? t('memTsqlDesc') : t('memLpimTsqlDesc')}
                 diagnosticScript={{
-                    '2019': `SELECT type, name, pages_kb\nFROM sys.dm_os_memory_clerks\nWHERE type = 'MEMORYCLERK_SQLBUFFERPOOL'\nORDER BY pages_kb DESC;`,
-                    '2022': `SELECT type, name, pages_kb\nFROM sys.dm_os_memory_clerks\nWHERE type = 'MEMORYCLERK_SQLBUFFERPOOL'\nORDER BY pages_kb DESC;`,
-                    '2025': `SELECT type, name, pages_kb\nFROM sys.dm_os_memory_clerks\nWHERE type = 'MEMORYCLERK_SQLBUFFERPOOL'\nORDER BY pages_kb DESC;`
+                    '2019': tsqlType === 'clerks'
+                        ? `SELECT type, name, pages_kb\nFROM sys.dm_os_memory_clerks\nWHERE type = 'MEMORYCLERK_SQLBUFFERPOOL'\nORDER BY pages_kb DESC;`
+                        : `DBCC MEMORYSTATUS;`,
+                    '2022': tsqlType === 'clerks'
+                        ? `SELECT type, name, pages_kb\nFROM sys.dm_os_memory_clerks\nWHERE type = 'MEMORYCLERK_SQLBUFFERPOOL'\nORDER BY pages_kb DESC;`
+                        : `DBCC MEMORYSTATUS;`,
+                    '2025': tsqlType === 'clerks'
+                        ? `SELECT type, name, pages_kb\nFROM sys.dm_os_memory_clerks\nWHERE type = 'MEMORYCLERK_SQLBUFFERPOOL'\nORDER BY pages_kb DESC;`
+                        : `DBCC MEMORYSTATUS;`
                 }}
-                remediationTitle={t('memRemediationTitle')}
+                remediationTitle={tsqlType === 'clerks' ? t('memRemediationTitle') : t('memLpimRemediationTitle')}
                 remediationScript={{
-                    '2019': `EXEC sp_configure 'show advanced options', 1;\nRECONFIGURE;\nEXEC sp_configure 'max server memory (MB)', 8192; -- Set to appropriate value\nRECONFIGURE;`,
-                    '2022': `EXEC sp_configure 'show advanced options', 1;\nRECONFIGURE;\nEXEC sp_configure 'max server memory (MB)', 8192; -- Set to appropriate value\nRECONFIGURE;`,
-                    '2025': `EXEC sp_configure 'show advanced options', 1;\nRECONFIGURE;\nEXEC sp_configure 'max server memory (MB)', 8192; -- Set to appropriate value\nRECONFIGURE;`
+                    '2019': tsqlType === 'clerks'
+                        ? `EXEC sp_configure 'show advanced options', 1;\nRECONFIGURE;\nEXEC sp_configure 'max server memory (MB)', 8192;\nRECONFIGURE;`
+                        : `-- 1. Open secpol.msc\n-- 2. Local Policies -> User Rights Assignment\n-- 3. Double-click "Lock pages in memory"\n-- 4. Add the SQL Server service account\n-- 5. Restart SQL Server service`,
+                    '2022': tsqlType === 'clerks'
+                        ? `EXEC sp_configure 'show advanced options', 1;\nRECONFIGURE;\nEXEC sp_configure 'max server memory (MB)', 8192;\nRECONFIGURE;`
+                        : `-- 1. Open secpol.msc\n-- 2. Local Policies -> User Rights Assignment\n-- 3. Double-click "Lock pages in memory"\n-- 4. Add the SQL Server service account\n-- 5. Restart SQL Server service`,
+                    '2025': tsqlType === 'clerks'
+                        ? `EXEC sp_configure 'show advanced options', 1;\nRECONFIGURE;\nEXEC sp_configure 'max server memory (MB)', 8192;\nRECONFIGURE;`
+                        : `-- 1. Open secpol.msc\n-- 2. Local Policies -> User Rights Assignment\n-- 3. Double-click "Lock pages in memory"\n-- 4. Add the SQL Server service account\n-- 5. Restart SQL Server service`
                 }}
             />
         </div>

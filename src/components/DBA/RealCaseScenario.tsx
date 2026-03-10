@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
+import type { Dispatch, SetStateAction } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronLeft, ChevronRight, Play, Pause, RotateCcw, Cpu, Database, Activity } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Play, Pause, RotateCcw, Cpu, Database, Activity, ArrowLeft } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { type RealCase, type ExecPhase, CASE_RESOLUTION_SCRIPTS } from './realCasesData';
@@ -184,23 +185,43 @@ function BufferPanel({ buf }: { buf: RealCase['steps'][0]['buffer'] }) {
 // ─────────────────────────── Main component ─────────────────────────────────
 interface Props {
     cases: RealCase[];
+    onFocusChange?: Dispatch<SetStateAction<boolean>>;
 }
 
-export function RealCaseScenario({ cases }: Props) {
+export function RealCaseScenario({ cases, onFocusChange }: Props) {
     const { t } = useLanguage();
-    const [caseIdx, setCaseIdx] = useState(0);
+    const [caseIdx, setCaseIdx] = useState<number | null>(null);
     const [stepIdx, setStepIdx] = useState(0);
     const [playing, setPlaying] = useState(false);
     const [activePanel, setActivePanel] = useState<'schema' | 'query' | 'detection' | 'resolution'>('schema');
     const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-    const rc = cases[caseIdx];
+    const rc = caseIdx !== null ? cases[caseIdx] : cases[0]; // fallback
     const step = rc.steps[stepIdx];
     const totalSteps = rc.steps.length;
     const c = COLOR[rc.color];
 
     const stopTimer = () => { if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; } };
     const resetCase = () => { stopTimer(); setStepIdx(0); setPlaying(false); };
+
+    // Cleanup when unmounting or switching
+    useEffect(() => {
+        return () => stopTimer();
+    }, []);
+
+    const handleSelectCase = (idx: number) => {
+        setCaseIdx(idx);
+        setActivePanel('schema');
+        setStepIdx(0);
+        setPlaying(false);
+        if (onFocusChange) onFocusChange(true);
+    };
+
+    const handleBack = () => {
+        stopTimer();
+        setCaseIdx(null);
+        if (onFocusChange) onFocusChange(false);
+    };
 
     const startAuto = () => {
         setPlaying(true);
@@ -218,27 +239,41 @@ export function RealCaseScenario({ cases }: Props) {
         startAuto();
     };
 
-    useEffect(() => { resetCase(); setActivePanel('schema'); }, [caseIdx]);
-    useEffect(() => () => stopTimer(), []);
 
-    return (
-        <div className="flex flex-col gap-4">
-            {/* Case pill row */}
-            <div className="flex flex-wrap gap-2">
+
+    if (caseIdx === null) {
+        return (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {cases.map((rc2, i) => {
                     const col2 = COLOR[rc2.color];
                     return (
-                        <button key={rc2.id} onClick={() => setCaseIdx(i)}
-                            className={cn('px-3 py-1.5 rounded-xl text-xs font-bold border flex items-center gap-1.5 transition-all',
-                                caseIdx === i ? `${col2.bg} ${col2.text} ${col2.ring} ${col2.glow}` : 'bg-white/5 text-muted-foreground border-white/10 hover:bg-white/10')}>
-                            <span>{rc2.icon}</span>{t(rc2.nameKey as any)}
+                        <button key={rc2.id} onClick={() => handleSelectCase(i)}
+                            className={cn('flex flex-col text-left p-5 rounded-2xl border transition-all h-full hover:scale-[1.02]',
+                                `bg-${rc2.color}-500/10 hover:${col2.bg} border-${rc2.color}-500/30 hover:${col2.ring} ${col2.glow}`)}>
+                            <div className="flex items-center gap-3 mb-3">
+                                <span className="text-3xl">{rc2.icon}</span>
+                                <h4 className={cn('text-lg font-black', col2.text)}>{t(rc2.nameKey as any)}</h4>
+                            </div>
+                            <p className="text-xs text-muted-foreground leading-relaxed flex-1">{t(rc2.descKey as any)}</p>
+                            <div className="mt-4 text-[10px] font-bold uppercase tracking-wider text-white/50 bg-black/40 px-3 py-1.5 rounded self-start">
+                                {rc2.steps.length} {t('stepsLabel')}
+                            </div>
                         </button>
                     );
                 })}
             </div>
+        );
+    }
+
+    return (
+        <div className="flex flex-col h-full gap-4 max-h-full overflow-hidden">
+            <button onClick={handleBack}
+                className="self-start flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-sm font-bold transition-all text-muted-foreground hover:text-white shrink-0">
+                <ArrowLeft className="w-4 h-4" /> Volver a Casos
+            </button>
 
             {/* Main panel */}
-            <div className={cn('rounded-2xl border-2 overflow-hidden bg-black/20', c.ring, c.glow)}>
+            <div className={cn('rounded-2xl border-2 overflow-hidden bg-black/20 flex flex-col flex-1 min-h-0', c.ring, c.glow)}>
                 {/* Header */}
                 <div className={cn('px-5 py-4 border-b border-white/10', c.bg)}>
                     <div className="flex items-center gap-3 mb-1">
@@ -249,7 +284,7 @@ export function RealCaseScenario({ cases }: Props) {
                 </div>
 
                 {/* Body — 3 column layout */}
-                <div className="grid grid-cols-1 xl:grid-cols-[1fr_1fr_1fr] divide-y xl:divide-y-0 xl:divide-x divide-white/5">
+                <div className="grid grid-cols-1 xl:grid-cols-[1fr_1fr_1fr] divide-y xl:divide-y-0 xl:divide-x divide-white/5 flex-1 min-h-0 overflow-y-auto">
 
                     {/* ── LEFT: Code Panels ── */}
                     <div className="flex flex-col gap-0 p-0 min-h-0">

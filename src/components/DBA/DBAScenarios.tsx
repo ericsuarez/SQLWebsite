@@ -10,6 +10,7 @@ import { RealCaseScenario } from './RealCaseScenario';
 export function DBAScenarios() {
     const { t } = useLanguage();
     const [activeTab, setActiveTab] = useState<'pageSplit' | 'ifi' | 'creation' | 'realCases'>('pageSplit');
+    const [isFullScreenCase, setIsFullScreenCase] = useState(false);
 
     // Page Split
     const [fillFactor, setFillFactor] = useState(100);
@@ -46,26 +47,30 @@ export function DBAScenarios() {
 
     return (
         <div className="flex flex-col h-full gap-6">
-            <div className="flex flex-col gap-2">
-                <h2 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-rose-400 to-orange-400">{t('dbaTitle')}</h2>
-                <p className="text-muted-foreground">{t('dbaDescription')}</p>
-            </div>
+            {!isFullScreenCase && (
+                <>
+                    <div className="flex flex-col gap-2">
+                        <h2 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-rose-400 to-orange-400">{t('dbaTitle')}</h2>
+                        <p className="text-muted-foreground">{t('dbaDescription')}</p>
+                    </div>
 
-            {/* Tabs */}
-            <div className="flex gap-2 flex-wrap border-b border-white/10 pb-3">
-                {(['pageSplit', 'ifi', 'creation'] as const).map(tab => (
-                    <button key={tab} onClick={() => setActiveTab(tab)}
-                        className={cn('px-4 py-2 rounded-lg font-bold transition-all text-sm', activeTab === tab ? 'bg-rose-500/20 text-rose-400 border border-rose-500/50' : 'bg-white/5 text-muted-foreground hover:bg-white/10')}>
-                        {t(tab === 'pageSplit' ? 'tabPageSplit' : tab === 'ifi' ? 'tabIfi' : 'tabCreation')}
-                    </button>
-                ))}
-                <button onClick={() => setActiveTab('realCases')}
-                    className={cn('px-4 py-2 rounded-lg font-bold transition-all text-sm flex items-center gap-1.5', activeTab === 'realCases' ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/50' : 'bg-white/5 text-muted-foreground hover:bg-white/10')}>
-                    <AlertTriangle className="w-3.5 h-3.5" />{t('tabRealCases')}
-                </button>
-            </div>
+                    {/* Tabs */}
+                    <div className="flex gap-2 flex-wrap border-b border-white/10 pb-3">
+                        {(['pageSplit', 'ifi', 'creation'] as const).map(tab => (
+                            <button key={tab} onClick={() => setActiveTab(tab)}
+                                className={cn('px-4 py-2 rounded-lg font-bold transition-all text-sm', activeTab === tab ? 'bg-rose-500/20 text-rose-400 border border-rose-500/50' : 'bg-white/5 text-muted-foreground hover:bg-white/10')}>
+                                {t(tab === 'pageSplit' ? 'tabPageSplit' : tab === 'ifi' ? 'tabIfi' : 'tabCreation')}
+                            </button>
+                        ))}
+                        <button onClick={() => setActiveTab('realCases')}
+                            className={cn('px-4 py-2 rounded-lg font-bold transition-all text-sm flex items-center gap-1.5', activeTab === 'realCases' ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/50' : 'bg-white/5 text-muted-foreground hover:bg-white/10')}>
+                            <AlertTriangle className="w-3.5 h-3.5" />{t('tabRealCases')}
+                        </button>
+                    </div>
+                </>
+            )}
 
-            <div className="flex-1 overflow-y-auto">
+            <div className={cn("flex-1 overflow-y-auto", isFullScreenCase ? "mt-0" : "")}>
 
                 {/* PAGE SPLIT */}
                 {activeTab === 'pageSplit' && (
@@ -182,12 +187,14 @@ export function DBAScenarios() {
 
                 {/* REAL CASES — delegates to RealCaseScenario */}
                 {activeTab === 'realCases' && (
-                    <div className="flex flex-col gap-4">
-                        <div className="glass-panel p-5 rounded-2xl border-cyan-500/30">
-                            <h3 className="text-xl font-bold text-cyan-400 flex items-center gap-2 mb-1"><AlertTriangle className="w-5 h-5" />{t('realCasesTitle')}</h3>
-                            <p className="text-sm text-muted-foreground">{t('realCasesDesc')}</p>
-                        </div>
-                        <RealCaseScenario cases={REAL_CASES} />
+                    <div className={cn("flex flex-col", isFullScreenCase ? "h-full gap-0" : "gap-4")}>
+                        {!isFullScreenCase && (
+                            <div className="glass-panel p-5 rounded-2xl border-cyan-500/30">
+                                <h3 className="text-xl font-bold text-cyan-400 flex items-center gap-2 mb-1"><AlertTriangle className="w-5 h-5" />{t('realCasesTitle')}</h3>
+                                <p className="text-sm text-muted-foreground">{t('realCasesDesc')}</p>
+                            </div>
+                        )}
+                        <RealCaseScenario cases={REAL_CASES} onFocusChange={setIsFullScreenCase} />
                     </div>
                 )}
             </div>

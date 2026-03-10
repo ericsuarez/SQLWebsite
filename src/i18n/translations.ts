@@ -138,6 +138,10 @@ export const translations = {
         lpimDesc: 'A Windows Security Policy that prevents SQL Server buffer pool pages from being paged out to disk (Pagefile.sys) when the OS experiences memory pressure.',
         lpimEnabled: 'LPIM Enabled',
         lpimDisabled: 'LPIM Disabled',
+        memLpimTsqlTitle: 'Enable Lock Pages in Memory',
+        memLpimTsqlDesc: 'Enable LPIM via Windows Local Security Policy (secpol.msc) -> User Rights Assignment. Then verify the SQL Server memory state using DBCC MEMORYSTATUS.',
+        memLpimRemediationTitle: 'Enable LPIM (Windows OS)',
+        osMemoryWarning: 'Aim to leave 4GB-10GB for the OS. If hosting multiple instances, divide max server memory among them. For Failover Clusters, ensure a single node can handle all instances running simultaneously after a failover without OS starvation.',
 
         // Query Execution
         qeTitle: 'Query Execution & Concurrency',
@@ -271,8 +275,9 @@ export const translations = {
         caseCxpacket: 'CXPACKET / Parallelism',
         caseAutoGrowth: 'Auto-Growth & VLF Explosion',
         caseParamSniff: 'Parameter Sniffing',
-        caseVirtualization: 'Virtualization (CPU Ready)',
+        caseVirtualization: 'Virtualization (CPU Ready & I/O)',
         caseMissingIndex: 'Missing Index',
+        stepsLabel: 'Steps',
         // Case descriptions
         caseBlockerDesc: 'A long transaction holds an X lock (SPID 52). Other sessions queue behind it in SUSPENDED state. Classic sign: wait_type=LCK_M_X.',
         caseLatchDesc: 'Multiple parallel inserts target the same last page (clustered index on sequential key). All threads fight for PAGELATCH_EX on one page.',
@@ -282,7 +287,7 @@ export const translations = {
         caseCxpacketDesc: 'A large parallel query spawns multiple worker threads. One slow thread stalls the others on CXPACKET waits. Symptom: high CPU with many CXPACKET rows in sys.dm_os_wait_stats.',
         caseAutoGrowthDesc: 'When a database file grows, auto-growth fires a synchronous extension event. Log files with many tiny VLFs (Virtual Log Files) cause slow startup / recovery and random latency spikes.',
         caseParamSniffDesc: 'SQL Server compiled a plan for one parameter value that is terrible for other values. The cached plan may do a table scan for a common value or a full seek for an uncommon one.',
-        caseVirtualizationDesc: 'On a VM host under pressure, the hypervisor cannot give the guest its CPU slice. The guest sees CPU Ready time — a wait invisible to SQL DMVs but very visible in VMware vSphere / Hyper-V.',
+        caseVirtualizationDesc: 'On an overcommitted VM host, the guest sees CPU Ready time/waits invisible to SQL DMVs. Single SCSI controllers for OS, Data, and Log create severe I/O bottlenecks. Memory ballooning can suddenly trigger massive OS paging.',
         caseMissingIndexDesc: 'A query performs a full scan of a large table because no suitable index exists. sys.dm_db_missing_index_details exposes the missing index. Impact: high I/O and slow response.',
         // Impact labels
         impactLabel: 'Impact',
@@ -296,7 +301,7 @@ export const translations = {
         cxpacketBestPractice: 'Set MAXDOP based on NUMA topology. Use Cost Threshold for Parallelism ≥ 50 to prevent trivial query parallelism.',
         autoGrowthBestPractice: 'Pre-size files, set growth in MB not %. Aim for <50 VLFs with DBCC LOGINFO. Use instant file initialization for data files.',
         paramSniffBestPractice: 'Use OPTION(OPTIMIZE FOR UNKNOWN), local variables, or Query Store plan forcing to stabilize for all parameter values.',
-        virtBestPractice: 'Reserve vCPUs (do not overcommit). Set Memory Reservation = full RAM. Disable memory ballooning for SQL VMs. Monitor CPU Ready < 5%.',
+        virtBestPractice: 'Reserve vCPUs (1:1 ratio) and Memory (100% full RAM). Disable memory ballooning. Separate OS, Data, and Log disks across multiple Paravirtual SCSI controllers. Monitor CPU Ready < 5%.',
         missingIndexBestPractice: 'Validate missing index DMV suggestions. Check user_seeks × avg_total_user_cost. Avoid over-indexing — each index costs on writes.',
 
         // High Availability
@@ -466,6 +471,10 @@ export const translations = {
         lpimDesc: 'Una directiva de seguridad de Windows que evita que las páginas del Buffer Pool sean enviadas al disco (Pagefile.sys) cuando el SO tiene presión de memoria.',
         lpimEnabled: 'LPIM Habilitado',
         lpimDisabled: 'LPIM Deshabilitado',
+        memLpimTsqlTitle: 'Activar Lock Pages in Memory',
+        memLpimTsqlDesc: 'Activa LPIM en Local Security Policy de Windows (secpol.msc) -> Asignación de derechos de usuario. Luego verifica el estado de la memoria con DBCC MEMORYSTATUS.',
+        memLpimRemediationTitle: 'Activar LPIM (Windows OS)',
+        osMemoryWarning: 'Deja 4GB-10GB libres para el SO. Si tienes varias instancias, divide la memoria máxima entre ellas. Para un Failover Cluster, asegúrate de que un solo nodo pueda soportar todas las instancias tras un failover sin quedarse sin RAM.',
 
         // Query Execution
         qeTitle: 'Ejecución de Consultas y Concurrencia',
@@ -610,8 +619,9 @@ export const translations = {
         caseCxpacketDesc: 'Una consulta paralela grande lanza múltiples hilos de trabajo. El hilo más lento retiene a todos los demás en esperas CXPACKET. Síntoma: CPU alta con muchas filas CXPACKET en sys.dm_os_wait_stats.',
         caseAutoGrowthDesc: 'Cuando un archivo crece, el auto-crecimiento dispara un evento síncrono. Los logs con muchos VLFs pequeños (Virtual Log Files) causan arranque lento y picos de latencia aleatorios.',
         caseParamSniffDesc: 'SQL compiló un plan para un valor de parámetro que es terrible para otros valores. El plan cacheado puede hacer un scan completo para valores comunes o un seek para valores raros.',
-        caseVirtualizationDesc: 'En un host VM bajo presión, el hipervisor no puede dar al guest su slice de CPU. El guest ve tiempo de CPU Ready — una espera invisible en DMVs de SQL pero muy visible en VMware vSphere / Hyper-V.',
+        caseVirtualizationDesc: 'En un host sobre-asignado, el guest ve tiempos de CPU Ready invisibles en SQL. Un solo controlador SCSI para OS, Datos y Log genera un cuello de botella masivo de E/S. El memory ballooning puede disparar paginación repentina.',
         caseMissingIndexDesc: 'Una consulta recorre toda una tabla grande porque no existe un índice adecuado. sys.dm_db_missing_index_details expone el índice faltante. Impacto: alta E/S y respuesta lenta.',
+        stepsLabel: 'Pasos',
         impactLabel: 'Impacto',
         rootCauseLabel: 'Causa Raíz',
         bestPracticeLabel: 'Buena Práctica',
@@ -623,7 +633,7 @@ export const translations = {
         cxpacketBestPractice: 'Configurar MAXDOP según topología NUMA. Usar Cost Threshold for Parallelism ≥ 50 para evitar paralelismo en consultas triviales.',
         autoGrowthBestPractice: 'Pre-dimensionar archivos, configurar crecimiento en MB no en %. Objetivo: <50 VLFs con DBCC LOGINFO. Usar IFI para archivos de datos.',
         paramSniffBestPractice: 'Usar OPTION(OPTIMIZE FOR UNKNOWN), variables locales, o forzado de plan en Query Store para estabilizar todos los valores de parámetro.',
-        virtBestPractice: 'Reservar vCPUs (no sobrecomprometer). Memory Reservation = RAM total. Deshabilitar memory ballooning para VMs SQL. Monitorizar CPU Ready < 5%.',
+        virtBestPractice: 'Reservar vCPUs (ratio 1:1) y Memoria (100% RAM total). Deshabilitar memory ballooning. Separar discos OS, Datos y Log en múltiples controladores SCSI. CPU Ready < 5%.',
         missingIndexBestPractice: 'Validar sugerencias de DMV de índices faltantes. Revisar user_seeks × avg_total_user_cost. Evitar sobre-indexar — cada índice tiene coste en escrituras.',
 
         // High Availability
