@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { HardDrive, File, Database, ArrowRight, ArrowLeft, Play } from 'lucide-react';
+import { HardDrive, File, Database, ArrowRight, ArrowLeft, Play, Save, History, AlertTriangle, ShieldCheck } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { useLanguage } from '../../contexts/LanguageContext';
 
@@ -14,10 +14,16 @@ interface ExtentData {
 
 export function StorageEngine() {
     const { t } = useLanguage();
+    const [activeTab, setActiveTab] = useState<'files' | 'backups'>('files');
     const [viewState, setViewState] = useState<ViewState>('overview');
     const [selectedExtent, setSelectedExtent] = useState<number | null>(null);
     const [selectedPage, setSelectedPage] = useState<number | null>(null);
     const [gamLog, setGamLog] = useState<string | null>(null);
+
+    // Backup State
+    const [recoveryMode, setRecoveryMode] = useState<'Simple' | 'Full'>('Full');
+    const [logFullness, setLogFullness] = useState(0); // 0 to 100
+    const [backupLog, setBackupLog] = useState<{ time: string, msg: string }[]>([]);
 
     const [extents, setExtents] = useState<ExtentData[]>(
         Array.from({ length: 12 }, (_, i) => ({
@@ -42,44 +48,108 @@ export function StorageEngine() {
         setTimeout(() => setGamLog(null), 3000);
     };
 
+    // Simulate database activity filling the log
+    useEffect(() => {
+        if (activeTab !== 'backups') return;
+
+        const interval = setInterval(() => {
+            setLogFullness(prev => {
+                const newVal = prev + Math.floor(Math.random() * 5) + 2;
+                if (recoveryMode === 'Simple' && newVal > 60) {
+                    addBackupLog("CHECKPOINT: Log auto-truncated (Simple Mode)");
+                    return 10;
+                }
+                return Math.min(newVal, 100);
+            });
+        }, 1500);
+
+        return () => clearInterval(interval);
+    }, [activeTab, recoveryMode]);
+
+    const addBackupLog = (msg: string) => {
+        setBackupLog(prev => [{ time: new Date().toLocaleTimeString(), msg }, ...prev].slice(0, 5));
+    };
+
+    const takeFullBackup = () => {
+        addBackupLog(t('backupLogActivity').replace('{type}', 'FULL (.bak)'));
+        if (recoveryMode === 'Simple') {
+            setLogFullness(10);
+        }
+    };
+
+    const takeTrnBackup = () => {
+        if (recoveryMode !== 'Full') return;
+        addBackupLog(t('backupLogActivity').replace('{type}', 'LOG (.trn)'));
+        addBackupLog(t('logBackupDesc'));
+        setLogFullness(10); // Truncate log
+    };
+
     return (
         <div className="flex flex-col h-full gap-6">
-            <div className="flex flex-col gap-2 relative">
-                <h2 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 to-cyan-400">
-                    Storage Engine Details
-                </h2>
-                <p className="text-muted-foreground flex items-center gap-2">
-                    {viewState === 'overview' && 'SQL Server stores data in 8KB Pages and 64KB Extents.'}
-                    {viewState === 'extent' && (
-                        <>
-                            <button
-                                onClick={() => setViewState('overview')}
-                                className="hover:text-white transition-colors flex items-center gap-1 bg-white/5 px-2 py-0.5 rounded"
-                            >
-                                <ArrowLeft className="w-3 h-3" /> Back to Files
-                            </button>
-                            <span>Viewing Extent {selectedExtent}. An extent is a collection of 8 contiguous pages.</span>
-                        </>
-                    )}
-                    {viewState === 'page' && (
-                        <>
-                            <button
-                                onClick={() => setViewState('extent')}
-                                className="hover:text-white transition-colors flex items-center gap-1 bg-white/5 px-2 py-0.5 rounded"
-                            >
-                                <ArrowLeft className="w-3 h-3" /> Back to Extent
-                            </button>
-                            <span>Viewing Page {selectedPage}. 8KB structural unit showing header, data, and slot array.</span>
-                        </>
-                    )}
-                </p>
+            <div className="flex flex-col gap-4 relative">
+                <div className="flex justify-between items-start">
+                    <div>
+                        <h2 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 to-cyan-400">
+                            {t('storageEngine')}
+                        </h2>
+                        <p className="text-muted-foreground mt-2 flex items-center gap-2">
+                            {activeTab === 'files' && viewState === 'overview' && 'SQL Server stores data in 8KB Pages and 64KB Extents.'}
+                            {activeTab === 'files' && viewState === 'extent' && (
+                                <>
+                                    <button
+                                        onClick={() => setViewState('overview')}
+                                        className="hover:text-white transition-colors flex items-center gap-1 bg-white/5 px-2 py-0.5 rounded"
+                                    >
+                                        <ArrowLeft className="w-3 h-3" /> Back to Files
+                                    </button>
+                                    <span>Viewing Extent {selectedExtent}. An extent is a collection of 8 contiguous pages.</span>
+                                </>
+                            )}
+                            {activeTab === 'files' && viewState === 'page' && (
+                                <>
+                                    <button
+                                        onClick={() => setViewState('extent')}
+                                        className="hover:text-white transition-colors flex items-center gap-1 bg-white/5 px-2 py-0.5 rounded"
+                                    >
+                                        <ArrowLeft className="w-3 h-3" /> Back to Extent
+                                    </button>
+                                    <span>Viewing Page {selectedPage}. 8KB structural unit showing header, data, and slot array.</span>
+                                </>
+                            )}
+                            {activeTab === 'backups' && t('backupsDesc')}
+                        </p>
+                    </div>
+                </div>
+
+                <div className="flex p-1 bg-white/5 rounded-xl w-fit glass-panel border border-white/10">
+                    <button
+                        onClick={() => setActiveTab('files')}
+                        className={cn(
+                            "px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2",
+                            activeTab === 'files' ? "bg-emerald-500 text-white shadow-glow" : "text-muted-foreground hover:text-white hover:bg-white/5"
+                        )}
+                    >
+                        <HardDrive className="w-4 h-4" />
+                        Files & Pages
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('backups')}
+                        className={cn(
+                            "px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2",
+                            activeTab === 'backups' ? "bg-amber-500 text-white shadow-glow" : "text-muted-foreground hover:text-white hover:bg-white/5"
+                        )}
+                    >
+                        <History className="w-4 h-4" />
+                        {t('backupsTitle')}
+                    </button>
+                </div>
             </div>
 
-            <div className="flex-1 glass-panel p-6 rounded-2xl relative overflow-hidden flex flex-col">
+            <div className="flex-1 glass-panel rounded-2xl relative overflow-hidden flex flex-col p-6">
                 <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 to-transparent pointer-events-none" />
 
                 <AnimatePresence mode="wait">
-                    {viewState === 'overview' && (
+                    {activeTab === 'files' && viewState === 'overview' && (
                         <motion.div
                             key="overview"
                             initial={{ opacity: 0, scale: 0.95 }}
@@ -186,7 +256,7 @@ export function StorageEngine() {
                         </motion.div>
                     )}
 
-                    {viewState === 'extent' && (
+                    {activeTab === 'files' && viewState === 'extent' && (
                         <motion.div
                             key="extent"
                             initial={{ opacity: 0, x: 20 }}
@@ -245,7 +315,7 @@ export function StorageEngine() {
                         </motion.div>
                     )}
 
-                    {viewState === 'page' && (
+                    {activeTab === 'files' && viewState === 'page' && (
                         <motion.div
                             key="page"
                             initial={{ opacity: 0, scale: 0.95 }}
@@ -301,6 +371,137 @@ export function StorageEngine() {
                                         <ArrowRight className="w-8 h-8 text-muted-foreground" />
                                     </div>
                                     <span className="text-xs font-mono">NextPage</span>
+                                </div>
+                            </div>
+                        </motion.div>
+                    )}
+
+                    {activeTab === 'backups' && (
+                        <motion.div
+                            key="backups"
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -10 }}
+                            className="h-full w-full grid grid-cols-1 lg:grid-cols-2 gap-8 overflow-y-auto pb-4"
+                        >
+                            {/* Recovery Model Selection */}
+                            <div className="flex flex-col gap-6">
+                                <div className="glass-panel p-6 rounded-2xl flex flex-col gap-4">
+                                    <div className="flex items-center justify-between">
+                                        <h3 className="text-xl font-bold flex items-center gap-2 text-amber-400">
+                                            <ShieldCheck className="w-5 h-5" /> Recovery Models
+                                        </h3>
+                                        <button
+                                            onClick={() => setRecoveryMode(prev => prev === 'Full' ? 'Simple' : 'Full')}
+                                            className="px-3 py-1.5 bg-white/10 hover:bg-white/20 rounded-lg text-sm transition-colors border border-white/10"
+                                        >
+                                            {t('switchRecoveryMode')}
+                                        </button>
+                                    </div>
+
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className={cn(
+                                            "p-4 rounded-xl border-2 transition-all cursor-pointer flex flex-col gap-2",
+                                            recoveryMode === 'Simple' ? "border-emerald-500 bg-emerald-500/10 shadow-glow" : "border-white/10 bg-white/5 opacity-50 hover:opacity-80"
+                                        )} onClick={() => setRecoveryMode('Simple')}>
+                                            <h4 className="font-bold text-emerald-400 text-lg">{t('simpleRecovery')}</h4>
+                                            <p className="text-xs text-muted-foreground">{t('simpleDesc')}</p>
+                                        </div>
+                                        <div className={cn(
+                                            "p-4 rounded-xl border-2 transition-all cursor-pointer flex flex-col gap-2",
+                                            recoveryMode === 'Full' ? "border-amber-500 bg-amber-500/10 shadow-glow" : "border-white/10 bg-white/5 opacity-50 hover:opacity-80"
+                                        )} onClick={() => setRecoveryMode('Full')}>
+                                            <h4 className="font-bold text-amber-400 text-lg">{t('fullRecovery')}</h4>
+                                            <p className="text-xs text-muted-foreground">{t('fullDesc')}</p>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex gap-4 mt-4">
+                                        <button
+                                            onClick={takeFullBackup}
+                                            className="flex-1 py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-bold transition-all shadow-glowBlue flex items-center justify-center gap-2"
+                                        >
+                                            <Save className="w-5 h-5" /> {t('btnFullBackup')}
+                                        </button>
+                                        <button
+                                            onClick={takeTrnBackup}
+                                            disabled={recoveryMode === 'Simple'}
+                                            className="flex-1 py-3 bg-amber-600 hover:bg-amber-500 text-white rounded-xl font-bold transition-all shadow-glow disabled:opacity-30 disabled:hover:bg-amber-600 flex items-center justify-center gap-2"
+                                        >
+                                            <Save className="w-5 h-5" /> {t('btnLogBackup')}
+                                        </button>
+                                    </div>
+                                    {recoveryMode === 'Simple' && (
+                                        <p className="text-xs text-center text-rose-400 mt-[-8px]">{t('trnRequired')}</p>
+                                    )}
+                                </div>
+
+                                {/* Activity Log */}
+                                <div className="glass-panel p-6 rounded-2xl flex-1 flex flex-col border-white/5">
+                                    <h3 className="text-lg font-bold mb-4">{t('activityLog')}</h3>
+                                    <div className="flex-1 bg-black/40 rounded-xl p-4 overflow-y-auto space-y-2 border border-white/5 font-mono text-xs">
+                                        <AnimatePresence>
+                                            {backupLog.length === 0 && <p className="text-muted-foreground/50 italic text-center mt-8">Waiting for backup activity...</p>}
+                                            {backupLog.map((log, i) => (
+                                                <motion.div
+                                                    key={i}
+                                                    initial={{ opacity: 0, x: -10 }}
+                                                    animate={{ opacity: 1, x: 0 }}
+                                                    className="p-2 bg-white/5 rounded border-l-2 border-amber-500"
+                                                >
+                                                    <span className="text-muted-foreground mr-2">[{log.time}]</span>
+                                                    <span className="text-amber-200">{log.msg}</span>
+                                                </motion.div>
+                                            ))}
+                                        </AnimatePresence>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Transaction Log Visualization */}
+                            <div className="glass-panel p-6 rounded-2xl border-white/5 flex flex-col">
+                                <h3 className="text-xl font-bold flex items-center gap-2 mb-2 text-indigo-400">
+                                    <Database className="w-5 h-5" /> Transaction Log (.LDF) Status
+                                </h3>
+                                <p className="text-sm text-muted-foreground mb-6">
+                                    Watch how different recovery models affect the transaction log size.
+                                </p>
+
+                                <div className="flex-1 flex flex-col justify-end relative rounded-xl border-4 border-white/10 p-2 bg-black/40 overflow-hidden">
+                                    {logFullness > 90 && (
+                                        <div className="absolute inset-0 bg-red-500/20 z-10 flex items-center justify-center animate-pulse backdrop-blur-sm">
+                                            <span className="text-red-400 font-bold text-2xl flex items-center gap-2 bg-black/50 p-4 rounded-xl">
+                                                <AlertTriangle /> LOG FILE FULL!
+                                            </span>
+                                        </div>
+                                    )}
+
+                                    {/* Virtual Log Files (VLFs) representation */}
+                                    <div className="absolute inset-0 flex flex-col-reverse justify-between opacity-20 pointer-events-none p-2">
+                                        {[1, 2, 3, 4, 5, 6, 7, 8].map(i => (
+                                            <div key={i} className="h-[12%] border-b-2 border-dashed border-white/50 w-full" />
+                                        ))}
+                                    </div>
+
+                                    <div className="w-full bg-white/5 rounded-lg flex-1 overflow-hidden relative border border-white/10 flex flex-col-reverse">
+                                        <motion.div
+                                            className={cn(
+                                                "w-full transition-all duration-300 relative",
+                                                logFullness > 80 ? "bg-red-500/50" : logFullness > 50 ? "bg-amber-500/50" : "bg-indigo-500/50"
+                                            )}
+                                            style={{ height: `${logFullness}%` }}
+                                        >
+                                            <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI4IiBoZWlnaHQ9IjgiPgo8cmVjdCB3aWR0aD0iOCIgaGVpZ2h0PSI4IiBmaWxsPSJ0cmFuc3BhcmVudCIvPgo8cGF0aCBkPSJNMCAwTDggOFpNOCAwTDAgOFoiIHN0cm9rZT0icmdiYSgyNTUsIDI1NSwgMjU1LCAwLjEpIiBzdHJva2Utd2lkdGg9IjEiLz4KPC9zdmc+')] opacity-30" />
+                                        </motion.div>
+                                    </div>
+
+                                    <div className="flex justify-between items-center mt-4 px-2">
+                                        <div className="font-mono text-xs text-muted-foreground">0%</div>
+                                        <div className="font-bold text-lg font-mono tracking-wider">
+                                            {logFullness}% USED
+                                        </div>
+                                        <div className="font-mono text-xs text-muted-foreground">100%</div>
+                                    </div>
                                 </div>
                             </div>
                         </motion.div>
