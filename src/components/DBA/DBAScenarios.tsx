@@ -1,5 +1,5 @@
 ﻿import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { Database, Zap, FileWarning, ShieldCheck, HardDrive, Cpu, Code2, AlertTriangle } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { useLanguage } from '../../contexts/LanguageContext';
@@ -7,124 +7,21 @@ import { TSqlModal } from '../Shared/TSqlModal';
 import { REAL_CASES } from './realCasesData';
 import { RealCaseScenario } from './RealCaseScenario';
 
-// ── colour helpers ──────────────────────────────────────────────────────────
-const COLOR: Record<string, { ring: string; bg: string; text: string; glow: string }> = {
-    amber: { ring: 'border-amber-500/50', bg: 'bg-amber-500/20', text: 'text-amber-400', glow: 'shadow-[0_0_12px_rgba(245,158,11,0.35)]' },
-    rose: { ring: 'border-rose-500/50', bg: 'bg-rose-500/20', text: 'text-rose-400', glow: 'shadow-[0_0_12px_rgba(244,63,94,0.35)]' },
-    purple: { ring: 'border-purple-500/50', bg: 'bg-purple-500/20', text: 'text-purple-400', glow: 'shadow-[0_0_12px_rgba(168,85,247,0.35)]' },
-    cyan: { ring: 'border-cyan-500/50', bg: 'bg-cyan-500/20', text: 'text-cyan-400', glow: 'shadow-[0_0_12px_rgba(6,182,212,0.35)]' },
-    red: { ring: 'border-red-500/50', bg: 'bg-red-500/20', text: 'text-red-400', glow: 'shadow-[0_0_12px_rgba(239,68,68,0.35)]' },
-    orange: { ring: 'border-orange-500/50', bg: 'bg-orange-500/20', text: 'text-orange-400', glow: 'shadow-[0_0_12px_rgba(249,115,22,0.35)]' },
-    yellow: { ring: 'border-yellow-500/50', bg: 'bg-yellow-500/20', text: 'text-yellow-400', glow: 'shadow-[0_0_12px_rgba(234,179,8,0.35)]' },
-    blue: { ring: 'border-blue-500/50', bg: 'bg-blue-500/20', text: 'text-blue-400', glow: 'shadow-[0_0_12px_rgba(59,130,246,0.35)]' },
-    violet: { ring: 'border-violet-500/50', bg: 'bg-violet-500/20', text: 'text-violet-400', glow: 'shadow-[0_0_12px_rgba(139,92,246,0.35)]' },
-    emerald: { ring: 'border-emerald-500/50', bg: 'bg-emerald-500/20', text: 'text-emerald-400', glow: 'shadow-[0_0_12px_rgba(16,185,129,0.35)]' },
-};
-
-const STATUS_STYLE: Record<SpidCard['status'], string> = {
-    running: 'bg-emerald-500/15 border-emerald-500/40 text-emerald-300',
-    suspended: 'bg-rose-500/15    border-rose-500/50    text-rose-300    animate-pulse',
-    evicted: 'bg-purple-500/15  border-purple-500/40  text-purple-300',
-    idle: 'bg-white/5        border-white/10       text-white/30    opacity-50',
-    contention: 'bg-amber-500/15   border-amber-500/50   text-amber-300   animate-pulse',
-    growth: 'bg-yellow-500/15  border-yellow-500/50  text-yellow-300  animate-pulse',
-    virt: 'bg-violet-500/15  border-violet-500/50  text-violet-300  animate-pulse',
-};
-
-function SpidRow({ s }: { s: SpidCard }) {
-    return (
-        <motion.div
-            key={s.spid}
-            layout
-            initial={{ opacity: 0, x: -8 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: 8 }}
-            className={cn('flex items-center justify-between px-3 py-2 rounded-xl border text-xs font-bold', STATUS_STYLE[s.status])}
-        >
-            <span className="font-mono text-cyan-400 w-16 shrink-0">SPID {s.spid}</span>
-            <span className="flex-1 mx-2 text-white/70 truncate">{s.label ?? ''}</span>
-            <div className="flex items-center gap-2 ml-auto shrink-0">
-                {s.waitType && <span className="bg-rose-500/20 border border-rose-500/30 text-rose-300 px-1.5 py-0.5 rounded text-[10px] font-mono">{s.waitType}</span>}
-                {s.blockedBy && <span className="text-amber-300 text-[10px]">← {s.blockedBy}</span>}
-                {s.planStatus && (
-                    <span className={cn('px-1.5 py-0.5 rounded border text-[10px] font-mono',
-                        s.planStatus === 'cached' ? 'text-emerald-300 bg-emerald-500/20 border-emerald-500/30' :
-                            s.planStatus === 'evicted' ? 'text-rose-300    bg-rose-500/20    border-rose-500/30' :
-                                'text-amber-300   bg-amber-500/20   border-amber-500/30 animate-pulse'
-                    )}>PLAN:{s.planStatus.toUpperCase()}</span>
-                )}
-                <span className={cn('px-1.5 py-0.5 rounded uppercase text-[10px]',
-                    s.status === 'running' ? 'bg-emerald-500/20 text-emerald-400' :
-                        s.status === 'suspended' ? 'bg-rose-500/20    text-rose-400    animate-pulse' :
-                            s.status === 'evicted' ? 'bg-purple-500/20  text-purple-400' :
-                                s.status === 'contention' ? 'bg-amber-500/20   text-amber-400   animate-pulse' :
-                                    s.status === 'growth' ? 'bg-yellow-500/20  text-yellow-400  animate-pulse' :
-                                        s.status === 'virt' ? 'bg-violet-500/20  text-violet-400  animate-pulse' :
-                                            'bg-white/10        text-white/40'
-                )}>{s.status}</span>
-            </div>
-        </motion.div>
-    );
-}
-
 export function DBAScenarios() {
     const { t } = useLanguage();
     const [activeTab, setActiveTab] = useState<'pageSplit' | 'ifi' | 'creation' | 'realCases'>('pageSplit');
 
-    // Page Split State
+    // Page Split
     const [fillFactor, setFillFactor] = useState(100);
     const [pages, setPages] = useState<number[][]>([[1, 2, 3, 4, 5]]);
     const maxRows = 6;
 
-    // IFI State
+    // IFI
     const [ifiEnabled, setIfiEnabled] = useState(false);
     const [dbStatus, setDbStatus] = useState<'idle' | 'creating' | 'done'>('idle');
     const [progress, setProgress] = useState(0);
     const [isTsqlOpen, setIsTsqlOpen] = useState(false);
 
-    // Real Cases State
-    const [caseIdx, setCaseIdx] = useState(0);
-    const [stepIdx, setStepIdx] = useState(0);
-    const [playing, setPlaying] = useState(false);
-    const [autoMode, setAutoMode] = useState(true);
-    const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-
-    const activeCase = REAL_CASES[caseIdx];
-    const totalSteps = activeCase.steps.length;
-    const currentStep = activeCase.steps[stepIdx];
-
-    const stopTimer = () => { if (timerRef.current) clearInterval(timerRef.current); };
-
-    const resetCase = () => {
-        stopTimer();
-        setStepIdx(0);
-        setPlaying(false);
-    };
-
-    const startAuto = () => {
-        setPlaying(true);
-        timerRef.current = setInterval(() => {
-            setStepIdx(p => {
-                if (p >= totalSteps - 1) {
-                    stopTimer();
-                    setPlaying(false);
-                    return p;
-                }
-                return p + 1;
-            });
-        }, 2200);
-    };
-
-    const handlePlay = () => {
-        if (playing) { stopTimer(); setPlaying(false); return; }
-        if (stepIdx >= totalSteps - 1) setStepIdx(0);
-        startAuto();
-    };
-
-    useEffect(() => { resetCase(); }, [caseIdx]);
-    useEffect(() => () => stopTimer(), []);
-
-    // Page split
     const insertRow = () => {
         let np = [...pages]; let lp = [...np[np.length - 1]];
         const max = Math.ceil(maxRows * (fillFactor / 100));
@@ -147,8 +44,6 @@ export function DBAScenarios() {
         }
     }, [dbStatus, ifiEnabled]);
 
-    const c = COLOR[activeCase.color];
-
     return (
         <div className="flex flex-col h-full gap-6">
             <div className="flex flex-col gap-2">
@@ -157,24 +52,22 @@ export function DBAScenarios() {
             </div>
 
             {/* Tabs */}
-            <div className="flex gap-2 flex-wrap border-b border-white/10 pb-4">
+            <div className="flex gap-2 flex-wrap border-b border-white/10 pb-3">
                 {(['pageSplit', 'ifi', 'creation'] as const).map(tab => (
                     <button key={tab} onClick={() => setActiveTab(tab)}
-                        className={cn('px-4 py-2 rounded-lg font-bold transition-all text-sm',
-                            activeTab === tab ? 'bg-rose-500/20 text-rose-400 border border-rose-500/50' : 'bg-white/5 text-muted-foreground hover:bg-white/10')}>
+                        className={cn('px-4 py-2 rounded-lg font-bold transition-all text-sm', activeTab === tab ? 'bg-rose-500/20 text-rose-400 border border-rose-500/50' : 'bg-white/5 text-muted-foreground hover:bg-white/10')}>
                         {t(tab === 'pageSplit' ? 'tabPageSplit' : tab === 'ifi' ? 'tabIfi' : 'tabCreation')}
                     </button>
                 ))}
-                <button onClick={() => { setActiveTab('realCases'); resetCase(); }}
-                    className={cn('px-4 py-2 rounded-lg font-bold transition-all text-sm flex items-center gap-1.5',
-                        activeTab === 'realCases' ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/50' : 'bg-white/5 text-muted-foreground hover:bg-white/10')}>
+                <button onClick={() => setActiveTab('realCases')}
+                    className={cn('px-4 py-2 rounded-lg font-bold transition-all text-sm flex items-center gap-1.5', activeTab === 'realCases' ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/50' : 'bg-white/5 text-muted-foreground hover:bg-white/10')}>
                     <AlertTriangle className="w-3.5 h-3.5" />{t('tabRealCases')}
                 </button>
             </div>
 
             <div className="flex-1 overflow-y-auto">
 
-                {/* ── PAGE SPLIT ── */}
+                {/* PAGE SPLIT */}
                 {activeTab === 'pageSplit' && (
                     <div className="glass-panel p-6 rounded-2xl border-rose-500/30 flex flex-col gap-6">
                         <div className="flex justify-between items-start flex-col lg:flex-row gap-4">
@@ -198,33 +91,28 @@ export function DBAScenarios() {
                                 <button onClick={resetPages} className="px-3 py-2 bg-white/5 hover:bg-white/10 text-muted-foreground rounded transition-colors">{t('resetBtn')}</button>
                             </div>
                         </div>
-                        <div className="flex flex-wrap gap-6 items-start">
-                            <AnimatePresence>
-                                {pages.map((page, i) => (
-                                    <motion.div key={i} layout initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }}
-                                        className={cn('w-44 h-60 border-2 rounded-xl flex flex-col p-2 gap-1 bg-black/40 relative overflow-hidden',
-                                            page.length >= Math.ceil(maxRows * (fillFactor / 100)) ? 'border-rose-500/50' : 'border-emerald-500/30')}>
-                                        <div className="text-xs font-bold text-center border-b border-white/10 pb-1 mb-1 text-muted-foreground">Page {i + 1}</div>
-                                        <AnimatePresence>
-                                            {page.map((row, j) => (
-                                                <motion.div key={row} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="bg-emerald-500/20 text-emerald-300 text-xs p-1.5 rounded border border-emerald-500/30 flex justify-between">
-                                                    <span>{t('rowData')}</span><span className="opacity-50">#{j + 1}</span>
-                                                </motion.div>
-                                            ))}
-                                        </AnimatePresence>
-                                        <div className="flex-1" />
-                                        <div className="text-[10px] text-muted-foreground/50 border-t border-white/10 pt-1 mt-1 flex justify-between px-1">
-                                            <span>{t('usedLabel')}: {Math.round((page.length / maxRows) * 100)}%</span>
-                                            <span className={page.length >= Math.ceil(maxRows * (fillFactor / 100)) ? 'text-rose-400 font-bold' : ''}>{t('maxLabel')}: {fillFactor}%</span>
-                                        </div>
-                                    </motion.div>
-                                ))}
-                            </AnimatePresence>
+                        <div className="flex flex-wrap gap-4 items-start">
+                            {pages.map((page, i) => (
+                                <motion.div key={i} layout initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }}
+                                    className={cn('w-44 h-60 border-2 rounded-xl flex flex-col p-2 gap-1 bg-black/40', page.length >= Math.ceil(maxRows * (fillFactor / 100)) ? 'border-rose-500/50' : 'border-emerald-500/30')}>
+                                    <div className="text-xs font-bold text-center border-b border-white/10 pb-1 mb-1 text-muted-foreground">Page {i + 1}</div>
+                                    {page.map((row, j) => (
+                                        <motion.div key={row} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="bg-emerald-500/20 text-emerald-300 text-xs p-1.5 rounded border border-emerald-500/30 flex justify-between">
+                                            <span>{t('rowData')}</span><span className="opacity-50">#{j + 1}</span>
+                                        </motion.div>
+                                    ))}
+                                    <div className="flex-1" />
+                                    <div className="text-[10px] text-muted-foreground/50 border-t border-white/10 pt-1 mt-1 flex justify-between px-1">
+                                        <span>{t('usedLabel')}: {Math.round((page.length / maxRows) * 100)}%</span>
+                                        <span className={page.length >= Math.ceil(maxRows * (fillFactor / 100)) ? 'text-rose-400 font-bold' : ''}>{t('maxLabel')}: {fillFactor}%</span>
+                                    </div>
+                                </motion.div>
+                            ))}
                         </div>
                     </div>
                 )}
 
-                {/* ── IFI ── */}
+                {/* IFI */}
                 {activeTab === 'ifi' && (
                     <div className="glass-panel p-6 rounded-2xl border-orange-500/30 flex flex-col gap-6">
                         <h3 className="text-xl font-bold flex items-center gap-2 text-orange-400">
@@ -245,9 +133,7 @@ export function DBAScenarios() {
                             {dbStatus !== 'idle' && (
                                 <div className="flex flex-col gap-2">
                                     <div className="flex justify-between text-sm font-bold">
-                                        <span className={dbStatus === 'done' ? 'text-emerald-400' : 'text-orange-400 animate-pulse'}>
-                                            {dbStatus === 'creating' ? (ifiEnabled ? 'Calling SetFileValidData()...' : t('zeroingDisk')) : t('allocationComplete')}
-                                        </span>
+                                        <span className={dbStatus === 'done' ? 'text-emerald-400' : 'text-orange-400 animate-pulse'}>{dbStatus === 'creating' ? (ifiEnabled ? 'Calling SetFileValidData()...' : t('zeroingDisk')) : t('allocationComplete')}</span>
                                         <span className="text-muted-foreground">10,000 MB</span>
                                     </div>
                                     <div className="h-4 bg-white/5 rounded-full overflow-hidden border border-white/10">
@@ -266,7 +152,7 @@ export function DBAScenarios() {
                     </div>
                 )}
 
-                {/* ── CREATION ── */}
+                {/* CREATION */}
                 {activeTab === 'creation' && (
                     <div className="glass-panel p-6 rounded-2xl border-purple-500/30 flex flex-col gap-6">
                         <h3 className="text-xl font-bold flex items-center gap-2 text-purple-400"><Database className="w-5 h-5" />{t('dbCreationTitle')}</h3>
@@ -294,106 +180,14 @@ export function DBAScenarios() {
                     </div>
                 )}
 
-                {/* ── REAL CASES ── */}
+                {/* REAL CASES — delegates to RealCaseScenario */}
                 {activeTab === 'realCases' && (
-                    <div className="flex flex-col gap-6">
-                        {/* header */}
+                    <div className="flex flex-col gap-4">
                         <div className="glass-panel p-5 rounded-2xl border-cyan-500/30">
                             <h3 className="text-xl font-bold text-cyan-400 flex items-center gap-2 mb-1"><AlertTriangle className="w-5 h-5" />{t('realCasesTitle')}</h3>
                             <p className="text-sm text-muted-foreground">{t('realCasesDesc')}</p>
                         </div>
-
-                        {/* case pill selector */}
-                        <div className="flex flex-wrap gap-2">
-                            {REAL_CASES.map((rc, i) => {
-                                const col = COLOR[rc.color];
-                                return (
-                                    <button key={rc.id} onClick={() => setCaseIdx(i)}
-                                        className={cn('px-3 py-1.5 rounded-xl text-xs font-bold border flex items-center gap-1.5 transition-all',
-                                            caseIdx === i ? `${col.bg} ${col.text} ${col.ring} ${col.glow}` : 'bg-white/5 text-muted-foreground border-white/10 hover:bg-white/10')}>
-                                        <span>{rc.icon}</span>{t(rc.nameKey as any)}
-                                    </button>
-                                );
-                            })}
-                        </div>
-
-                        {/* active case panel */}
-                        <div className={cn('glass-panel rounded-2xl border-2 overflow-hidden', c.ring)}>
-                            {/* case header */}
-                            <div className={cn('px-6 py-4 border-b border-white/5', c.bg)}>
-                                <div className="flex items-center gap-3 mb-1">
-                                    <span className="text-2xl">{activeCase.icon}</span>
-                                    <h4 className={cn('text-lg font-black', c.text)}>{t(activeCase.nameKey as any)}</h4>
-                                </div>
-                                <p className="text-sm text-white/70">{t(activeCase.descKey as any)}</p>
-                            </div>
-
-                            <div className="p-6 grid grid-cols-1 xl:grid-cols-2 gap-6">
-
-                                {/* LEFT — step player */}
-                                <div className="flex flex-col gap-4">
-                                    {/* progress bar */}
-                                    <div className="flex items-center gap-3">
-                                        <span className="text-xs text-muted-foreground font-bold">{t('stepLabel')} {stepIdx + 1} {t('of')} {totalSteps}</span>
-                                        <div className="flex-1 h-1.5 bg-white/10 rounded-full overflow-hidden">
-                                            <motion.div className={cn('h-full rounded-full', c.bg.replace('/20', '/80'))} animate={{ width: `${((stepIdx + 1) / totalSteps) * 100}%` }} />
-                                        </div>
-                                    </div>
-
-                                    {/* controls */}
-                                    <div className="flex items-center gap-2">
-                                        <button onClick={resetCase} className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-muted-foreground transition-colors">
-                                            <RotateCcw className="w-3.5 h-3.5" />
-                                        </button>
-                                        <button disabled={stepIdx === 0} onClick={() => setStepIdx(p => Math.max(0, p - 1))}
-                                            className="px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-bold disabled:opacity-30 flex items-center gap-1 text-muted-foreground transition-colors">
-                                            <ChevronLeft className="w-3.5 h-3.5" />{t('stepPrev')}
-                                        </button>
-                                        <button onClick={handlePlay}
-                                            className={cn('px-4 py-1.5 rounded-lg border text-xs font-bold flex items-center gap-1.5 transition-all', c.bg, c.text, c.ring)}>
-                                            {playing ? <><Pause className="w-3.5 h-3.5" /> Pause</> : <><Play className="w-3.5 h-3.5" />{t('autoPlay')}</>}
-                                        </button>
-                                        <button disabled={stepIdx >= totalSteps - 1} onClick={() => setStepIdx(p => Math.min(totalSteps - 1, p + 1))}
-                                            className="px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-bold disabled:opacity-30 flex items-center gap-1 text-muted-foreground transition-colors">
-                                            {t('stepNext')}<ChevronRight className="w-3.5 h-3.5" />
-                                        </button>
-                                    </div>
-
-                                    {/* log line */}
-                                    <div className="bg-black/40 rounded-xl p-3 border border-white/5 min-h-14 flex items-center font-mono text-xs">
-                                        <AnimatePresence mode="wait">
-                                            <motion.div key={stepIdx} initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }}
-                                                className="text-white/90">
-                                                <span className="text-cyan-600 mr-1.5">[{stepIdx + 1}/{totalSteps}]</span>{currentStep.log}
-                                            </motion.div>
-                                        </AnimatePresence>
-                                    </div>
-
-                                    {/* SPID cards */}
-                                    <div className="flex flex-col gap-2 min-h-40">
-                                        <AnimatePresence mode="popLayout">
-                                            {currentStep.spids.map(s => <SpidRow key={s.spid} s={s} />)}
-                                        </AnimatePresence>
-                                    </div>
-                                </div>
-
-                                {/* RIGHT — detection + resolution */}
-                                <div className="flex flex-col gap-4">
-                                    <div className="bg-black/30 rounded-xl p-4 border border-white/5 flex flex-col gap-2">
-                                        <h5 className={cn('text-xs font-bold uppercase tracking-wider', c.text)}>{t('detectionLabel')}</h5>
-                                        <pre className="text-[11px] text-emerald-300/90 bg-black/40 p-3 rounded-lg border border-white/5 overflow-x-auto whitespace-pre-wrap break-all leading-relaxed">{activeCase.detectionQuery}</pre>
-                                    </div>
-                                    <div className="bg-black/30 rounded-xl p-4 border border-white/5 flex flex-col gap-2">
-                                        <h5 className="text-xs font-bold uppercase tracking-wider text-amber-400">{t('resolutionLabel')}</h5>
-                                        <pre className="text-[11px] text-amber-200/80 bg-black/40 p-3 rounded-lg border border-white/5 overflow-x-auto whitespace-pre-wrap break-all leading-relaxed">{CASE_BEST_PRACTICES[activeCase.id]}</pre>
-                                    </div>
-                                    <div className="bg-black/30 rounded-xl p-4 border border-white/5 flex flex-col gap-2">
-                                        <h5 className="text-xs font-bold uppercase tracking-wider text-cyan-400">{t('bestPracticeLabel')}</h5>
-                                        <p className="text-xs text-white/70 leading-relaxed">{t(activeCase.resolutionKey as any)}</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                        <RealCaseScenario cases={REAL_CASES} />
                     </div>
                 )}
             </div>
@@ -416,15 +210,9 @@ export function DBAScenarios() {
                 }}
                 remediationTitle={activeTab === 'pageSplit' ? t('dbaRemediationSplitTitle') : t('dbaRemediationIfiTitle')}
                 remediationScript={{
-                    '2019': activeTab === 'pageSplit'
-                        ? `ALTER INDEX ALL ON TableName REBUILD WITH (FILLFACTOR = 80, ONLINE = ON);`
-                        : `-- Enable via Local Security Policy → User Rights Assignment`,
-                    '2022': activeTab === 'pageSplit'
-                        ? `ALTER INDEX ALL ON TableName REBUILD WITH (FILLFACTOR = 80, ONLINE = ON, RESUMABLE = ON);`
-                        : `-- Enable via Local Security Policy → User Rights Assignment`,
-                    '2025': activeTab === 'pageSplit'
-                        ? `ALTER INDEX ALL ON TableName REBUILD WITH (FILLFACTOR = 80, ONLINE = ON, RESUMABLE = ON);`
-                        : `-- Enable via Local Security Policy → User Rights Assignment`,
+                    '2019': activeTab === 'pageSplit' ? `ALTER INDEX ALL ON TableName REBUILD WITH (FILLFACTOR = 80, ONLINE = ON);` : `-- Enable via Local Security Policy`,
+                    '2022': activeTab === 'pageSplit' ? `ALTER INDEX ALL ON TableName REBUILD WITH (FILLFACTOR = 80, ONLINE = ON, RESUMABLE = ON);` : `-- Enable via Local Security Policy`,
+                    '2025': activeTab === 'pageSplit' ? `ALTER INDEX ALL ON TableName REBUILD WITH (FILLFACTOR = 80, ONLINE = ON, RESUMABLE = ON);` : `-- Enable via Local Security Policy`,
                 }}
             />
         </div>

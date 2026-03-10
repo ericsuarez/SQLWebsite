@@ -56,9 +56,6 @@ export function Sidebar({ currentModule, onModuleChange }: SidebarProps) {
                 })}
             </nav>
 
-            <div className="p-4 border-t border-white/10 text-xs text-muted-foreground/60 text-center">
-                {t('poweredBy')}
-            </div>
         </aside>
     );
 }

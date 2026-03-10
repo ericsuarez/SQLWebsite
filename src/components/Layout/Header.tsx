@@ -1,4 +1,4 @@
-import { Bell, Search, Activity, Database } from 'lucide-react';
+import { Search, Activity, Database } from 'lucide-react';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useSqlVersion, type SqlVersion } from '../../contexts/SqlVersionContext';
 
@@ -56,10 +56,6 @@ export function Header() {
                     <Activity className="w-3.5 h-3.5 animate-pulse" />
                     {t('online')}
                 </div>
-                <button className="p-2 rounded-full hover:bg-white/10 transition-colors text-muted-foreground hover:text-white relative">
-                    <Bell className="w-5 h-5" />
-                    <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-primary shadow-glowBlue"></span>
-                </button>
             </div>
         </header>
     );

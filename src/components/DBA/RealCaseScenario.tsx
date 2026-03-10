@@ -6,7 +6,6 @@ import { useLanguage } from '../../contexts/LanguageContext';
 import { type RealCase, type ExecPhase, CASE_RESOLUTION_SCRIPTS } from './realCasesData';
 
 // ─────────────────────────── Helpers ────────────────────────────────────────
-const PHASE_ORDER: ExecPhase[] = ['parse', 'bind', 'optimize', 'execute', 'lock', 'wait', 'done', 'error'];
 const PHASE_LABELS: Record<ExecPhase, string> = {
     parse: 'Parse', bind: 'Bind', optimize: 'Optimize',
     execute: 'Execute', lock: 'Lock', wait: 'Wait', done: 'Done', error: 'Error',
@@ -98,7 +97,7 @@ function SpidRow({ s }: { s: { spid: number; label?: string; status: string; wai
 function SqlosPanel({ sqlos }: { sqlos: RealCase['steps'][0]['sqlos'] }) {
     if (!sqlos) return null;
     const { schedulers, workers, runnable, suspended, waitType, waitMs } = sqlos;
-    const idle = Math.max(0, workers - runnable - suspended);
+
     return (
         <div className="bg-black/30 rounded-xl border border-white/5 p-4 flex flex-col gap-3">
             <div className="flex items-center gap-2">
@@ -144,10 +143,8 @@ function BufferPanel({ buf }: { buf: RealCase['steps'][0]['buffer'] }) {
     if (!buf) return null;
     const { totalPages, usedPages, dirtyPages, evictedPages } = buf;
     const cleanPages = usedPages - dirtyPages;
-    const freePct = Math.max(0, ((totalPages - usedPages) / totalPages) * 100);
     const cleanPct = (cleanPages / totalPages) * 100;
     const dirtyPct = (dirtyPages / totalPages) * 100;
-    const evictPct = Math.min(40, (evictedPages / totalPages) * 100);
     return (
         <div className="bg-black/30 rounded-xl border border-white/5 p-4 flex flex-col gap-3">
             <div className="flex items-center gap-2">

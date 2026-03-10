@@ -1,6 +1,10 @@
 # SQL Server Architecture Simulator
 
+![SQL Server Architecture Simulator](https://raw.githubusercontent.com/ericsuarez/SQLWebsite/main/public/preview.png)
+
 An interactive, visual educational tool built with React, TypeScript, and Framer Motion to explore the intricate internal workings of Microsoft SQL Server.
+
+🌍 **Live Demo:** [Available on Vercel](https://sql-website-lemon.vercel.app/)
 
 ## 🚀 Features
 
