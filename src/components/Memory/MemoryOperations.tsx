@@ -291,30 +291,45 @@ export function MemoryOperations() {
                             {/* Memory Clerks & Architecture */}
                             <div className="flex flex-col gap-6">
                                 <div className="glass-panel p-6 rounded-2xl flex flex-col gap-4 border-b-4 border-purple-500">
-                                    <h3 className="text-xl font-bold flex items-center gap-2 text-purple-400 mb-2">
-                                        <PieChart className="w-5 h-5" /> {t('memClerksTitle')}
-                                    </h3>
+                                    <div className="flex items-center justify-between mb-2">
+                                        <h3 className="text-xl font-bold flex items-center gap-2 text-purple-400">
+                                            <PieChart className="w-5 h-5" /> {t('memClerksTitle')}
+                                        </h3>
+                                        <button
+                                            onClick={() => { setTsqlType('clerks'); setIsTsqlOpen(true); }}
+                                            className="px-2 py-1 bg-white/5 hover:bg-white/10 border border-white/10 rounded flex items-center gap-1.5 text-xs text-muted-foreground transition-colors"
+                                        >
+                                            <Code2 className="w-3.5 h-3.5" /> {t('viewTsql')}
+                                        </button>
+                                    </div>
                                     <p className="text-muted-foreground text-sm">{t('memClerksDesc')}</p>
 
-                                    <div className="space-y-3 mt-2">
-                                        <div className="bg-black/30 p-3 rounded-xl border-l-4 border-emerald-500 flex justify-between items-center">
-                                            <span className="font-mono text-xs">{t('clerkBufferPool')}</span>
-                                            <span className="text-xs font-bold text-emerald-400">75%</span>
-                                        </div>
-                                        <div className="bg-black/30 p-3 rounded-xl border-l-4 border-cyan-500 flex justify-between items-center">
-                                            <span className="font-mono text-xs">{t('clerkPlanCache')}</span>
-                                            <span className="text-xs font-bold text-cyan-400">15%</span>
-                                        </div>
-                                        <div className="bg-black/30 p-3 rounded-xl border-l-4 border-pink-500 flex justify-between items-center">
-                                            <span className="font-mono text-xs">{t('clerkLogPool')}</span>
-                                            <span className="text-xs font-bold text-pink-400">5%</span>
-                                        </div>
-                                        <div className="bg-black/30 p-3 rounded-xl border-l-4 border-amber-500 flex justify-between items-center">
-                                            <span className="font-mono text-xs">{t('clerkSosNode')}</span>
-                                            <span className="text-xs font-bold text-amber-400">5%</span>
-                                        </div>
+                                    <div className="space-y-2 mt-2">
+                                        {(([
+                                          { name: 'MEMORYCLERK_SQLBUFFERPOOL', label: 'Buffer Pool (Data Pages)', pct: 68, color: 'border-emerald-500', text: 'text-emerald-400', bar: 'bg-emerald-500' },
+                                          { name: 'CACHESTORE_SQLCP', label: 'SQL Plan Cache', pct: 12, color: 'border-cyan-500', text: 'text-cyan-400', bar: 'bg-cyan-500' },
+                                          { name: 'CACHESTORE_OBJCP', label: 'Object Plan Cache (SP/Triggers)', pct: 7, color: 'border-blue-500', text: 'text-blue-400', bar: 'bg-blue-500' },
+                                          { name: 'MEMORYCLERK_SQLLOGPOOL', label: 'Log Pool (WAL Buffer)', pct: 5, color: 'border-pink-500', text: 'text-pink-400', bar: 'bg-pink-500' },
+                                          { name: 'MEMORYCLERK_SQLQERESERVATIONS', label: 'Query Workspace (Sorts/Hashes)', pct: 4, color: 'border-amber-500', text: 'text-amber-400', bar: 'bg-amber-500' },
+                                          { name: 'MEMORYCLERK_SQLOS', label: 'SQLOS Internal Structures', pct: 2, color: 'border-violet-500', text: 'text-violet-400', bar: 'bg-violet-500' },
+                                          { name: 'CACHESTORE_TEMPTABLES', label: 'TempDB Metadata Cache', pct: 1, color: 'border-orange-500', text: 'text-orange-400', bar: 'bg-orange-500' },
+                                          { name: 'MEMORYCLERK_SRVPROC', label: 'Server Process (Connections)', pct: 1, color: 'border-rose-500', text: 'text-rose-400', bar: 'bg-rose-500' },
+                                        ]) as {name:string;label:string;pct:number;color:string;text:string;bar:string}[]).map(cl => (
+                                            <div key={cl.name} className={`bg-black/30 p-3 rounded-xl border-l-4 ${cl.color} flex flex-col gap-1.5`}>
+                                                <div className="flex justify-between items-center">
+                                                    <span className="font-mono text-[10px] text-white/60">{cl.name}</span>
+                                                    <span className={`text-xs font-black ${cl.text}`}>{cl.pct}%</span>
+                                                </div>
+                                                <div className="text-[10px] text-muted-foreground">{cl.label}</div>
+                                                <div className="h-1 bg-white/10 rounded-full overflow-hidden">
+                                                    <div className={`h-full rounded-full ${cl.bar}`} style={{ width: `${cl.pct}%` }} />
+                                                </div>
+                                            </div>
+                                        ))}
                                     </div>
                                 </div>
+
+
 
                                 <div className={cn(
                                     "glass-panel p-6 rounded-2xl flex flex-col gap-4 border-t-4 transition-all duration-300",
@@ -456,13 +471,13 @@ export function MemoryOperations() {
                 description={tsqlType === 'clerks' ? t('memTsqlDesc') : t('memLpimTsqlDesc')}
                 diagnosticScript={{
                     '2019': tsqlType === 'clerks'
-                        ? `SELECT type, name, pages_kb\nFROM sys.dm_os_memory_clerks\nWHERE type = 'MEMORYCLERK_SQLBUFFERPOOL'\nORDER BY pages_kb DESC;`
+                        ? `-- Top Memory Clerks by usage\nSELECT TOP 15\n  type AS clerk_type,\n  name AS clerk_name,\n  SUM(pages_kb) / 1024 AS used_mb,\n  SUM(virtual_memory_committed_kb) / 1024 AS vm_mb,\n  SUM(awe_allocated_kb) / 1024 AS awe_mb,\n  COUNT(*) AS numa_nodes\nFROM sys.dm_os_memory_clerks\nGROUP BY type, name\nORDER BY used_mb DESC;\n\n-- Total memory by clerk category\nSELECT type,\n  SUM(pages_kb) / 1024 AS total_mb,\n  ROUND(SUM(pages_kb) * 100.0 / SUM(SUM(pages_kb)) OVER(), 1) AS pct\nFROM sys.dm_os_memory_clerks\nGROUP BY type\nORDER BY total_mb DESC;`
                         : `DBCC MEMORYSTATUS;`,
                     '2022': tsqlType === 'clerks'
-                        ? `SELECT type, name, pages_kb\nFROM sys.dm_os_memory_clerks\nWHERE type = 'MEMORYCLERK_SQLBUFFERPOOL'\nORDER BY pages_kb DESC;`
+                        ? `-- Top Memory Clerks by usage\nSELECT TOP 15\n  type AS clerk_type,\n  name AS clerk_name,\n  SUM(pages_kb) / 1024 AS used_mb,\n  SUM(virtual_memory_committed_kb) / 1024 AS vm_mb,\n  SUM(awe_allocated_kb) / 1024 AS awe_mb,\n  COUNT(*) AS numa_nodes\nFROM sys.dm_os_memory_clerks\nGROUP BY type, name\nORDER BY used_mb DESC;\n\n-- Total memory by clerk category\nSELECT type,\n  SUM(pages_kb) / 1024 AS total_mb,\n  ROUND(SUM(pages_kb) * 100.0 / SUM(SUM(pages_kb)) OVER(), 1) AS pct\nFROM sys.dm_os_memory_clerks\nGROUP BY type\nORDER BY total_mb DESC;`
                         : `DBCC MEMORYSTATUS;`,
                     '2025': tsqlType === 'clerks'
-                        ? `SELECT type, name, pages_kb\nFROM sys.dm_os_memory_clerks\nWHERE type = 'MEMORYCLERK_SQLBUFFERPOOL'\nORDER BY pages_kb DESC;`
+                        ? `-- Top Memory Clerks by usage\nSELECT TOP 15\n  type AS clerk_type,\n  name AS clerk_name,\n  SUM(pages_kb) / 1024 AS used_mb,\n  SUM(virtual_memory_committed_kb) / 1024 AS vm_mb,\n  SUM(awe_allocated_kb) / 1024 AS awe_mb,\n  COUNT(*) AS numa_nodes\nFROM sys.dm_os_memory_clerks\nGROUP BY type, name\nORDER BY used_mb DESC;\n\n-- Total memory by clerk category\nSELECT type,\n  SUM(pages_kb) / 1024 AS total_mb,\n  ROUND(SUM(pages_kb) * 100.0 / SUM(SUM(pages_kb)) OVER(), 1) AS pct\nFROM sys.dm_os_memory_clerks\nGROUP BY type\nORDER BY total_mb DESC;`
                         : `DBCC MEMORYSTATUS;`
                 }}
                 remediationTitle={tsqlType === 'clerks' ? t('memRemediationTitle') : t('memLpimRemediationTitle')}

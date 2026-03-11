@@ -8,6 +8,7 @@ import { MemoryOperations } from './components/Memory/MemoryOperations';
 import { QueryExecution } from './components/Execution/QueryExecution';
 import { DBAScenarios } from './components/DBA/DBAScenarios';
 import { HighAvailability } from './components/HA/HighAvailability';
+import { IndexVisualizer } from './components/Storage/IndexVisualizer';
 
 function App() {
   return (
@@ -34,6 +35,8 @@ function App() {
               <DBAScenarios />
             ) : currentModule === 'ha' ? (
               <HighAvailability />
+            ) : currentModule === 'indexes' ? (
+              <IndexVisualizer />
             ) : (
               <div className="w-full h-full flex items-center justify-center glass-panel rounded-2xl relative overflow-hidden">
                 <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent pointer-events-none" />
