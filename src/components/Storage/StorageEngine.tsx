@@ -13,7 +13,7 @@ interface ExtentData {
 }
 
 export function StorageEngine() {
-    const { t } = useLanguage();
+    const { t, language } = useLanguage();
     const [activeTab, setActiveTab] = useState<'files' | 'backups'>('files');
     const [viewState, setViewState] = useState<ViewState>('overview');
     const [selectedExtent, setSelectedExtent] = useState<number | null>(null);
@@ -34,6 +34,73 @@ export function StorageEngine() {
     );
 
     const pagesArray = Array.from({ length: 8 }, (_, i) => i);
+    const ui = language === 'es'
+        ? {
+            filesAndPages: 'Archivos y paginas',
+            overviewDesc: 'SQL Server almacena los datos en paginas de 8 KB y extents de 64 KB.',
+            backToFiles: 'Volver a Archivos',
+            backToExtent: 'Volver al Extent',
+            viewingExtent: 'Viendo el extent {id}. Un extent es un conjunto de 8 paginas contiguas.',
+            viewingPage: 'Viendo la pagina {id}. Unidad de 8 KB con cabecera, datos y slot array.',
+            dataFile: 'Archivo de datos .MDF',
+            dataFileDesc: 'Los archivos de datos se dividen logicamente en paginas (8 KB) y extents (64 KB). Las primeras paginas se reservan para metadatos estructurales.',
+            allocationMaps: 'Mapas de asignacion',
+            extentsView: 'Vista de extents',
+            extentContains: 'Contiene 8 paginas contiguas de 8 KB (64 KB en total)',
+            waitingBackup: 'Esperando actividad de backup...',
+            transactionLog: 'Estado del transaction log (.LDF)',
+            transactionLogDesc: 'Observa como cambia el uso del log segun el modelo de recuperacion y los backups.',
+            logFileFull: 'LOG FILE FULL!',
+            allocFree: 'Libre en GAM',
+            allocMixed: 'Extent mixto (SGAM)',
+            allocUniform: 'Uniforme - asignado en GAM',
+            allocBitMixed: 'SGAM bit = 1 - quedan paginas libres',
+            allocBitAllocated: 'GAM bit = 0 - asignado',
+            allocBitFree: 'GAM bit = 1 - libre',
+            pageHeader: 'Cabecera',
+            prevPage: 'Pagina anterior',
+            nextPage: 'Pagina siguiente',
+            pageHeaderTitle: 'Cabecera de pagina (96 bytes)',
+            dataRowsTitle: 'Filas de datos (8060 bytes)',
+            freeSpace: 'Espacio libre para inserts y updates',
+            slotArray: 'Slot array',
+            recoveryModels: 'Modelos de recuperacion',
+            checkpointSimple: 'CHECKPOINT: log truncado automaticamente (modo simple)',
+            usedPct: '{pct}% usado',
+        }
+        : {
+            filesAndPages: 'Files & Pages',
+            overviewDesc: 'SQL Server stores data in 8KB Pages and 64KB Extents.',
+            backToFiles: 'Back to Files',
+            backToExtent: 'Back to Extent',
+            viewingExtent: 'Viewing Extent {id}. An extent is a collection of 8 contiguous pages.',
+            viewingPage: 'Viewing Page {id}. 8KB structural unit showing header, data and slot array.',
+            dataFile: '.MDF Data File',
+            dataFileDesc: 'Data files are logically divided into pages (8KB) and extents (64KB). The first pages are reserved for structural metadata.',
+            allocationMaps: 'Allocation Maps',
+            extentsView: 'Extents View',
+            extentContains: 'Contains 8 contiguous 8KB pages (Total 64KB)',
+            waitingBackup: 'Waiting for backup activity...',
+            transactionLog: 'Transaction Log (.LDF) Status',
+            transactionLogDesc: 'Watch how different recovery models affect the transaction log size.',
+            logFileFull: 'LOG FILE FULL!',
+            allocFree: 'Free in GAM',
+            allocMixed: 'Mixed Extent (SGAM)',
+            allocUniform: 'Uniform - allocated in GAM',
+            allocBitMixed: 'SGAM bit = 1 - still has free pages',
+            allocBitAllocated: 'GAM bit = 0 - allocated',
+            allocBitFree: 'GAM bit = 1 - free',
+            pageHeader: 'Header',
+            prevPage: 'PrevPage',
+            nextPage: 'NextPage',
+            pageHeaderTitle: 'Page Header (96 Bytes)',
+            dataRowsTitle: 'Data Rows (8060 Bytes)',
+            freeSpace: 'Free space available for inserts and updates',
+            slotArray: 'Slot Array',
+            recoveryModels: 'Recovery Models',
+            checkpointSimple: 'CHECKPOINT: Log auto-truncated (Simple Mode)',
+            usedPct: '{pct}% used',
+        };
 
     const allocateExtent = () => {
         const freeExtentIndex = extents.findIndex(e => !e.allocated);
@@ -56,7 +123,7 @@ export function StorageEngine() {
             setLogFullness(prev => {
                 const newVal = prev + Math.floor(Math.random() * 5) + 2;
                 if (recoveryMode === 'Simple' && newVal > 60) {
-                    addBackupLog("CHECKPOINT: Log auto-truncated (Simple Mode)");
+                    addBackupLog(ui.checkpointSimple);
                     return 10;
                 }
                 return Math.min(newVal, 100);
@@ -92,17 +159,17 @@ export function StorageEngine() {
                         <h2 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 to-cyan-400">
                             {t('storageEngine')}
                         </h2>
-                        <p className="text-muted-foreground mt-2 flex items-center gap-2">
-                            {activeTab === 'files' && viewState === 'overview' && 'SQL Server stores data in 8KB Pages and 64KB Extents.'}
+                        <p className="text-muted-foreground mt-2 flex items-center gap-2 flex-wrap">
+                            {activeTab === 'files' && viewState === 'overview' && ui.overviewDesc}
                             {activeTab === 'files' && viewState === 'extent' && (
                                 <>
                                     <button
                                         onClick={() => setViewState('overview')}
                                         className="hover:text-white transition-colors flex items-center gap-1 bg-white/5 px-2 py-0.5 rounded"
                                     >
-                                        <ArrowLeft className="w-3 h-3" /> Back to Files
+                                        <ArrowLeft className="w-3 h-3" /> {ui.backToFiles}
                                     </button>
-                                    <span>Viewing Extent {selectedExtent}. An extent is a collection of 8 contiguous pages.</span>
+                                    <span>{ui.viewingExtent.replace('{id}', String(selectedExtent))}</span>
                                 </>
                             )}
                             {activeTab === 'files' && viewState === 'page' && (
@@ -111,9 +178,9 @@ export function StorageEngine() {
                                         onClick={() => setViewState('extent')}
                                         className="hover:text-white transition-colors flex items-center gap-1 bg-white/5 px-2 py-0.5 rounded"
                                     >
-                                        <ArrowLeft className="w-3 h-3" /> Back to Extent
+                                        <ArrowLeft className="w-3 h-3" /> {ui.backToExtent}
                                     </button>
-                                    <span>Viewing Page {selectedPage}. 8KB structural unit showing header, data, and slot array.</span>
+                                    <span>{ui.viewingPage.replace('{id}', String(selectedPage))}</span>
                                 </>
                             )}
                             {activeTab === 'backups' && t('backupsDesc')}
@@ -130,7 +197,7 @@ export function StorageEngine() {
                         )}
                     >
                         <HardDrive className="w-4 h-4" />
-                        Files & Pages
+                        {ui.filesAndPages}
                     </button>
                     <button
                         onClick={() => setActiveTab('backups')}
@@ -162,14 +229,19 @@ export function StorageEngine() {
                                 {/* File Layout */}
                                 <div className="col-span-1 lg:col-span-2 glass-panel p-6 border-emerald-500/30">
                                     <h3 className="text-xl font-bold mb-4 flex items-center gap-2 text-emerald-400">
-                                        <Database className="w-5 h-5" /> .MDF Data File
+                                        <Database className="w-5 h-5" /> {ui.dataFile}
                                     </h3>
                                     <div className="space-y-4">
                                         <p className="text-sm text-muted-foreground bg-black/20 p-3 rounded-lg">
-                                            Data files are logically divided into pages (8KB) and extents (64KB). The first few pages are reserved for structural metadata.
+                                            {ui.dataFileDesc}
                                         </p>
                                         <div className="flex gap-2 p-2 bg-black/40 rounded-xl overflow-x-auto border border-white/5">
-                                            {['Header (0)', 'PFS (1)', 'GAM (2)', 'SGAM (3)'].map((p, i) => (
+                                            {[
+                                                language === 'es' ? 'Cabecera (0)' : 'Header (0)',
+                                                'PFS (1)',
+                                                'GAM (2)',
+                                                'SGAM (3)',
+                                            ].map((p, i) => (
                                                 <div key={i} className="flex-shrink-0 w-24 h-32 bg-amber-500/20 border border-amber-500/50 rounded-lg flex flex-col items-center justify-center text-center p-2 text-xs font-bold text-amber-200 shadow-glow">
                                                     <File className="w-6 h-6 mb-2 opacity-50" />
                                                     {p}
@@ -183,7 +255,7 @@ export function StorageEngine() {
                                 {/* Allocation Maps Explanation */}
                                 <div className="glass-panel p-6 border-amber-500/30 flex flex-col gap-4 relative">
                                     <div className="flex justify-between items-center">
-                                        <h3 className="text-xl font-bold text-amber-400">Allocation Maps</h3>
+                                        <h3 className="text-xl font-bold text-amber-400">{ui.allocationMaps}</h3>
                                         <button
                                             onClick={allocateExtent}
                                             className="flex items-center gap-2 px-3 py-1.5 bg-amber-500/20 hover:bg-amber-500/30 text-amber-400 rounded-lg border border-amber-500/50 text-xs font-bold transition-all"
@@ -204,26 +276,32 @@ export function StorageEngine() {
                                             </motion.div>
                                         )}
                                     </AnimatePresence>
-                                    <div className="flex-1 space-y-3 text-sm">
-                                        <div className="bg-black/20 p-3 rounded-lg border-l-2 border-emerald-500">
-                                            <strong>GAM</strong> (Global Allocation Map):<br />
-                                            Tracks allocated extents. 1 bit per extent. 1 = Free, 0 = Allocated.
+                                        <div className="flex-1 space-y-3 text-sm">
+                                            <div className="bg-black/20 p-3 rounded-lg border-l-2 border-emerald-500">
+                                                <strong>GAM</strong> (Global Allocation Map):<br />
+                                            {language === 'es'
+                                                ? 'Marca que extents estan asignados. 1 bit por extent. 1 = libre, 0 = asignado.'
+                                                : 'Tracks allocated extents. 1 bit per extent. 1 = Free, 0 = Allocated.'}
+                                            </div>
+                                            <div className="bg-black/20 p-3 rounded-lg border-l-2 border-blue-500">
+                                                <strong>SGAM</strong> (Shared GAM):<br />
+                                            {language === 'es'
+                                                ? 'Marca extents mixtos con paginas libres. 1 = mixto y con espacio disponible.'
+                                                : 'Tracks mixed extents with free pages. 1 = Mixed and has free pages.'}
+                                            </div>
+                                            <div className="bg-black/20 p-3 rounded-lg border-l-2 border-purple-500">
+                                            <strong>PFS</strong> ({language === 'es' ? 'Page Free Space' : 'Page Free Space'}):<br />
+                                            {language === 'es'
+                                                ? 'Controla uso de espacio (0%, 50%, 80%, 95%, 100%) y tipo de pagina. 1 byte por pagina.'
+                                                : 'Tracks space usage (0%, 50%, 80%, 95%, 100%) and page type. 1 byte per page.'}
+                                            </div>
                                         </div>
-                                        <div className="bg-black/20 p-3 rounded-lg border-l-2 border-blue-500">
-                                            <strong>SGAM</strong> (Shared GAM):<br />
-                                            Tracks mixed extents with free pages. 1 = Mixed and has free pages.
-                                        </div>
-                                        <div className="bg-black/20 p-3 rounded-lg border-l-2 border-purple-500">
-                                            <strong>PFS</strong> (Page Free Space):<br />
-                                            Tracks space usage (0%, 50%, 80%, 95%, 100%) and page type. 1 byte per page.
-                                        </div>
-                                    </div>
                                 </div>
                             </div>
 
                             {/* Extents Grid */}
                             <div className="glass-panel p-6 flex-1 flex flex-col">
-                                <h3 className="text-xl font-bold mb-4">Extents View</h3>
+                                <h3 className="text-xl font-bold mb-4">{ui.extentsView}</h3>
                                 <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-4">
                                     {extents.map((extent) => (
                                         <motion.div
@@ -262,7 +340,7 @@ export function StorageEngine() {
                             initial={{ opacity: 0, x: 20 }}
                             animate={{ opacity: 1, x: 0 }}
                             exit={{ opacity: 0, x: -20 }}
-                            className="flex-1 flex flex-col items-center p-8 overflow-y-auto h-full"
+                            className="flex-1 flex flex-col p-8 overflow-y-auto h-full"
                         >
                             {selectedExtent !== null && (() => {
                                 const ext = extents[selectedExtent];
@@ -270,7 +348,7 @@ export function StorageEngine() {
                                 const isAlloc = ext.allocated;
                                 return (
                                 <div className={cn(
-                                    "w-full max-w-4xl glass-panel p-8 rounded-2xl",
+                                    "w-full glass-panel p-8 rounded-2xl",
                                     !isAlloc ? "border-gray-500/40 bg-gray-500/5" :
                                     isMixed ? "border-blue-500/40 bg-blue-500/5" :
                                              "border-emerald-500/40 bg-emerald-500/5"
@@ -281,7 +359,7 @@ export function StorageEngine() {
                                                 !isAlloc ? "text-gray-400" :
                                                 isMixed ? "text-blue-400" : "text-emerald-400"
                                             )}>Extent {selectedExtent}</h3>
-                                            <p className="text-muted-foreground">Contains 8 contiguous 8KB pages (Total 64KB)</p>
+                                            <p className="text-muted-foreground">{ui.extentContains}</p>
                                         </div>
                                         <div className="flex flex-col items-end gap-1">
                                             <span className={cn("px-3 py-1.5 rounded-lg text-sm font-bold border",
@@ -289,10 +367,10 @@ export function StorageEngine() {
                                                 isMixed ? "bg-blue-500/20 border-blue-500/40 text-blue-300" :
                                                            "bg-emerald-500/20 border-emerald-500/40 text-emerald-300"
                                             )}>
-                                                {!isAlloc ? "Free in GAM" : isMixed ? "Mixed Extent (SGAM)" : "Uniform — Allocated in GAM"}
+                                                {!isAlloc ? ui.allocFree : isMixed ? ui.allocMixed : ui.allocUniform}
                                             </span>
                                             <span className="text-[10px] text-muted-foreground/60 font-mono">
-                                                {isMixed ? "SGAM bit = 1 • has free pages" : isAlloc ? "GAM bit = 0 • allocated" : "GAM bit = 1 • free"}
+                                                {isMixed ? ui.allocBitMixed : isAlloc ? ui.allocBitAllocated : ui.allocBitFree}
                                             </span>
                                         </div>
                                     </div>
@@ -310,7 +388,7 @@ export function StorageEngine() {
                                                 className="aspect-[3/4] bg-white/5 border border-white/20 rounded-xl flex flex-col hover:border-emerald-400/50 hover:shadow-glow transition-all cursor-pointer overflow-hidden group"
                                             >
                                                 <div className="h-8 bg-black/40 border-b border-white/10 flex items-center justify-center text-xs font-bold text-muted-foreground group-hover:text-white">
-                                                    Header {i}
+                                                    {ui.pageHeader} {i}
                                                 </div>
                                                 <div className="flex-1 p-2 flex flex-col gap-1">
                                                     <div className="h-2 bg-emerald-500/20 rounded" />
@@ -323,7 +401,7 @@ export function StorageEngine() {
                                                     <div className="flex-1" />
                                                 </div>
                                                 <div className="h-6 bg-black/40 border-t border-white/10 flex items-center justify-end px-2 text-[10px] text-muted-foreground">
-                                                    Offset Array
+                                                    {language === 'es' ? 'Slot array' : 'Offset Array'}
                                                 </div>
                                             </motion.div>
                                         ))}
@@ -342,24 +420,24 @@ export function StorageEngine() {
                             exit={{ opacity: 0, scale: 0.95 }}
                             className="flex-1 flex items-center justify-center"
                         >
-                            <div className="flex items-center gap-8 w-full max-w-5xl">
+                            <div className="flex items-center gap-8 w-full">
                                 {/* Previous Page Pointer */}
                                 <div onClick={() => setSelectedPage(Math.max(0, selectedPage! - 1))} className="flex flex-col items-center gap-2 opacity-50 cursor-pointer hover:opacity-100 transition-opacity">
                                     <div className="px-4 py-8 bg-white/5 border border-white/10 rounded-xl border-dashed">
                                         <ArrowLeft className="w-8 h-8 text-muted-foreground" />
                                     </div>
-                                    <span className="text-xs font-mono">PrevPage</span>
+                                    <span className="text-xs font-mono">{ui.prevPage}</span>
                                 </div>
 
                                 {/* Main Page Anatomy */}
                                 <div className="flex-1 glass-panel p-6 rounded-2xl border-white/20 flex flex-col gap-4 shadow-glass bg-gradient-to-b from-white/10 to-transparent">
                                     <div className="flex justify-between items-center bg-black/40 p-3 rounded-lg border border-white/10">
-                                        <span className="font-bold text-lg">Page Header (96 Bytes)</span>
+                                        <span className="font-bold text-lg">{ui.pageHeaderTitle}</span>
                                         <span className="text-xs font-mono text-emerald-400">PageID: 1:123{selectedPage}</span>
                                     </div>
 
                                     <div className="flex-1 bg-black/20 rounded-lg border border-white/5 p-4 flex flex-col gap-3 min-h-[300px]">
-                                        <div className="text-xs text-muted-foreground font-semibold uppercase tracking-wider mb-2">Data Rows (8060 Bytes)</div>
+                                        <div className="text-xs text-muted-foreground font-semibold uppercase tracking-wider mb-2">{ui.dataRowsTitle}</div>
                                         {[1, 2, 3].map((row) => (
                                             <div key={row} className="bg-emerald-500/10 border border-emerald-500/30 p-3 rounded flex items-center justify-between group hover:border-emerald-400 transition-colors">
                                                 <div className="flex gap-4 items-center">
@@ -370,12 +448,12 @@ export function StorageEngine() {
                                             </div>
                                         ))}
                                         <div className="flex-1 border-2 border-dashed border-white/10 rounded flex items-center justify-center text-muted-foreground text-sm">
-                                            Free Space (Available for Inserts/Updates)
+                                            {ui.freeSpace}
                                         </div>
                                     </div>
 
                                     <div className="bg-black/40 p-3 rounded-lg border border-white/10 flex flex-row-reverse gap-2 items-center">
-                                        <span className="font-bold text-sm ml-4">Slot Array</span>
+                                        <span className="font-bold text-sm ml-4">{ui.slotArray}</span>
                                         {[1, 2, 3].map((slot) => (
                                             <div key={slot} className="w-12 h-6 bg-white/10 rounded flex items-center justify-center text-xs font-mono border border-white/20">
                                                 0x{96 + (slot * 142)}
@@ -389,7 +467,7 @@ export function StorageEngine() {
                                     <div className="px-4 py-8 bg-white/5 border border-white/10 rounded-xl border-dashed">
                                         <ArrowRight className="w-8 h-8 text-muted-foreground" />
                                     </div>
-                                    <span className="text-xs font-mono">NextPage</span>
+                                    <span className="text-xs font-mono">{ui.nextPage}</span>
                                 </div>
                             </div>
                         </motion.div>
@@ -408,7 +486,7 @@ export function StorageEngine() {
                                 <div className="glass-panel p-6 rounded-2xl flex flex-col gap-4">
                                     <div className="flex items-center justify-between">
                                         <h3 className="text-xl font-bold flex items-center gap-2 text-amber-400">
-                                            <ShieldCheck className="w-5 h-5" /> Recovery Models
+                                            <ShieldCheck className="w-5 h-5" /> {ui.recoveryModels}
                                         </h3>
                                         <button
                                             onClick={() => setRecoveryMode(prev => prev === 'Full' ? 'Simple' : 'Full')}
@@ -460,7 +538,7 @@ export function StorageEngine() {
                                     <h3 className="text-lg font-bold mb-4">{t('activityLog')}</h3>
                                     <div className="flex-1 bg-black/40 rounded-xl p-4 overflow-y-auto space-y-2 border border-white/5 font-mono text-xs">
                                         <AnimatePresence>
-                                            {backupLog.length === 0 && <p className="text-muted-foreground/50 italic text-center mt-8">Waiting for backup activity...</p>}
+                                            {backupLog.length === 0 && <p className="text-muted-foreground/50 italic text-center mt-8">{ui.waitingBackup}</p>}
                                             {backupLog.map((log, i) => (
                                                 <motion.div
                                                     key={i}
@@ -480,17 +558,17 @@ export function StorageEngine() {
                             {/* Transaction Log Visualization */}
                             <div className="glass-panel p-6 rounded-2xl border-white/5 flex flex-col">
                                 <h3 className="text-xl font-bold flex items-center gap-2 mb-2 text-indigo-400">
-                                    <Database className="w-5 h-5" /> Transaction Log (.LDF) Status
+                                    <Database className="w-5 h-5" /> {ui.transactionLog}
                                 </h3>
                                 <p className="text-sm text-muted-foreground mb-6">
-                                    Watch how different recovery models affect the transaction log size.
+                                    {ui.transactionLogDesc}
                                 </p>
 
                                 <div className="flex-1 flex flex-col justify-end relative rounded-xl border-4 border-white/10 p-2 bg-black/40 overflow-hidden">
                                     {logFullness > 90 && (
                                         <div className="absolute inset-0 bg-red-500/20 z-10 flex items-center justify-center animate-pulse backdrop-blur-sm">
                                             <span className="text-red-400 font-bold text-2xl flex items-center gap-2 bg-black/50 p-4 rounded-xl">
-                                                <AlertTriangle /> LOG FILE FULL!
+                                                <AlertTriangle /> {ui.logFileFull}
                                             </span>
                                         </div>
                                     )}
@@ -517,7 +595,7 @@ export function StorageEngine() {
                                     <div className="flex justify-between items-center mt-4 px-2">
                                         <div className="font-mono text-xs text-muted-foreground">0%</div>
                                         <div className="font-bold text-lg font-mono tracking-wider">
-                                            {logFullness}% USED
+                                            {ui.usedPct.replace('{pct}', String(logFullness))}
                                         </div>
                                         <div className="font-mono text-xs text-muted-foreground">100%</div>
                                     </div>

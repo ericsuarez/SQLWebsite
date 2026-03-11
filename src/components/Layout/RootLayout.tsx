@@ -6,6 +6,7 @@ import { Header } from './Header';
 
 export function RootLayout({ children }: { children: (currentModule: ModuleId) => ReactNode }) {
     const [currentModule, setCurrentModule] = useState<ModuleId>('architecture');
+    const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
     return (
         <div className="flex h-screen w-full bg-zinc-950 text-zinc-50 overflow-hidden font-sans selection:bg-primary/30">
@@ -15,13 +16,18 @@ export function RootLayout({ children }: { children: (currentModule: ModuleId) =
                 <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] rounded-full bg-blue-600/20 blur-[120px]"></div>
             </div>
 
-            <Sidebar currentModule={currentModule} onModuleChange={setCurrentModule} />
+            <Sidebar
+                currentModule={currentModule}
+                onModuleChange={setCurrentModule}
+                isCollapsed={isSidebarCollapsed}
+                onToggleCollapse={() => setIsSidebarCollapsed((current) => !current)}
+            />
 
             <div className="flex-1 flex flex-col relative z-0">
                 <Header />
 
-                <main className="flex-1 overflow-x-hidden overflow-y-auto p-6 relative">
-                    <div className="max-w-7xl mx-auto w-full h-full">
+                <main className="flex-1 overflow-x-hidden overflow-y-auto px-4 py-4 md:px-6 md:py-5 relative">
+                    <div className="w-full min-h-full">
                         {children(currentModule)}
                     </div>
                 </main>

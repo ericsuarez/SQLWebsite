@@ -8,6 +8,7 @@ import {
 import { cn } from '../../lib/utils';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { type RealCase, type ExecPhase, CASE_RESOLUTION_SCRIPTS } from './realCasesData';
+import { CopyCodeBlock } from '../Shared/CopyCodeBlock';
 
 // ── phase config ─────────────────────────────────────────────────────────────
 const PHASE_CFG: Record<ExecPhase, { label: string; dot: string; bg: string; text: string }> = {
@@ -130,7 +131,7 @@ function PipelineBar({ phase }: { phase?: ExecPhase }) {
 
 // ── Detail view ───────────────────────────────────────────────────────────────
 function CaseDetail({ rc, onBack }: { rc: RealCase; onBack: () => void }) {
-    const { t } = useLanguage();
+    const { t, language } = useLanguage();
     const [stepIdx, setStepIdx] = useState(0);
     const [playing, setPlaying] = useState(false);
     const [activePanel, setActivePanel] = useState<'flow' | 'schema' | 'fix'>('flow');
@@ -173,6 +174,78 @@ function CaseDetail({ rc, onBack }: { rc: RealCase; onBack: () => void }) {
         ['schema', t('tabSchemaQuery')],
         ['fix', t('tabDetectionFix')],
     ];
+    const waitType = step.sqlos?.waitType ?? 'none';
+    const needsPhysicalIo =
+        step.highlight === 'io' ||
+        /PAGEIOLATCH|ASYNC_IO|WRITELOG|IO_COMPLETION|LOGBUFFER/i.test(waitType);
+    const flowCards = [
+        {
+            id: 'ingress',
+            label: language === 'es' ? 'Entrada SQL' : 'SQL ingress',
+            note: language === 'es' ? 'La query entra al parser' : 'The request enters the parser',
+            tone: 'done',
+        },
+        {
+            id: 'compile',
+            label: language === 'es' ? 'Compilacion' : 'Compile',
+            note:
+                step.phase === 'optimize'
+                    ? language === 'es'
+                        ? 'Optimizando y ajustando el plan'
+                        : 'Optimizing and shaping the plan'
+                    : language === 'es'
+                        ? 'Parser, binding y optimizer'
+                        : 'Parser, binding and optimizer',
+            tone: ['parse', 'bind', 'optimize'].includes(step.phase ?? '') ? 'active' : 'done',
+        },
+        {
+            id: 'buffer',
+            label: 'Buffer Pool',
+            note: needsPhysicalIo
+                ? language === 'es'
+                    ? 'La pagina no estaba en memoria'
+                    : 'The page was not in memory'
+                : language === 'es'
+                    ? 'La pagina ya estaba cargada'
+                    : 'The page was already cached',
+            tone: needsPhysicalIo ? 'warn' : 'done',
+        },
+        {
+            id: 'io',
+            label: language === 'es' ? 'I/O fisico' : 'Physical I/O',
+            note: needsPhysicalIo
+                ? language === 'es'
+                    ? 'Leyendo disco o endureciendo log'
+                    : 'Reading from disk or hardening log'
+                : language === 'es'
+                    ? 'Sin lectura fisica critica'
+                    : 'No critical physical read',
+            tone: needsPhysicalIo ? 'active' : 'idle',
+        },
+        {
+            id: 'state',
+            label: language === 'es' ? 'Estado actual' : 'Current state',
+            note:
+                step.phase === 'done'
+                    ? language === 'es'
+                        ? 'Ejecucion completada'
+                        : 'Execution completed'
+                    : waitType !== 'none'
+                        ? `Wait ${waitType}`
+                        : language === 'es'
+                            ? 'Query en progreso'
+                            : 'Query in progress',
+            tone: step.phase === 'done' ? 'done' : step.phase === 'error' ? 'warn' : 'active',
+        },
+    ] as const;
+    const flowToneClass = (tone: 'done' | 'active' | 'warn' | 'idle') =>
+        tone === 'done'
+            ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300'
+            : tone === 'active'
+                ? 'border-cyan-500/30 bg-cyan-500/10 text-cyan-300'
+                : tone === 'warn'
+                    ? 'border-amber-500/30 bg-amber-500/10 text-amber-300'
+                    : 'border-white/10 bg-black/20 text-white/50';
 
     return (
         <div className="flex flex-col gap-4 h-full">
@@ -218,8 +291,41 @@ function CaseDetail({ rc, onBack }: { rc: RealCase; onBack: () => void }) {
                             </span>
                         </div>
 
+                        <div className="grid gap-4 md:grid-cols-4">
+                            <div className="rounded-2xl border border-white/10 bg-black/30 p-4">
+                                <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-white/40">{t('executionPipeline')}</div>
+                                <div className={cn('mt-2 text-lg font-black capitalize', clrText)}>{step.phase ?? 'idle'}</div>
+                            </div>
+                            <div className="rounded-2xl border border-white/10 bg-black/30 p-4">
+                                <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-white/40">SPIDs</div>
+                                <div className="mt-2 text-lg font-black text-cyan-300">{step.spids.length}</div>
+                            </div>
+                            <div className="rounded-2xl border border-white/10 bg-black/30 p-4">
+                                <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-white/40">Wait</div>
+                                <div className="mt-2 text-sm font-black text-rose-300">{step.sqlos?.waitType ?? 'none'}</div>
+                            </div>
+                            <div className="rounded-2xl border border-white/10 bg-black/30 p-4">
+                                <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-white/40">{t('bufferPool')}</div>
+                                <div className="mt-2 text-lg font-black text-emerald-300">
+                                    {step.buffer ? `${Math.round((step.buffer.usedPages / step.buffer.totalPages) * 100)}%` : '0%'}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="grid gap-3 xl:grid-cols-5">
+                            {flowCards.map((card) => (
+                                <div
+                                    key={card.id}
+                                    className={cn('rounded-2xl border p-4 transition-all', flowToneClass(card.tone))}
+                                >
+                                    <div className="text-[10px] font-bold uppercase tracking-[0.18em]">{card.label}</div>
+                                    <p className="mt-2 text-sm leading-relaxed text-white/80">{card.note}</p>
+                                </div>
+                            ))}
+                        </div>
+
                         {/* Main 2-col grid */}
-                        <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 flex-1 min-h-0 overflow-y-auto pb-24">
+                        <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1.08fr)_minmax(360px,0.92fr)] gap-4 flex-1 min-h-0 overflow-y-auto pb-6">
 
                             {/* LEFT (Scrolls independently if needed via parent flex) */}
                             <div className="flex flex-col gap-4">
@@ -230,7 +336,7 @@ function CaseDetail({ rc, onBack }: { rc: RealCase; onBack: () => void }) {
                                 <AnimatePresence mode="wait">
                                     <motion.div key={stepIdx} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }}>
                                         <SectionBox icon={Activity}
-                                            label={`${t('stepLabel')} ${stepIdx + 1} — ${t('stepObservation')}`}
+                                            label={`${t('stepLabel')} ${stepIdx + 1} - ${t('stepObservation')}`}
                                             accent={`${clrText} ${clrBg}`}>
                                             <p className="text-sm text-white/85 leading-relaxed">{t(step.logKey as any)}</p>
                                             {step.highlight && (
@@ -285,6 +391,15 @@ function CaseDetail({ rc, onBack }: { rc: RealCase; onBack: () => void }) {
                                                     <div className="text-[9px] text-muted-foreground">{k}</div>
                                                 </div>
                                             ))}
+                                        </div>
+                                        <div className="mt-4 space-y-2">
+                                            <div className="flex items-center justify-between text-xs text-white/50">
+                                                <span>{language === 'es' ? 'Paginas cargadas' : 'Pages loaded'}</span>
+                                                <span>{step.buffer.usedPages}/{step.buffer.totalPages}</span>
+                                            </div>
+                                            <div className="h-2 rounded-full bg-white/10">
+                                                <div className="h-2 rounded-full bg-emerald-500" style={{ width: `${(step.buffer.usedPages / step.buffer.totalPages) * 100}%` }} />
+                                            </div>
                                         </div>
                                     </SectionBox>
                                 )}
@@ -383,10 +498,10 @@ function CaseDetail({ rc, onBack }: { rc: RealCase; onBack: () => void }) {
                     <motion.div key="schema" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
                         className="grid grid-cols-1 xl:grid-cols-2 gap-4">
                         <SectionBox icon={Database} label={t('tableSchema')} accent="text-emerald-300 bg-emerald-500/10">
-                            <pre className="text-[11px] font-mono text-white/80 leading-relaxed whitespace-pre-wrap overflow-x-auto">{rc.schema}</pre>
+                            <CopyCodeBlock code={rc.schema} accent="emerald" />
                         </SectionBox>
                         <SectionBox icon={Code2} label={t('problematicQuery')} accent="text-amber-300 bg-amber-500/10">
-                            <pre className="text-[11px] font-mono text-white/80 leading-relaxed whitespace-pre-wrap overflow-x-auto">{rc.query}</pre>
+                            <CopyCodeBlock code={rc.query} accent="amber" />
                         </SectionBox>
                     </motion.div>
                 )}
@@ -396,10 +511,10 @@ function CaseDetail({ rc, onBack }: { rc: RealCase; onBack: () => void }) {
                     <motion.div key="fix" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
                         className="grid grid-cols-1 xl:grid-cols-2 gap-4">
                         <SectionBox icon={Search} label={t('detectionTsql')} accent="text-blue-300 bg-blue-500/10">
-                            <pre className="text-[11px] font-mono text-white/80 leading-relaxed whitespace-pre-wrap overflow-x-auto">{rc.detectionQuery}</pre>
+                            <CopyCodeBlock code={rc.detectionQuery} accent="blue" />
                         </SectionBox>
                         <SectionBox icon={Wrench} label={t('resolutionBestPractice')} accent="text-emerald-300 bg-emerald-500/10">
-                            <pre className="text-[11px] font-mono text-white/80 leading-relaxed whitespace-pre-wrap overflow-x-auto">{resolution ?? t(rc.resolutionKey as any)}</pre>
+                            <CopyCodeBlock code={resolution ?? t(rc.resolutionKey as any)} accent="emerald" />
                         </SectionBox>
                     </motion.div>
                 )}

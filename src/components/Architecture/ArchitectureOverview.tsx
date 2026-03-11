@@ -35,12 +35,12 @@ export function ArchitectureOverview() {
     return (
         <div className="flex flex-col h-full gap-6 relative">
             <div className="flex flex-col gap-4">
-                <div className="flex justify-between items-start">
+                <div className="flex justify-between items-start gap-4 flex-wrap">
                     <div>
                         <h2 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-emerald-400">
                             {t('archTitle')}
                         </h2>
-                        <p className="text-muted-foreground mt-2 max-w-2xl">
+                        <p className="text-muted-foreground mt-2 max-w-4xl">
                             {t('archDescription')}
                         </p>
                     </div>
@@ -99,9 +99,9 @@ export function ArchitectureOverview() {
                                     <Play className="w-4 h-4" /> {t('simulateFlow')}
                                 </button>
                             </div>
-                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 flex-1">
+                            <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1.1fr)_minmax(360px,0.9fr)] gap-6 flex-1">
                                 {/* Interactive Diagram */}
-                                <div className="glass-panel p-8 rounded-2xl flex flex-col items-center justify-center gap-4 relative overflow-hidden">
+                                <div className="glass-panel p-8 rounded-2xl flex flex-col justify-center gap-4 relative overflow-hidden min-h-[540px]">
                                     <div className="absolute inset-0 bg-gradient-to-b from-white/5 to-transparent pointer-events-none" />
 
                                     {layers.map((layer, index) => {
@@ -113,7 +113,7 @@ export function ArchitectureOverview() {
                                                     onClick={() => setActiveLayer(layer.id)}
                                                     whileHover={{ scale: 1.02, y: -2 }}
                                                     whileTap={{ scale: 0.98 }}
-                                                    className={`w-full max-w-md p-6 rounded-xl border-2 cursor-pointer transition-all duration-300 relative z-10 ${isActive ? `${layer.bg} ${layer.color} shadow-glow` : 'border-white/10 bg-white/5 hover:border-white/30'}`}
+                                                    className={`w-full p-6 rounded-xl border-2 cursor-pointer transition-all duration-300 relative z-10 ${isActive ? `${layer.bg} ${layer.color} shadow-glow` : 'border-white/10 bg-white/5 hover:border-white/30'}`}
                                                 >
                                                     <div className="flex items-center gap-4">
                                                         <div className="p-3 rounded-lg bg-black/20">
@@ -143,7 +143,7 @@ export function ArchitectureOverview() {
                                 </div>
 
                                 {/* Details Panel */}
-                                <div className="glass-panel p-8 rounded-2xl flex flex-col items-start justify-start relative">
+                                <div className="glass-panel p-8 rounded-2xl flex flex-col relative min-h-[540px]">
                                     <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-blue-500/10 via-transparent to-transparent pointer-events-none" />
 
                                     {activeLayer ? (
@@ -201,7 +201,7 @@ export function ArchitectureOverview() {
                                             </div>
                                         </motion.div>
                                     ) : (
-                                        <div className="flex-1 flex flex-col items-center justify-center text-center text-muted-foreground gap-4">
+                                        <div className="flex-1 flex w-full flex-col items-center justify-center text-center text-muted-foreground gap-4 mx-auto max-w-xl">
                                             <Database className="w-16 h-16 opacity-20" />
                                             <p>{t('selectLayerPrompt')}</p>
                                         </div>

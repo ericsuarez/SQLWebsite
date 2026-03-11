@@ -8,6 +8,7 @@ import {
 import { cn } from '../../lib/utils';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { TSqlModal } from '../Shared/TSqlModal';
+import { CopyCodeBlock } from '../Shared/CopyCodeBlock';
 
 // ── Sample data ───────────────────────────────────────────────────────────────
 const TABLE = [
@@ -281,9 +282,21 @@ function StepPlayer({ scenarios, accent, tableLabel }: {
 type IndexView = 'compare' | 'clustered' | 'nonclustered';
 
 export function IndexVisualizer() {
-    const { t } = useLanguage();
+    const { t, language } = useLanguage();
     const [activeView, setActiveView] = useState<IndexView>('compare');
     const [isTsqlOpen, setIsTsqlOpen] = useState(false);
+    const missingIndexDemandQuery = `SELECT TOP 10
+  ROUND(s.avg_total_user_cost * s.avg_user_impact * (s.user_seeks + s.user_scans), 0) AS demand_score,
+  d.statement AS table_name,
+  d.equality_columns,
+  d.inequality_columns,
+  d.included_columns
+FROM sys.dm_db_missing_index_details d
+JOIN sys.dm_db_missing_index_groups g
+  ON d.index_handle = g.index_handle
+JOIN sys.dm_db_missing_index_group_stats s
+  ON g.index_group_handle = s.group_handle
+ORDER BY demand_score DESC;`;
 
     return (
         <div className="flex flex-col h-full gap-6">
@@ -396,6 +409,46 @@ export function IndexVisualizer() {
                                         ))}
                                     </tbody>
                                 </table>
+                            </div>
+
+                            <div className="lg:col-span-2 glass-panel p-6 rounded-3xl border border-emerald-500/20">
+                                <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_420px]">
+                                    <div>
+                                        <h4 className="text-lg font-bold text-emerald-400 flex items-center gap-2">
+                                            <BarChart3 className="w-5 h-5" />
+                                            {language === 'es' ? 'Demanda de indices faltantes' : 'Missing index demand'}
+                                        </h4>
+                                        <p className="mt-2 text-sm text-muted-foreground">
+                                            {language === 'es'
+                                                ? 'No solo mires si falta un indice: mira cuanto trabajo ahorraria realmente segun seeks, scans e impacto estimado.'
+                                                : 'Do not just check whether an index is missing: check how much work it would really save using seeks, scans and estimated impact.'}
+                                        </p>
+
+                                        <div className="mt-5 grid gap-3 md:grid-cols-3">
+                                            {([
+                                                ['Sales.RegionID, SaleDate', 98, '18K logical reads -> 240'],
+                                                ['Orders.CustomerID', 74, 'Scan diario -> seek reusable'],
+                                                ['Products.Price INCLUDE(Name)', 61, 'Lookup cost desaparece'],
+                                            ] as [string, number, string][]).map(([label, pct, note]) => (
+                                                <div key={label} className="rounded-2xl border border-white/10 bg-black/30 p-4">
+                                                    <div className="text-sm font-bold text-white">{label}</div>
+                                                    <div className="mt-3 h-2 rounded-full bg-white/10">
+                                                        <div className="h-2 rounded-full bg-emerald-500" style={{ width: `${pct}%` }} />
+                                                    </div>
+                                                    <div className="mt-2 text-xs text-emerald-300">{pct}% demand score</div>
+                                                    <div className="mt-1 text-xs text-white/50">{note}</div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <p className="mb-3 text-[11px] font-bold uppercase tracking-[0.22em] text-white/40">
+                                            {language === 'es' ? 'Consulta DMV lista para copiar' : 'Ready-to-copy DMV query'}
+                                        </p>
+                                        <CopyCodeBlock code={missingIndexDemandQuery} accent="emerald" />
+                                    </div>
+                                </div>
                             </div>
                         </motion.div>
                     )}
