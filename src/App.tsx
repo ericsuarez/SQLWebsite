@@ -14,6 +14,10 @@ import { OSLevelConfig } from './components/OS/OSLevelConfig';
 import { PerfMonVisualizer } from './components/PerfMon/PerfMonVisualizer';
 import { SQLOSDeepDive } from './components/SQLOS/SQLOSDeepDive';
 import { ModernFeatures } from './components/Modern/ModernFeatures';
+import { TLogInternals } from './components/Internals/TLogInternals';
+import { TempDBAndIO } from './components/Internals/TempDBAndIO';
+import { ReplicationInternals } from './components/Internals/ReplicationInternals';
+import { VersionHistory } from './components/Internals/VersionHistory';
 
 function App() {
   return (
@@ -52,6 +56,14 @@ function App() {
               <SQLOSDeepDive />
             ) : currentModule === 'modern' ? (
               <ModernFeatures />
+            ) : currentModule === 'tlog-internals' ? (
+              <TLogInternals />
+            ) : currentModule === 'tempdb-io' ? (
+              <TempDBAndIO />
+            ) : currentModule === 'replication' ? (
+              <ReplicationInternals />
+            ) : currentModule === 'version-history' ? (
+              <VersionHistory />
             ) : (
               <div className="w-full h-full flex items-center justify-center glass-panel rounded-2xl relative overflow-hidden">
                 <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent pointer-events-none" />

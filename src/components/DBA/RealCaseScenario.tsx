@@ -7,19 +7,19 @@ import {
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { useLanguage } from '../../contexts/LanguageContext';
-import { type RealCase, type ExecPhase, CASE_RESOLUTION_SCRIPTS } from './realCasesData';
+import { type RealCase, type ExecPhase, type LocalizedCaseText, CASE_RESOLUTION_SCRIPTS } from './realCasesData';
 import { CopyCodeBlock } from '../Shared/CopyCodeBlock';
 
 // ── phase config ─────────────────────────────────────────────────────────────
-const PHASE_CFG: Record<ExecPhase, { label: string; dot: string; bg: string; text: string }> = {
-    parse:    { label: 'Parse',    dot: 'bg-blue-500',    bg: 'bg-blue-500/20',    text: 'text-blue-300' },
-    bind:     { label: 'Bind',     dot: 'bg-cyan-500',    bg: 'bg-cyan-500/20',    text: 'text-cyan-300' },
-    optimize: { label: 'Optimize', dot: 'bg-purple-500',  bg: 'bg-purple-500/20',  text: 'text-purple-300' },
-    execute:  { label: 'Execute',  dot: 'bg-emerald-500', bg: 'bg-emerald-500/20', text: 'text-emerald-300' },
-    lock:     { label: 'Lock',     dot: 'bg-amber-500',   bg: 'bg-amber-500/20',   text: 'text-amber-300' },
-    wait:     { label: 'Wait',     dot: 'bg-rose-500',    bg: 'bg-rose-500/20',    text: 'text-rose-300' },
-    done:     { label: 'Done',     dot: 'bg-emerald-400', bg: 'bg-emerald-400/20', text: 'text-emerald-200' },
-    error:    { label: 'Error',    dot: 'bg-red-500',     bg: 'bg-red-500/20',     text: 'text-red-300' },
+const PHASE_CFG: Record<ExecPhase, { dot: string; bg: string; text: string }> = {
+    parse:    { dot: 'bg-blue-500',    bg: 'bg-blue-500/20',    text: 'text-blue-300' },
+    bind:     { dot: 'bg-cyan-500',    bg: 'bg-cyan-500/20',    text: 'text-cyan-300' },
+    optimize: { dot: 'bg-purple-500',  bg: 'bg-purple-500/20',  text: 'text-purple-300' },
+    execute:  { dot: 'bg-emerald-500', bg: 'bg-emerald-500/20', text: 'text-emerald-300' },
+    lock:     { dot: 'bg-amber-500',   bg: 'bg-amber-500/20',   text: 'text-amber-300' },
+    wait:     { dot: 'bg-rose-500',    bg: 'bg-rose-500/20',    text: 'text-rose-300' },
+    done:     { dot: 'bg-emerald-400', bg: 'bg-emerald-400/20', text: 'text-emerald-200' },
+    error:    { dot: 'bg-red-500',     bg: 'bg-red-500/20',     text: 'text-red-300' },
 };
 
 const STATUS_STYLE: Record<string, string> = {
@@ -60,6 +60,49 @@ const COLOR_BG: Record<string,string> = {
     violet:'bg-violet-500/15', emerald:'bg-emerald-500/15',
 };
 
+function pick(language: 'en' | 'es', text: LocalizedCaseText) {
+    return language === 'es' ? text.es : text.en;
+}
+
+function phaseLabel(language: 'en' | 'es', phase: ExecPhase) {
+    const labels: Record<ExecPhase, { en: string; es: string }> = {
+        parse: { en: 'Parse', es: 'Parseo' },
+        bind: { en: 'Bind', es: 'Binding' },
+        optimize: { en: 'Optimize', es: 'Optimizacion' },
+        execute: { en: 'Execute', es: 'Ejecucion' },
+        lock: { en: 'Lock', es: 'Bloqueo' },
+        wait: { en: 'Wait', es: 'Espera' },
+        done: { en: 'Done', es: 'Completado' },
+        error: { en: 'Error', es: 'Error' },
+    };
+
+    return language === 'es' ? labels[phase].es : labels[phase].en;
+}
+
+function sessionStatusLabel(language: 'en' | 'es', status: string) {
+    const labels: Record<string, { en: string; es: string }> = {
+        running: { en: 'RUNNING', es: 'EJECUTANDO' },
+        suspended: { en: 'SUSPENDED', es: 'SUSPENDIDO' },
+        evicted: { en: 'EVICTED', es: 'EXPULSADO' },
+        contention: { en: 'CONTENTION', es: 'CONTENCION' },
+        growth: { en: 'AUTOGROWTH', es: 'AUTOCRECIMIENTO' },
+        virt: { en: 'CPU READY', es: 'CPU READY' },
+        idle: { en: 'IDLE', es: 'INACTIVO' },
+    };
+
+    return language === 'es' ? labels[status].es : labels[status].en;
+}
+
+function planStatusLabel(language: 'en' | 'es', status: 'cached' | 'evicted' | 'recompiling') {
+    const labels = {
+        cached: { en: 'plan: cached', es: 'plan: cacheado' },
+        evicted: { en: 'plan: evicted', es: 'plan: expulsado' },
+        recompiling: { en: 'plan: recompiling', es: 'plan: recompilando' },
+    };
+
+    return language === 'es' ? labels[status].es : labels[status].en;
+}
+
 // ── Section box component ─────────────────────────────────────────────────────
 function SectionBox({ icon: Icon, label, accent, children, className }: {
     icon: React.ElementType; label: string; accent: string; children: React.ReactNode; className?: string;
@@ -77,7 +120,7 @@ function SectionBox({ icon: Icon, label, accent, children, className }: {
 
 // ── Case card grid ────────────────────────────────────────────────────────────
 function CaseGrid({ cases, onSelect }: { cases: RealCase[]; onSelect: (c: RealCase) => void }) {
-    const { t } = useLanguage();
+    const { t, language } = useLanguage();
     return (
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
             {cases.map(c => (
@@ -90,7 +133,9 @@ function CaseGrid({ cases, onSelect }: { cases: RealCase[]; onSelect: (c: RealCa
                             <div className={cn('font-bold text-sm', COLOR_TEXT[c.color])}>{t(c.nameKey as any)}</div>
                             <div className="flex items-center gap-1 mt-0.5">
                                 <Clock className="w-3 h-3 text-muted-foreground" />
-                                <span className="text-[10px] text-muted-foreground">{c.steps.length} steps</span>
+                                <span className="text-[10px] text-muted-foreground">
+                                    {c.steps.length} {language === 'es' ? 'pasos' : 'steps'}
+                                </span>
                             </div>
                         </div>
                     </div>
@@ -108,6 +153,7 @@ function CaseGrid({ cases, onSelect }: { cases: RealCase[]; onSelect: (c: RealCa
 
 // ── Pipeline bar ──────────────────────────────────────────────────────────────
 function PipelineBar({ phase }: { phase?: ExecPhase }) {
+    const { language } = useLanguage();
     const phases: ExecPhase[] = ['parse', 'bind', 'optimize', 'execute', 'lock', 'wait', 'done'];
     const activeIdx = phase ? phases.indexOf(phase) : -1;
     return (
@@ -121,7 +167,7 @@ function PipelineBar({ phase }: { phase?: ExecPhase }) {
                         active ? `${cfg.bg} ${cfg.text} border-current shadow-[0_0_10px_currentColor]` :
                         past   ? 'bg-white/10 text-white/40 border-white/10' : 'bg-transparent text-white/20 border-transparent')}>
                         <span className={cn('w-1.5 h-1.5 rounded-full', active ? cfg.dot : past ? 'bg-white/30' : 'bg-white/10')} />
-                        {cfg.label}
+                        {phaseLabel(language, p)}
                     </div>
                 );
             })}
@@ -174,15 +220,21 @@ function CaseDetail({ rc, onBack }: { rc: RealCase; onBack: () => void }) {
         ['schema', t('tabSchemaQuery')],
         ['fix', t('tabDetectionFix')],
     ];
+    const resolutionText = resolution ? pick(language, resolution) : t(rc.resolutionKey as any);
     const waitType = step.sqlos?.waitType ?? 'none';
     const needsPhysicalIo =
         step.highlight === 'io' ||
         /PAGEIOLATCH|ASYNC_IO|WRITELOG|IO_COMPLETION|LOGBUFFER/i.test(waitType);
+    const overviewCards = [
+        { label: t('rootCauseLabel'), value: t(rc.detailsKey as any) },
+        { label: t('impactLabel'), value: t(rc.descKey as any) },
+        { label: t('bestPracticeLabel'), value: t(rc.resolutionKey as any) },
+    ];
     const flowCards = [
         {
             id: 'ingress',
             label: language === 'es' ? 'Entrada SQL' : 'SQL ingress',
-            note: language === 'es' ? 'La query entra al parser' : 'The request enters the parser',
+            note: language === 'es' ? 'La consulta entra al parser y arranca el pipeline interno.' : 'The request enters the parser and starts the internal pipeline.',
             tone: 'done',
         },
         {
@@ -194,13 +246,13 @@ function CaseDetail({ rc, onBack }: { rc: RealCase; onBack: () => void }) {
                         ? 'Optimizando y ajustando el plan'
                         : 'Optimizing and shaping the plan'
                     : language === 'es'
-                        ? 'Parser, binding y optimizer'
+                        ? 'Parser, binding y optimizador preparando la ejecucion'
                         : 'Parser, binding and optimizer',
             tone: ['parse', 'bind', 'optimize'].includes(step.phase ?? '') ? 'active' : 'done',
         },
         {
             id: 'buffer',
-            label: 'Buffer Pool',
+            label: language === 'es' ? 'Buffer pool' : 'Buffer pool',
             note: needsPhysicalIo
                 ? language === 'es'
                     ? 'La pagina no estaba en memoria'
@@ -231,9 +283,11 @@ function CaseDetail({ rc, onBack }: { rc: RealCase; onBack: () => void }) {
                         ? 'Ejecucion completada'
                         : 'Execution completed'
                     : waitType !== 'none'
-                        ? `Wait ${waitType}`
+                        ? language === 'es'
+                            ? `Espera ${waitType}`
+                            : `Wait ${waitType}`
                         : language === 'es'
-                            ? 'Query en progreso'
+                            ? 'Consulta en progreso'
                             : 'Query in progress',
             tone: step.phase === 'done' ? 'done' : step.phase === 'error' ? 'warn' : 'active',
         },
@@ -291,18 +345,35 @@ function CaseDetail({ rc, onBack }: { rc: RealCase; onBack: () => void }) {
                             </span>
                         </div>
 
+                        <div className="grid gap-4 xl:grid-cols-3">
+                            {overviewCards.map((card) => (
+                                <div key={card.label} className="rounded-2xl border border-white/10 bg-black/25 p-4">
+                                    <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-white/40">{card.label}</div>
+                                    <p className="mt-3 text-sm leading-7 text-white/80">{card.value}</p>
+                                </div>
+                            ))}
+                        </div>
+
                         <div className="grid gap-4 md:grid-cols-4">
                             <div className="rounded-2xl border border-white/10 bg-black/30 p-4">
                                 <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-white/40">{t('executionPipeline')}</div>
-                                <div className={cn('mt-2 text-lg font-black capitalize', clrText)}>{step.phase ?? 'idle'}</div>
+                                <div className={cn('mt-2 text-lg font-black', clrText)}>
+                                    {step.phase ? phaseLabel(language, step.phase) : language === 'es' ? 'Inactivo' : 'Idle'}
+                                </div>
                             </div>
                             <div className="rounded-2xl border border-white/10 bg-black/30 p-4">
-                                <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-white/40">SPIDs</div>
+                                <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-white/40">
+                                    {language === 'es' ? 'Sesiones' : 'SPIDs'}
+                                </div>
                                 <div className="mt-2 text-lg font-black text-cyan-300">{step.spids.length}</div>
                             </div>
                             <div className="rounded-2xl border border-white/10 bg-black/30 p-4">
-                                <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-white/40">Wait</div>
-                                <div className="mt-2 text-sm font-black text-rose-300">{step.sqlos?.waitType ?? 'none'}</div>
+                                <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-white/40">
+                                    {language === 'es' ? 'Espera' : 'Wait'}
+                                </div>
+                                <div className="mt-2 text-sm font-black text-rose-300">
+                                    {step.sqlos?.waitType ?? (language === 'es' ? 'ninguna' : 'none')}
+                                </div>
                             </div>
                             <div className="rounded-2xl border border-white/10 bg-black/30 p-4">
                                 <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-white/40">{t('bufferPool')}</div>
@@ -358,10 +429,10 @@ function CaseDetail({ rc, onBack }: { rc: RealCase; onBack: () => void }) {
                                     <SectionBox icon={Layers} label={t('sqlosScheduler')} accent="text-violet-300 bg-violet-500/10">
                                         <div className="grid grid-cols-2 gap-3">
                                             {([
-                                                ['Schedulers', step.sqlos.schedulers, 'text-violet-300'],
-                                                ['Workers',    step.sqlos.workers,    'text-blue-300'],
-                                                ['Runnable',   step.sqlos.runnable,   'text-emerald-300'],
-                                                ['Suspended',  step.sqlos.suspended,  'text-rose-300'],
+                                                [language === 'es' ? 'Schedulers' : 'Schedulers', step.sqlos.schedulers, 'text-violet-300'],
+                                                [language === 'es' ? 'Workers' : 'Workers', step.sqlos.workers, 'text-blue-300'],
+                                                [language === 'es' ? 'Runnable' : 'Runnable', step.sqlos.runnable, 'text-emerald-300'],
+                                                [language === 'es' ? 'Suspendidos' : 'Suspended', step.sqlos.suspended, 'text-rose-300'],
                                             ] as [string, number, string][]).map(([k, v, c]) => (
                                                 <div key={k} className="bg-black/40 rounded-xl p-3 text-center border border-white/5">
                                                     <div className={cn('text-xl font-black', c)}>{v}</div>
@@ -371,7 +442,7 @@ function CaseDetail({ rc, onBack }: { rc: RealCase; onBack: () => void }) {
                                         </div>
                                         {step.sqlos.waitType && (
                                             <div className="mt-3 bg-rose-500/10 border border-rose-500/30 rounded-xl px-4 py-2 text-rose-300 text-xs font-mono font-bold text-center">
-                                                Wait: {step.sqlos.waitType} ({step.sqlos.waitMs}ms)
+                                                {language === 'es' ? 'Espera' : 'Wait'}: {step.sqlos.waitType} ({step.sqlos.waitMs}ms)
                                             </div>
                                         )}
                                     </SectionBox>
@@ -381,10 +452,10 @@ function CaseDetail({ rc, onBack }: { rc: RealCase; onBack: () => void }) {
                                     <SectionBox icon={Database} label={t('bufferPool')} accent="text-cyan-300 bg-cyan-500/10">
                                         <div className="grid grid-cols-4 gap-2">
                                             {([
-                                                ['Total',   step.buffer.totalPages,   'text-white/70'],
-                                                ['Used',    step.buffer.usedPages,    'text-emerald-300'],
-                                                ['Dirty',   step.buffer.dirtyPages,   'text-amber-300'],
-                                                ['Evicted', step.buffer.evictedPages, 'text-rose-300'],
+                                                [language === 'es' ? 'Total' : 'Total', step.buffer.totalPages, 'text-white/70'],
+                                                [language === 'es' ? 'Usadas' : 'Used', step.buffer.usedPages, 'text-emerald-300'],
+                                                [language === 'es' ? 'Sucias' : 'Dirty', step.buffer.dirtyPages, 'text-amber-300'],
+                                                [language === 'es' ? 'Expulsadas' : 'Evicted', step.buffer.evictedPages, 'text-rose-300'],
                                             ] as [string, number, string][]).map(([k, v, c]) => (
                                                 <div key={k} className="bg-black/40 rounded-xl p-2 text-center border border-white/5">
                                                     <div className={cn('text-lg font-black', c)}>{v}</div>
@@ -424,7 +495,7 @@ function CaseDetail({ rc, onBack }: { rc: RealCase; onBack: () => void }) {
                                                             s.status === 'contention' ? 'bg-amber-500/20 text-amber-400' :
                                                             s.status === 'virt'       ? 'bg-violet-500/20 text-violet-400' :
                                                                                         'bg-white/10 text-white/40')}>
-                                                            {s.status}
+                                                            {sessionStatusLabel(language, s.status)}
                                                         </span>
                                                     </div>
                                                     <div className="flex flex-wrap gap-1.5">
@@ -435,7 +506,7 @@ function CaseDetail({ rc, onBack }: { rc: RealCase; onBack: () => void }) {
                                                         )}
                                                         {s.blockedBy && (
                                                             <span className="bg-amber-500/20 border border-amber-500/30 text-amber-300 px-2 py-0.5 rounded-md text-[10px] font-mono">
-                                                                🔒 blocked by SPID {s.blockedBy}
+                                                                {language === 'es' ? 'bloqueado por SPID' : 'blocked by SPID'} {s.blockedBy}
                                                             </span>
                                                         )}
                                                         {s.planStatus && (
@@ -443,7 +514,7 @@ function CaseDetail({ rc, onBack }: { rc: RealCase; onBack: () => void }) {
                                                                 s.planStatus === 'cached'  ? 'bg-emerald-500/20 border-emerald-500/30 text-emerald-300' :
                                                                 s.planStatus === 'evicted' ? 'bg-rose-500/20 border-rose-500/30 text-rose-300' :
                                                                                              'bg-amber-500/20 border-amber-500/30 text-amber-300 animate-pulse')}>
-                                                                📋 plan: {s.planStatus}
+                                                                {planStatusLabel(language, s.planStatus)}
                                                             </span>
                                                         )}
                                                         {s.extra && (
@@ -462,7 +533,11 @@ function CaseDetail({ rc, onBack }: { rc: RealCase; onBack: () => void }) {
 
                         {/* Controls — docked inside the panel, never overlap, shrink-0 prevents compressing */}
                         <div className="flex items-center justify-between gap-3 pt-3 border-t border-white/10 bg-black/20 shrink-0 -mx-0 rounded-xl px-3 pb-3">
-                            <button onClick={reset} className="p-2 rounded-lg bg-white/5 hover:bg-white/10 text-muted-foreground transition-colors" title="Reset">
+                            <button
+                                onClick={reset}
+                                className="p-2 rounded-lg bg-white/5 hover:bg-white/10 text-muted-foreground transition-colors"
+                                title={language === 'es' ? 'Reiniciar simulacion' : 'Reset simulation'}
+                            >
                                 <RotateCcw className="w-4 h-4" />
                             </button>
                             <div className="flex items-center gap-2">
@@ -498,10 +573,10 @@ function CaseDetail({ rc, onBack }: { rc: RealCase; onBack: () => void }) {
                     <motion.div key="schema" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
                         className="grid grid-cols-1 xl:grid-cols-2 gap-4">
                         <SectionBox icon={Database} label={t('tableSchema')} accent="text-emerald-300 bg-emerald-500/10">
-                            <CopyCodeBlock code={rc.schema} accent="emerald" />
+                            <CopyCodeBlock code={pick(language, rc.schema)} accent="emerald" />
                         </SectionBox>
                         <SectionBox icon={Code2} label={t('problematicQuery')} accent="text-amber-300 bg-amber-500/10">
-                            <CopyCodeBlock code={rc.query} accent="amber" />
+                            <CopyCodeBlock code={pick(language, rc.query)} accent="amber" />
                         </SectionBox>
                     </motion.div>
                 )}
@@ -511,10 +586,10 @@ function CaseDetail({ rc, onBack }: { rc: RealCase; onBack: () => void }) {
                     <motion.div key="fix" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
                         className="grid grid-cols-1 xl:grid-cols-2 gap-4">
                         <SectionBox icon={Search} label={t('detectionTsql')} accent="text-blue-300 bg-blue-500/10">
-                            <CopyCodeBlock code={rc.detectionQuery} accent="blue" />
+                            <CopyCodeBlock code={pick(language, rc.detectionQuery)} accent="blue" />
                         </SectionBox>
                         <SectionBox icon={Wrench} label={t('resolutionBestPractice')} accent="text-emerald-300 bg-emerald-500/10">
-                            <CopyCodeBlock code={resolution ?? t(rc.resolutionKey as any)} accent="emerald" />
+                            <CopyCodeBlock code={resolutionText} accent="emerald" />
                         </SectionBox>
                     </motion.div>
                 )}

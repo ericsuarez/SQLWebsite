@@ -1,9 +1,9 @@
-import { Settings, Database, Server, HardDrive, Cpu, Shield, AlertTriangle, BookOpen, Siren, Zap, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
+import { Settings, Database, Server, HardDrive, Cpu, Shield, AlertTriangle, BookOpen, Siren, Zap, PanelLeftClose, PanelLeftOpen, FileWarning, GitBranch, History } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { useLanguage } from '../../contexts/LanguageContext';
 import type { TranslationKey } from '../../i18n/translations';
 
-export type ModuleId = 'architecture' | 'storage' | 'memory' | 'execution' | 'dba' | 'ha' | 'indexes' | 'realcases' | 'osconfig' | 'perfmon' | 'sqlos' | 'modern';
+export type ModuleId = 'architecture' | 'storage' | 'memory' | 'execution' | 'dba' | 'ha' | 'indexes' | 'realcases' | 'osconfig' | 'perfmon' | 'sqlos' | 'modern' | 'tlog-internals' | 'tempdb-io' | 'replication' | 'version-history';
 
 interface SidebarProps {
     currentModule: ModuleId;
@@ -25,6 +25,10 @@ const modules: { id: ModuleId; titleKey: TranslationKey; icon: any; color: strin
     { id: 'perfmon', titleKey: 'tabPerfMon', icon: Cpu, color: 'text-fuchsia-400' },
     { id: 'sqlos', titleKey: 'tabSqlOs', icon: Database, color: 'text-violet-400' },
     { id: 'modern', titleKey: 'tabModern', icon: Zap, color: 'text-yellow-400' },
+    { id: 'tlog-internals', titleKey: 'tabTlogInternals', icon: FileWarning, color: 'text-orange-400' },
+    { id: 'tempdb-io', titleKey: 'tabTempdbIo', icon: HardDrive, color: 'text-red-400' },
+    { id: 'replication', titleKey: 'tabReplication', icon: GitBranch, color: 'text-sky-400' },
+    { id: 'version-history', titleKey: 'tabVersionHistory', icon: History, color: 'text-lime-400' },
 ];
 
 export function Sidebar({ currentModule, onModuleChange, isCollapsed, onToggleCollapse }: SidebarProps) {

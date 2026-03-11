@@ -27,6 +27,10 @@ export const translations = {
         tabPerfMon: 'Performance Monitor',
         tabSqlOs: 'SQLOS Deep Dive',
         tabModern: 'Modern Features',
+        tabTlogInternals: 'Transaction Log & VLFs',
+        tabTempdbIo: 'TempDB & Advanced I/O',
+        tabReplication: 'Replication Topologies',
+        tabVersionHistory: 'Versions & History',
 
         // OS Level Config
         osConfigMainDesc: 'Explore critical OS-level settings that directly impact SQL Server performance. Misconfigurations here are often invisible to DBADMVs.',
@@ -563,6 +567,16 @@ export const translations = {
         virtBestPractice: 'Reserve vCPUs (1:1 ratio) and Memory (100% full RAM). Disable memory ballooning. Separate OS, Data, and Log disks across multiple Paravirtual SCSI controllers. Monitor CPU Ready < 5%.',
         missingIndexBestPractice: 'Validate missing index DMV suggestions. Check user_seeks × avg_total_user_cost. Avoid over-indexing — each index costs on writes.',
 
+        caseBlockerExplain: 'A single open transaction keeps the exclusive lock alive. First the row changes, then the COMMIT never arrives, and finally the rest of the workload piles up behind one SPID.',
+        caseLatchExplain: 'This is not a classic lock problem. Every worker targets the same last page, so they fight for a page latch even though each INSERT is short and simple.',
+        casePlanEvictionExplain: 'The visible query is only half of the problem. Memory churn removes a healthy plan from cache, so the next execution recompiles and burns extra CPU before it can run.',
+        caseTempDbExplain: 'The bottleneck appears in TempDB metadata before the real work begins. Under heavy temp object churn, PFS, GAM and SGAM become hot pages and workers queue on PAGELATCH waits.',
+        caseLdfPlacementExplain: 'Commit latency follows the transaction log path. If log writes share a slow or busy device with random data I/O, WRITELOG grows and every commit becomes slower.',
+        caseCxpacketExplain: 'Parallelism is not inherently bad. The issue is data skew: one worker gets most of the rows, finishes late and forces the faster workers to wait at the exchange operator.',
+        caseAutoGrowthExplain: 'The pause during growth is only the first symptom. Repeated tiny autogrowth events fragment the log into many VLFs, making recovery, startup and log scans slower later on.',
+        caseParamSniffExplain: 'Compilation happens for one parameter value, but the cached plan is reused for many. With skewed data, the first sniffed value can freeze a plan shape that is terrible for the next execution.',
+        caseVirtualizationExplain: 'SQL Server only sees part of the incident. Runnable workers, I/O spikes and memory churn may actually start in the hypervisor layer through CPU Ready, storage contention or host memory pressure.',
+        caseMissingIndexExplain: 'The expensive part is the work already done without the right access path. The engine scans, reads many pages into cache and waits on I/O before the missing-index DMV reveals a better seek pattern.',
         // High Availability
         haTitle: 'AlwaysOn High Availability',
         haDesc: 'Visualize data replication flows and Log Sequence Number (LSN) sync states between replicas.',
@@ -1468,6 +1482,20 @@ export const translations = {
         virtSpid131Wait2: 'Worker frenado ahora por WRITELOG',
         virtSpid131Running2: 'Worker termina con normalidad',
         virtSpid132Error1: 'Plan cache bajo presion de memoria de VM',
+        caseBlockerExplain: 'Una sola transaccion abierta mantiene vivo el lock exclusivo. Primero cambia la fila, luego no llega el COMMIT y al final el resto de sesiones se apila detras de un unico SPID.',
+        caseLatchExplain: 'No es un problema de locks logicos sino de pagina caliente. Todos los workers apuntan a la misma ultima pagina del indice y compiten por un latch fisico muy corto pero muy frecuente.',
+        casePlanEvictionExplain: 'La consulta visible es solo una parte del problema. La presion de memoria expulsa un plan sano de cache y la siguiente ejecucion tiene que recompilar antes de poder correr.',
+        caseTempDbExplain: 'El cuello de botella aparece en los metadatos de TempDB antes de que empiece el trabajo real. Cuando demasiadas sesiones crean y borran objetos a la vez, PFS, GAM y SGAM se convierten en hot pages.',
+        caseLdfPlacementExplain: 'La latencia del commit sigue a la ruta del log. Si el archivo LDF comparte dispositivo con I/O aleatoria de datos, WRITELOG sube y todos los commits se frenan.',
+        caseCxpacketExplain: 'El paralelismo no es malo por si mismo. El problema llega cuando un worker recibe casi todas las filas y obliga a los demas a esperar en el Exchange hasta que termina.',
+        caseAutoGrowthExplain: 'La pausa visible durante el crecimiento es solo el primer sintoma. Muchos autogrowth pequenos fragmentan el log en demasiados VLFs y empeoran recovery, arranque y escaneos posteriores.',
+        caseParamSniffExplain: 'La compilacion ocurre para un parametro concreto, pero el plan se reutiliza para muchos. Si la distribucion de datos es sesgada, el primer valor sniffed deja congelada una forma de plan muy mala para otros casos.',
+        caseVirtualizationExplain: 'SQL Server solo ve una parte del incidente. Los workers pueden parecer runnable o mostrar sintomas de I/O cuando la causa real vive en el hipervisor: CPU Ready, contencion de almacenamiento o presion de memoria del host.',
+        caseMissingIndexExplain: 'Lo caro no es solo la sugerencia del DMV, sino todo el trabajo que ya se hizo sin el camino de acceso correcto. El motor escanea, lee paginas a cache y espera I/O antes de revelar que un seek cubriente era mejor.',
+        tabTlogInternals: 'Log de transacciones y VLFs',
+        tabTempdbIo: 'TempDB y E/S avanzada',
+        tabReplication: 'Topologias de replicacion',
+        tabVersionHistory: 'Versiones e historia',
     }
 };
 
