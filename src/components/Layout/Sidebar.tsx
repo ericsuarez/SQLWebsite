@@ -1,9 +1,9 @@
-import { Settings, Database, Server, HardDrive, Cpu, Shield, AlertTriangle, BookOpen, Siren } from 'lucide-react';
+import { Settings, Database, Server, HardDrive, Cpu, Shield, AlertTriangle, BookOpen, Siren, Zap } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { useLanguage } from '../../contexts/LanguageContext';
 import type { TranslationKey } from '../../i18n/translations';
 
-export type ModuleId = 'architecture' | 'storage' | 'memory' | 'execution' | 'dba' | 'ha' | 'indexes' | 'realcases';
+export type ModuleId = 'architecture' | 'storage' | 'memory' | 'execution' | 'dba' | 'ha' | 'indexes' | 'realcases' | 'osconfig' | 'perfmon' | 'sqlos' | 'modern';
 
 interface SidebarProps {
     currentModule: ModuleId;
@@ -19,6 +19,10 @@ const modules: { id: ModuleId; titleKey: TranslationKey; icon: any; color: strin
     { id: 'realcases', titleKey: 'realCasesTitle', icon: Siren, color: 'text-cyan-400' },
     { id: 'ha', titleKey: 'highAvailability', icon: Shield, color: 'text-sky-400' },
     { id: 'indexes', titleKey: 'indexVisualizer', icon: BookOpen, color: 'text-teal-400' },
+    { id: 'osconfig', titleKey: 'tabOsConfig', icon: Server, color: 'text-indigo-400' },
+    { id: 'perfmon', titleKey: 'tabPerfMon', icon: Cpu, color: 'text-fuchsia-400' },
+    { id: 'sqlos', titleKey: 'tabSqlOs', icon: Database, color: 'text-violet-400' },
+    { id: 'modern', titleKey: 'tabModern', icon: Zap, color: 'text-yellow-400' },
 ];
 
 export function Sidebar({ currentModule, onModuleChange }: SidebarProps) {

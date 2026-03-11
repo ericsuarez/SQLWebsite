@@ -1,6 +1,6 @@
-﻿import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Database, Zap, FileWarning, ShieldCheck, HardDrive, Cpu, Code2, AlertTriangle } from 'lucide-react';
+import { Database, Zap, FileWarning, ShieldCheck, HardDrive, Cpu, Code2, AlertTriangle, ShieldAlert } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { TSqlModal } from '../Shared/TSqlModal';
@@ -9,7 +9,7 @@ import { RealCaseScenario } from './RealCaseScenario';
 
 export function DBAScenarios() {
     const { t } = useLanguage();
-    const [activeTab, setActiveTab] = useState<'pageSplit' | 'ifi' | 'creation' | 'realCases'>('pageSplit');
+    const [activeTab, setActiveTab] = useState<'pageSplit' | 'ifi' | 'lpim' | 'creation' | 'realCases'>('pageSplit');
     const [isFullScreenCase, setIsFullScreenCase] = useState(false);
 
     // Page Split
@@ -17,8 +17,9 @@ export function DBAScenarios() {
     const [pages, setPages] = useState<number[][]>([[1, 2, 3, 4, 5]]);
     const maxRows = 6;
 
-    // IFI
+    // IFI & LPIM
     const [ifiEnabled, setIfiEnabled] = useState(false);
+    const [lpimEnabled, setLpimEnabled] = useState(false);
     const [dbStatus, setDbStatus] = useState<'idle' | 'creating' | 'done'>('idle');
     const [progress, setProgress] = useState(0);
     const [isTsqlOpen, setIsTsqlOpen] = useState(false);
@@ -56,10 +57,10 @@ export function DBAScenarios() {
 
                     {/* Tabs */}
                     <div className="flex gap-2 flex-wrap border-b border-white/10 pb-3">
-                        {(['pageSplit', 'ifi', 'creation'] as const).map(tab => (
+                        {(['pageSplit', 'ifi', 'lpim', 'creation'] as const).map(tab => (
                             <button key={tab} onClick={() => setActiveTab(tab)}
                                 className={cn('px-4 py-2 rounded-lg font-bold transition-all text-sm', activeTab === tab ? 'bg-rose-500/20 text-rose-400 border border-rose-500/50' : 'bg-white/5 text-muted-foreground hover:bg-white/10')}>
-                                {t(tab === 'pageSplit' ? 'tabPageSplit' : tab === 'ifi' ? 'tabIfi' : 'tabCreation')}
+                                {t(tab === 'pageSplit' ? 'tabPageSplit' : tab === 'ifi' ? 'tabIfi' : tab === 'lpim' ? 'lpimTitle' : 'tabCreation')}
                             </button>
                         ))}
                         <button onClick={() => setActiveTab('realCases')}
@@ -153,6 +154,52 @@ export function DBAScenarios() {
                                     </div>
                                 </div>
                             )}
+                        </div>
+                    </div>
+                )}
+
+                {/* LPIM */}
+                {activeTab === 'lpim' && (
+                    <div className="glass-panel p-6 rounded-2xl border-emerald-500/30 flex flex-col gap-6">
+                        <h3 className="text-xl font-bold flex items-center gap-2 text-emerald-400">
+                            <ShieldAlert className="w-5 h-5" /> {t('lpimTitle')}
+                            <button onClick={() => setIsTsqlOpen(true)} className="ml-4 px-2 py-1 bg-white/5 hover:bg-white/10 border border-white/10 rounded flex items-center gap-1.5 text-xs text-muted-foreground transition-colors"><Code2 className="w-3.5 h-3.5" /> {t('viewTsql')}</button>
+                        </h3>
+                        <p className="text-muted-foreground">{t('lpimDesc')}</p>
+                        <div className="bg-black/40 p-6 rounded-xl border border-white/10 flex flex-col gap-6">
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                    <div className={cn('w-12 h-6 rounded-full p-1 cursor-pointer transition-colors', lpimEnabled ? 'bg-emerald-500' : 'bg-white/10')} onClick={() => setLpimEnabled(x => !x)}>
+                                        <motion.div className="w-4 h-4 rounded-full bg-white shadow-sm" animate={{ x: lpimEnabled ? 24 : 0 }} />
+                                    </div>
+                                    <span className="font-bold">{lpimEnabled ? t('lpimEnabled') : t('lpimDisabled')}</span>
+                                </div>
+                            </div>
+
+                            <div className="relative h-32 mt-4 flex items-center bg-black/30 rounded-xl overflow-hidden border border-white/5">
+                                <div className="w-1/2 flex flex-col items-center justify-center p-4 h-full border-r border-white/10 relative z-10">
+                                    <span className="text-sm font-bold text-white mb-2">RAM</span>
+                                    <HardDrive className="w-8 h-8 text-white/50" />
+                                </div>
+                                <div className="w-1/2 flex flex-col items-center justify-center p-4 h-full relative z-10">
+                                    <span className="text-sm font-bold text-white mb-2">Pagefile.sys (Disk)</span>
+                                    <HardDrive className="w-8 h-8 text-rose-400/50" />
+                                </div>
+
+                                {/* Animation representing paging */}
+                                {!lpimEnabled && (
+                                    <motion.div
+                                        animate={{ x: [0, 150, 0] }}
+                                        transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}
+                                        className="absolute left-[20%] w-8 h-8 bg-amber-500/50 rounded-lg blur-sm z-0"
+                                    />
+                                )}
+                                {lpimEnabled && (
+                                    <div className="absolute left-[40%] rounded-full w-20 h-20 bg-emerald-500/10 border-4 border-emerald-500/30 flex items-center justify-center z-20">
+                                        <ShieldAlert className="w-8 h-8 text-emerald-400" />
+                                    </div>
+                                )}
+                            </div>
                         </div>
                     </div>
                 )}

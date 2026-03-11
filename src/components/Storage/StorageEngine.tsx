@@ -262,7 +262,7 @@ export function StorageEngine() {
                             initial={{ opacity: 0, x: 20 }}
                             animate={{ opacity: 1, x: 0 }}
                             exit={{ opacity: 0, x: -20 }}
-                            className="flex-1 flex flex-col items-center justify-center p-8"
+                            className="flex-1 flex flex-col items-center p-8 overflow-y-auto h-full"
                         >
                             {selectedExtent !== null && (() => {
                                 const ext = extents[selectedExtent];
@@ -344,7 +344,7 @@ export function StorageEngine() {
                         >
                             <div className="flex items-center gap-8 w-full max-w-5xl">
                                 {/* Previous Page Pointer */}
-                                <div className="flex flex-col items-center gap-2 opacity-50 cursor-pointer hover:opacity-100 transition-opacity">
+                                <div onClick={() => setSelectedPage(Math.max(0, selectedPage! - 1))} className="flex flex-col items-center gap-2 opacity-50 cursor-pointer hover:opacity-100 transition-opacity">
                                     <div className="px-4 py-8 bg-white/5 border border-white/10 rounded-xl border-dashed">
                                         <ArrowLeft className="w-8 h-8 text-muted-foreground" />
                                     </div>
@@ -385,7 +385,7 @@ export function StorageEngine() {
                                 </div>
 
                                 {/* Next Page Pointer */}
-                                <div className="flex flex-col items-center gap-2 opacity-50 cursor-pointer hover:opacity-100 transition-opacity">
+                                <div onClick={() => setSelectedPage(Math.min(7, selectedPage! + 1))} className="flex flex-col items-center gap-2 opacity-50 cursor-pointer hover:opacity-100 transition-opacity">
                                     <div className="px-4 py-8 bg-white/5 border border-white/10 rounded-xl border-dashed">
                                         <ArrowRight className="w-8 h-8 text-muted-foreground" />
                                     </div>

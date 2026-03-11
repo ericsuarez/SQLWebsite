@@ -219,9 +219,9 @@ function CaseDetail({ rc, onBack }: { rc: RealCase; onBack: () => void }) {
                         </div>
 
                         {/* Main 2-col grid */}
-                        <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 flex-1 min-h-0">
+                        <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 flex-1 min-h-0 overflow-y-auto pb-24">
 
-                            {/* LEFT */}
+                            {/* LEFT (Scrolls independently if needed via parent flex) */}
                             <div className="flex flex-col gap-4">
                                 <SectionBox icon={Layers} label={t('executionPipeline')} accent="text-muted-foreground bg-black/20">
                                     <PipelineBar phase={step.phase} />
@@ -232,7 +232,7 @@ function CaseDetail({ rc, onBack }: { rc: RealCase; onBack: () => void }) {
                                         <SectionBox icon={Activity}
                                             label={`${t('stepLabel')} ${stepIdx + 1} — ${t('stepObservation')}`}
                                             accent={`${clrText} ${clrBg}`}>
-                                            <p className="text-sm text-white/85 leading-relaxed">{step.log}</p>
+                                            <p className="text-sm text-white/85 leading-relaxed">{t(step.logKey as any)}</p>
                                             {step.highlight && (
                                                 <div className={cn('mt-3 inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold border',
                                                     step.highlight === 'lock'  ? 'bg-amber-500/15 border-amber-500/30 text-amber-300' :
@@ -292,8 +292,8 @@ function CaseDetail({ rc, onBack }: { rc: RealCase; onBack: () => void }) {
 
                             {/* RIGHT: Session Monitor */}
                             <div className="flex flex-col gap-4">
-                                <SectionBox icon={Activity} label={t('sessionMonitor')} accent="text-cyan-300 bg-cyan-500/10">
-                                    <div className="flex flex-col gap-2 overflow-y-auto max-h-96">
+                                <SectionBox icon={Activity} label={t('sessionMonitor')} accent="text-cyan-300 bg-cyan-500/10" className="h-full">
+                                    <div className="flex flex-col gap-2">
                                         <AnimatePresence>
                                             {step.spids.map(s => (
                                                 <motion.div key={s.spid}
@@ -302,7 +302,7 @@ function CaseDetail({ rc, onBack }: { rc: RealCase; onBack: () => void }) {
                                                     <div className="flex items-center gap-2 flex-wrap">
                                                         <span className={cn('w-2.5 h-2.5 rounded-full shrink-0', DOT[s.status] ?? DOT.idle)} />
                                                         <span className="font-mono text-xs font-black text-cyan-400 shrink-0">SPID {s.spid}</span>
-                                                        {s.label && <span className="text-xs text-white/70 flex-1 min-w-0 truncate">{s.label}</span>}
+                                                        {s.labelKey && <span className="text-xs text-white/70 flex-1 min-w-0 truncate">{t(s.labelKey as any)}</span>}
                                                         <span className={cn('ml-auto text-[10px] font-bold uppercase px-1.5 py-0.5 rounded',
                                                             s.status === 'running'    ? 'bg-emerald-500/20 text-emerald-400' :
                                                             s.status === 'suspended'  ? 'bg-rose-500/20 text-rose-400' :
@@ -345,8 +345,8 @@ function CaseDetail({ rc, onBack }: { rc: RealCase; onBack: () => void }) {
                             </div>
                         </div>
 
-                        {/* Controls — docked inside the panel, never overlap */}
-                        <div className="flex items-center justify-between gap-3 pt-3 border-t border-white/10 bg-black/20 -mx-0 rounded-xl px-3 pb-3">
+                        {/* Controls — docked inside the panel, never overlap, shrink-0 prevents compressing */}
+                        <div className="flex items-center justify-between gap-3 pt-3 border-t border-white/10 bg-black/20 shrink-0 -mx-0 rounded-xl px-3 pb-3">
                             <button onClick={reset} className="p-2 rounded-lg bg-white/5 hover:bg-white/10 text-muted-foreground transition-colors" title="Reset">
                                 <RotateCcw className="w-4 h-4" />
                             </button>

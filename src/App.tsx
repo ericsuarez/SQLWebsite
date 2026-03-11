@@ -10,6 +10,10 @@ import { DBAScenarios } from './components/DBA/DBAScenarios';
 import { HighAvailability } from './components/HA/HighAvailability';
 import { IndexVisualizer } from './components/Storage/IndexVisualizer';
 import { RealCasesPage } from './components/DBA/RealCasesPage';
+import { OSLevelConfig } from './components/OS/OSLevelConfig';
+import { PerfMonVisualizer } from './components/PerfMon/PerfMonVisualizer';
+import { SQLOSDeepDive } from './components/SQLOS/SQLOSDeepDive';
+import { ModernFeatures } from './components/Modern/ModernFeatures';
 
 function App() {
   return (
@@ -40,6 +44,14 @@ function App() {
               <HighAvailability />
             ) : currentModule === 'indexes' ? (
               <IndexVisualizer />
+            ) : currentModule === 'osconfig' ? (
+              <OSLevelConfig />
+            ) : currentModule === 'perfmon' ? (
+              <PerfMonVisualizer />
+            ) : currentModule === 'sqlos' ? (
+              <SQLOSDeepDive />
+            ) : currentModule === 'modern' ? (
+              <ModernFeatures />
             ) : (
               <div className="w-full h-full flex items-center justify-center glass-panel rounded-2xl relative overflow-hidden">
                 <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent pointer-events-none" />
