@@ -1,4 +1,4 @@
-import React from 'react';
+// React import omitted — JSX transform handles it
 import { RootLayout } from './components/Layout/RootLayout';
 import { AnimatePresence, motion } from 'framer-motion';
 

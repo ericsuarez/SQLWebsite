@@ -61,7 +61,7 @@ const COLOR_BG: Record<string,string> = {
 
 // ── Section box component ─────────────────────────────────────────────────────
 function SectionBox({ icon: Icon, label, accent, children, className }: {
-    icon: any; label: string; accent: string; children: React.ReactNode; className?: string;
+    icon: React.ElementType; label: string; accent: string; children: React.ReactNode; className?: string;
 }) {
     return (
         <div className={cn('flex flex-col rounded-2xl border border-white/10 bg-black/30 overflow-hidden', className)}>
@@ -96,7 +96,7 @@ function CaseGrid({ cases, onSelect }: { cases: RealCase[]; onSelect: (c: RealCa
                     <p className="text-xs text-muted-foreground leading-relaxed line-clamp-3">{t(c.descKey as any)}</p>
                     <div className="flex justify-end">
                         <span className={cn('text-xs font-bold flex items-center gap-1 group-hover:gap-2 transition-all', COLOR_TEXT[c.color])}>
-                            Explorar <ArrowRight className="w-3 h-3" />
+                            {t('explore')} <ArrowRight className="w-3 h-3" />
                         </span>
                     </div>
                 </motion.button>
@@ -110,7 +110,7 @@ function PipelineBar({ phase }: { phase?: ExecPhase }) {
     const phases: ExecPhase[] = ['parse', 'bind', 'optimize', 'execute', 'lock', 'wait', 'done'];
     const activeIdx = phase ? phases.indexOf(phase) : -1;
     return (
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1 flex-wrap">
             {phases.map((p, i) => {
                 const cfg = PHASE_CFG[p];
                 const active = i === activeIdx;
@@ -159,6 +159,21 @@ function CaseDetail({ rc, onBack }: { rc: RealCase; onBack: () => void }) {
     const clrText = COLOR_TEXT[rc.color];
     const clrBg = COLOR_BG[rc.color];
 
+    const highlightLabel = (h: string | undefined) => {
+        if (!h) return t('queryEvent');
+        if (h === 'lock')  return t('lockContention');
+        if (h === 'wait')  return t('waitDetected');
+        if (h === 'io')    return t('ioBottleneck');
+        if (h === 'plan')  return t('planIssue');
+        return t('queryEvent');
+    };
+
+    const panels: [typeof activePanel, string][] = [
+        ['flow', t('tabSimulation')],
+        ['schema', t('tabSchemaQuery')],
+        ['fix', t('tabDetectionFix')],
+    ];
+
     return (
         <div className="flex flex-col gap-4 h-full">
             {/* Header bar */}
@@ -173,7 +188,7 @@ function CaseDetail({ rc, onBack }: { rc: RealCase; onBack: () => void }) {
                 </div>
                 {/* Panel switcher */}
                 <div className="flex gap-1 p-1 bg-white/5 rounded-xl border border-white/10">
-                    {([['flow', 'Simulación'], ['schema', 'Schema & Query'], ['fix', 'Detección & Fix']] as [typeof activePanel, string][]).map(([id, lbl]) => (
+                    {panels.map(([id, lbl]) => (
                         <button key={id} onClick={() => setActivePanel(id)}
                             className={cn('px-3 py-1.5 rounded-lg text-xs font-bold transition-all',
                                 activePanel === id ? `${clrBg} ${clrText}` : 'text-muted-foreground hover:text-white')}>
@@ -190,32 +205,34 @@ function CaseDetail({ rc, onBack }: { rc: RealCase; onBack: () => void }) {
                     <motion.div key="flow" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
                         className="flex flex-col gap-4 flex-1 min-h-0">
 
-                        {/* Step progress */}
+                        {/* Step progress dots */}
                         <div className="flex items-center gap-2">
                             {rc.steps.map((_, i) => (
                                 <button key={i} onClick={() => { setPlaying(false); setStepIdx(i); }}
                                     className={cn('h-2 rounded-full transition-all duration-300 cursor-pointer',
-                                        i === stepIdx ? `w-8 ${clrBg.replace('/15','').replace('/10','')} bg-current ${clrText}` :
+                                        i === stepIdx ? `w-8 ${clrText} bg-current` :
                                         i < stepIdx ? 'w-4 bg-white/30' : 'w-4 bg-white/10')} />
                             ))}
-                            <span className="ml-auto text-xs text-muted-foreground font-mono">Step {stepIdx + 1}/{total}</span>
+                            <span className="ml-auto text-xs text-muted-foreground font-mono">
+                                {t('stepLabel')} {stepIdx + 1}/{total}
+                            </span>
                         </div>
 
-                        {/* Main grid: 2 columns */}
+                        {/* Main 2-col grid */}
                         <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 flex-1 min-h-0">
 
-                            {/* LEFT: Phase pipeline + Step log */}
+                            {/* LEFT */}
                             <div className="flex flex-col gap-4">
-                                {/* Pipeline */}
-                                <SectionBox icon={Layers} label="Execution Pipeline" accent="text-muted-foreground bg-black/20">
+                                <SectionBox icon={Layers} label={t('executionPipeline')} accent="text-muted-foreground bg-black/20">
                                     <PipelineBar phase={step.phase} />
                                 </SectionBox>
 
-                                {/* Step log */}
                                 <AnimatePresence mode="wait">
                                     <motion.div key={stepIdx} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }}>
-                                        <SectionBox icon={Activity} label={`Paso ${stepIdx + 1} — Observación`} accent={`${clrText} ${clrBg}`}>
-                                            <p className="text-sm text-white/80 leading-relaxed">{step.log}</p>
+                                        <SectionBox icon={Activity}
+                                            label={`${t('stepLabel')} ${stepIdx + 1} — ${t('stepObservation')}`}
+                                            accent={`${clrText} ${clrBg}`}>
+                                            <p className="text-sm text-white/85 leading-relaxed">{step.log}</p>
                                             {step.highlight && (
                                                 <div className={cn('mt-3 inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold border',
                                                     step.highlight === 'lock'  ? 'bg-amber-500/15 border-amber-500/30 text-amber-300' :
@@ -224,27 +241,23 @@ function CaseDetail({ rc, onBack }: { rc: RealCase; onBack: () => void }) {
                                                     step.highlight === 'plan'  ? 'bg-purple-500/15 border-purple-500/30 text-purple-300' :
                                                                                  'bg-white/5 border-white/10 text-white/60')}>
                                                     <AlertTriangle className="w-3.5 h-3.5" />
-                                                    {step.highlight === 'lock'  ? 'Lock Contention' :
-                                                     step.highlight === 'wait'  ? 'Wait Detected' :
-                                                     step.highlight === 'io'    ? 'I/O Bottleneck' :
-                                                     step.highlight === 'plan'  ? 'Plan Issue' : 'Query Event'}
+                                                    {highlightLabel(step.highlight)}
                                                 </div>
                                             )}
                                         </SectionBox>
                                     </motion.div>
                                 </AnimatePresence>
 
-                                {/* SQLOS / Buffer panels if present */}
                                 {step.sqlos && (
-                                    <SectionBox icon={Layers} label="SQLOS Scheduler" accent="text-violet-300 bg-violet-500/10">
+                                    <SectionBox icon={Layers} label={t('sqlosScheduler')} accent="text-violet-300 bg-violet-500/10">
                                         <div className="grid grid-cols-2 gap-3">
-                                            {[
+                                            {([
                                                 ['Schedulers', step.sqlos.schedulers, 'text-violet-300'],
-                                                ['Workers', step.sqlos.workers, 'text-blue-300'],
-                                                ['Runnable', step.sqlos.runnable, 'text-emerald-300'],
-                                                ['Suspended', step.sqlos.suspended, 'text-rose-300'],
-                                            ].map(([k, v, c]) => (
-                                                <div key={k as string} className="bg-black/40 rounded-xl p-3 text-center border border-white/5">
+                                                ['Workers',    step.sqlos.workers,    'text-blue-300'],
+                                                ['Runnable',   step.sqlos.runnable,   'text-emerald-300'],
+                                                ['Suspended',  step.sqlos.suspended,  'text-rose-300'],
+                                            ] as [string, number, string][]).map(([k, v, c]) => (
+                                                <div key={k} className="bg-black/40 rounded-xl p-3 text-center border border-white/5">
                                                     <div className={cn('text-xl font-black', c)}>{v}</div>
                                                     <div className="text-[10px] text-muted-foreground mt-0.5">{k}</div>
                                                 </div>
@@ -259,15 +272,15 @@ function CaseDetail({ rc, onBack }: { rc: RealCase; onBack: () => void }) {
                                 )}
 
                                 {step.buffer && (
-                                    <SectionBox icon={Database} label="Buffer Pool" accent="text-cyan-300 bg-cyan-500/10">
+                                    <SectionBox icon={Database} label={t('bufferPool')} accent="text-cyan-300 bg-cyan-500/10">
                                         <div className="grid grid-cols-4 gap-2">
-                                            {[
-                                                ['Total', step.buffer.totalPages, 'text-white/70'],
-                                                ['Used', step.buffer.usedPages, 'text-emerald-300'],
-                                                ['Dirty', step.buffer.dirtyPages, 'text-amber-300'],
+                                            {([
+                                                ['Total',   step.buffer.totalPages,   'text-white/70'],
+                                                ['Used',    step.buffer.usedPages,    'text-emerald-300'],
+                                                ['Dirty',   step.buffer.dirtyPages,   'text-amber-300'],
                                                 ['Evicted', step.buffer.evictedPages, 'text-rose-300'],
-                                            ].map(([k, v, c]) => (
-                                                <div key={k as string} className="bg-black/40 rounded-xl p-2 text-center border border-white/5">
+                                            ] as [string, number, string][]).map(([k, v, c]) => (
+                                                <div key={k} className="bg-black/40 rounded-xl p-2 text-center border border-white/5">
                                                     <div className={cn('text-lg font-black', c)}>{v}</div>
                                                     <div className="text-[9px] text-muted-foreground">{k}</div>
                                                 </div>
@@ -279,14 +292,13 @@ function CaseDetail({ rc, onBack }: { rc: RealCase; onBack: () => void }) {
 
                             {/* RIGHT: Session Monitor */}
                             <div className="flex flex-col gap-4">
-                                <SectionBox icon={Activity} label="Monitor de Sesiones (sys.dm_exec_requests)" accent="text-cyan-300 bg-cyan-500/10">
-                                    <div className="flex flex-col gap-2">
+                                <SectionBox icon={Activity} label={t('sessionMonitor')} accent="text-cyan-300 bg-cyan-500/10">
+                                    <div className="flex flex-col gap-2 overflow-y-auto max-h-96">
                                         <AnimatePresence>
                                             {step.spids.map(s => (
                                                 <motion.div key={s.spid}
                                                     layout initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 8 }}
                                                     className={cn('rounded-xl border p-3 flex flex-col gap-2', STATUS_STYLE[s.status] ?? STATUS_STYLE.idle)}>
-                                                    {/* SPID header row */}
                                                     <div className="flex items-center gap-2 flex-wrap">
                                                         <span className={cn('w-2.5 h-2.5 rounded-full shrink-0', DOT[s.status] ?? DOT.idle)} />
                                                         <span className="font-mono text-xs font-black text-cyan-400 shrink-0">SPID {s.spid}</span>
@@ -300,7 +312,6 @@ function CaseDetail({ rc, onBack }: { rc: RealCase; onBack: () => void }) {
                                                             {s.status}
                                                         </span>
                                                     </div>
-                                                    {/* Tags row */}
                                                     <div className="flex flex-wrap gap-1.5">
                                                         {s.waitType && (
                                                             <span className="bg-rose-500/20 border border-rose-500/30 text-rose-300 px-2 py-0.5 rounded-md text-[10px] font-mono font-bold">
@@ -314,9 +325,9 @@ function CaseDetail({ rc, onBack }: { rc: RealCase; onBack: () => void }) {
                                                         )}
                                                         {s.planStatus && (
                                                             <span className={cn('px-2 py-0.5 rounded-md border text-[10px] font-mono font-bold',
-                                                                s.planStatus === 'cached'      ? 'bg-emerald-500/20 border-emerald-500/30 text-emerald-300' :
-                                                                s.planStatus === 'evicted'     ? 'bg-rose-500/20 border-rose-500/30 text-rose-300' :
-                                                                                                 'bg-amber-500/20 border-amber-500/30 text-amber-300 animate-pulse')}>
+                                                                s.planStatus === 'cached'  ? 'bg-emerald-500/20 border-emerald-500/30 text-emerald-300' :
+                                                                s.planStatus === 'evicted' ? 'bg-rose-500/20 border-rose-500/30 text-rose-300' :
+                                                                                             'bg-amber-500/20 border-amber-500/30 text-amber-300 animate-pulse')}>
                                                                 📋 plan: {s.planStatus}
                                                             </span>
                                                         )}
@@ -334,28 +345,34 @@ function CaseDetail({ rc, onBack }: { rc: RealCase; onBack: () => void }) {
                             </div>
                         </div>
 
-                        {/* Controls */}
-                        <div className="flex items-center justify-between gap-3 pt-2 border-t border-white/10">
+                        {/* Controls — docked inside the panel, never overlap */}
+                        <div className="flex items-center justify-between gap-3 pt-3 border-t border-white/10 bg-black/20 -mx-0 rounded-xl px-3 pb-3">
                             <button onClick={reset} className="p-2 rounded-lg bg-white/5 hover:bg-white/10 text-muted-foreground transition-colors" title="Reset">
                                 <RotateCcw className="w-4 h-4" />
                             </button>
                             <div className="flex items-center gap-2">
                                 <button onClick={() => { setPlaying(false); prev(); }} disabled={stepIdx === 0}
-                                    className="flex items-center gap-1.5 px-4 py-2 bg-white/5 hover:bg-white/10 text-sm rounded-lg disabled:opacity-30 transition-all border border-white/10">
-                                    <ChevronLeft className="w-4 h-4" /> Anterior
+                                    className="flex items-center gap-1.5 px-4 py-2 bg-white/5 hover:bg-white/10 text-sm rounded-xl disabled:opacity-30 transition-all border border-white/10">
+                                    <ChevronLeft className="w-4 h-4" /> {t('prevBtn')}
                                 </button>
                                 <button onClick={() => setPlaying(p => !p)}
-                                    className={cn('px-5 py-2 rounded-lg font-bold text-sm flex items-center gap-2 transition-all border',
+                                    className={cn('px-5 py-2 rounded-xl font-bold text-sm flex items-center gap-2 transition-all border',
                                         playing ? 'bg-amber-500/20 text-amber-300 border-amber-500/40' : `${clrBg} ${clrText} border-current/30`)}>
-                                    {playing ? <><Pause className="w-4 h-4" /> Pausar</> : <><Play className="w-4 h-4" /> Auto Play</>}
+                                    {playing
+                                        ? <><Pause className="w-4 h-4" /> {t('pauseBtn')}</>
+                                        : <><Play  className="w-4 h-4" /> {t('autoPlay')}</>
+                                    }
                                 </button>
                                 <button onClick={() => { setPlaying(false); next(); }} disabled={stepIdx === total - 1}
-                                    className="flex items-center gap-1.5 px-4 py-2 bg-white/5 hover:bg-white/10 text-sm rounded-lg disabled:opacity-30 transition-all border border-white/10">
-                                    Siguiente <ChevronRight className="w-4 h-4" />
+                                    className="flex items-center gap-1.5 px-4 py-2 bg-white/5 hover:bg-white/10 text-sm rounded-xl disabled:opacity-30 transition-all border border-white/10">
+                                    {t('nextBtn')} <ChevronRight className="w-4 h-4" />
                                 </button>
                             </div>
                             <div className={cn('text-xs font-bold px-3 py-1.5 rounded-lg border', clrBg, clrText)}>
-                                {stepIdx === total - 1 ? <span className="flex items-center gap-1"><CheckCircle2 className="w-3.5 h-3.5" /> Completo</span> : `${stepIdx + 1} / ${total}`}
+                                {stepIdx === total - 1
+                                    ? <span className="flex items-center gap-1"><CheckCircle2 className="w-3.5 h-3.5" /> {t('complete')}</span>
+                                    : `${stepIdx + 1} / ${total}`
+                                }
                             </div>
                         </div>
                     </motion.div>
@@ -365,10 +382,10 @@ function CaseDetail({ rc, onBack }: { rc: RealCase; onBack: () => void }) {
                 {activePanel === 'schema' && (
                     <motion.div key="schema" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
                         className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-                        <SectionBox icon={Database} label="Tabla / Schema" accent="text-emerald-300 bg-emerald-500/10">
+                        <SectionBox icon={Database} label={t('tableSchema')} accent="text-emerald-300 bg-emerald-500/10">
                             <pre className="text-[11px] font-mono text-white/80 leading-relaxed whitespace-pre-wrap overflow-x-auto">{rc.schema}</pre>
                         </SectionBox>
-                        <SectionBox icon={Code2} label="Query Problemática" accent="text-amber-300 bg-amber-500/10">
+                        <SectionBox icon={Code2} label={t('problematicQuery')} accent="text-amber-300 bg-amber-500/10">
                             <pre className="text-[11px] font-mono text-white/80 leading-relaxed whitespace-pre-wrap overflow-x-auto">{rc.query}</pre>
                         </SectionBox>
                     </motion.div>
@@ -378,10 +395,10 @@ function CaseDetail({ rc, onBack }: { rc: RealCase; onBack: () => void }) {
                 {activePanel === 'fix' && (
                     <motion.div key="fix" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
                         className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-                        <SectionBox icon={Search} label="T-SQL de Detección (sys.dm_exec_requests)" accent="text-blue-300 bg-blue-500/10">
+                        <SectionBox icon={Search} label={t('detectionTsql')} accent="text-blue-300 bg-blue-500/10">
                             <pre className="text-[11px] font-mono text-white/80 leading-relaxed whitespace-pre-wrap overflow-x-auto">{rc.detectionQuery}</pre>
                         </SectionBox>
-                        <SectionBox icon={Wrench} label="Resolución / Best Practice" accent="text-emerald-300 bg-emerald-500/10">
+                        <SectionBox icon={Wrench} label={t('resolutionBestPractice')} accent="text-emerald-300 bg-emerald-500/10">
                             <pre className="text-[11px] font-mono text-white/80 leading-relaxed whitespace-pre-wrap overflow-x-auto">{resolution ?? t(rc.resolutionKey as any)}</pre>
                         </SectionBox>
                     </motion.div>

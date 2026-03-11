@@ -1,8 +1,10 @@
-import React, { useState } from 'react';
-import { Sidebar, ModuleId } from './Sidebar';
+import { useState } from 'react';
+import type { ReactNode } from 'react';
+import { Sidebar } from './Sidebar';
+import type { ModuleId } from './Sidebar';
 import { Header } from './Header';
 
-export function RootLayout({ children }: { children: (currentModule: ModuleId) => React.ReactNode }) {
+export function RootLayout({ children }: { children: (currentModule: ModuleId) => ReactNode }) {
     const [currentModule, setCurrentModule] = useState<ModuleId>('architecture');
 
     return (

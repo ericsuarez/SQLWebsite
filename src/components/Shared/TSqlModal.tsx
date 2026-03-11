@@ -1,7 +1,6 @@
 import { X, Code2, Copy, Check } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useState } from 'react';
-import { cn } from '../../lib/utils';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useSqlVersion } from '../../contexts/SqlVersionContext';
 

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { HardDrive, File, Database, ArrowRight, ArrowLeft, Play, Save, History, AlertTriangle, ShieldCheck } from 'lucide-react';
 import { cn } from '../../lib/utils';
@@ -155,7 +155,7 @@ export function StorageEngine() {
                             initial={{ opacity: 0, scale: 0.95 }}
                             animate={{ opacity: 1, scale: 1 }}
                             exit={{ opacity: 0, scale: 0.95 }}
-                            className="flex-1 flex flex-col gap-8 h-full overflow-y-auto"
+                            className="flex-1 flex flex-col gap-8 h-full overflow-y-auto pr-1"
                         >
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
 
@@ -264,54 +264,73 @@ export function StorageEngine() {
                             exit={{ opacity: 0, x: -20 }}
                             className="flex-1 flex flex-col items-center justify-center p-8"
                         >
-                            <div className="w-full max-w-4xl glass-panel p-8 rounded-2xl border-emerald-500/40 bg-emerald-500/5">
-                                <div className="flex items-center justify-between mb-8">
-                                    <div>
-                                        <h3 className="text-2xl font-bold text-emerald-400">Extent {selectedExtent}</h3>
-                                        <p className="text-muted-foreground">Contains 8 contiguous 8KB pages (Total 64KB)</p>
+                            {selectedExtent !== null && (() => {
+                                const ext = extents[selectedExtent];
+                                const isMixed = ext.type === 'Mixed';
+                                const isAlloc = ext.allocated;
+                                return (
+                                <div className={cn(
+                                    "w-full max-w-4xl glass-panel p-8 rounded-2xl",
+                                    !isAlloc ? "border-gray-500/40 bg-gray-500/5" :
+                                    isMixed ? "border-blue-500/40 bg-blue-500/5" :
+                                             "border-emerald-500/40 bg-emerald-500/5"
+                                )}>
+                                    <div className="flex items-center justify-between mb-8">
+                                        <div>
+                                            <h3 className={cn("text-2xl font-bold",
+                                                !isAlloc ? "text-gray-400" :
+                                                isMixed ? "text-blue-400" : "text-emerald-400"
+                                            )}>Extent {selectedExtent}</h3>
+                                            <p className="text-muted-foreground">Contains 8 contiguous 8KB pages (Total 64KB)</p>
+                                        </div>
+                                        <div className="flex flex-col items-end gap-1">
+                                            <span className={cn("px-3 py-1.5 rounded-lg text-sm font-bold border",
+                                                !isAlloc ? "bg-gray-500/20 border-gray-500/30 text-gray-300" :
+                                                isMixed ? "bg-blue-500/20 border-blue-500/40 text-blue-300" :
+                                                           "bg-emerald-500/20 border-emerald-500/40 text-emerald-300"
+                                            )}>
+                                                {!isAlloc ? "Free in GAM" : isMixed ? "Mixed Extent (SGAM)" : "Uniform — Allocated in GAM"}
+                                            </span>
+                                            <span className="text-[10px] text-muted-foreground/60 font-mono">
+                                                {isMixed ? "SGAM bit = 1 • has free pages" : isAlloc ? "GAM bit = 0 • allocated" : "GAM bit = 1 • free"}
+                                            </span>
+                                        </div>
                                     </div>
-                                    <div className="px-4 py-2 bg-black/40 rounded-lg text-sm border border-white/10">
-                                        Status: <span className={cn(
-                                            "font-bold",
-                                            selectedExtent !== null && extents[selectedExtent].allocated ? "text-emerald-400" : "text-gray-400"
-                                        )}>
-                                            {selectedExtent !== null && extents[selectedExtent].allocated ? "Allocated in GAM" : "Free in GAM"}
-                                        </span>
-                                    </div>
-                                </div>
 
-                                <div className="grid grid-cols-4 gap-6">
-                                    {pagesArray.map((i) => (
-                                        <motion.div
-                                            key={i}
-                                            whileHover={{ scale: 1.05, y: -5 }}
-                                            whileTap={{ scale: 0.95 }}
-                                            onClick={() => {
-                                                setSelectedPage(i);
-                                                setViewState('page');
-                                            }}
-                                            className="aspect-[3/4] bg-white/5 border border-white/20 rounded-xl flex flex-col hover:border-emerald-400/50 hover:shadow-glow transition-all cursor-pointer overflow-hidden group"
-                                        >
-                                            <div className="h-8 bg-black/40 border-b border-white/10 flex items-center justify-center text-xs font-bold text-muted-foreground group-hover:text-white">
-                                                Header {i}
-                                            </div>
-                                            <div className="flex-1 p-2 flex flex-col gap-1">
-                                                <div className="h-2 bg-emerald-500/20 rounded" />
-                                                <div className="h-2 bg-emerald-500/20 rounded w-3/4" />
-                                                <div className="h-2 bg-emerald-500/20 rounded w-5/6" />
-                                                <div className="flex-1" />
-                                                <div className="flex justify-center">
-                                                    <File className="w-8 h-8 text-white/20 group-hover:text-emerald-400/50 transition-colors" />
+                                    <div className="grid grid-cols-4 gap-6">
+                                        {pagesArray.map((i) => (
+                                            <motion.div
+                                                key={i}
+                                                whileHover={{ scale: 1.05, y: -5 }}
+                                                whileTap={{ scale: 0.95 }}
+                                                onClick={() => {
+                                                    setSelectedPage(i);
+                                                    setViewState('page');
+                                                }}
+                                                className="aspect-[3/4] bg-white/5 border border-white/20 rounded-xl flex flex-col hover:border-emerald-400/50 hover:shadow-glow transition-all cursor-pointer overflow-hidden group"
+                                            >
+                                                <div className="h-8 bg-black/40 border-b border-white/10 flex items-center justify-center text-xs font-bold text-muted-foreground group-hover:text-white">
+                                                    Header {i}
                                                 </div>
-                                                <div className="flex-1" />
-                                            </div>
-                                            <div className="h-6 bg-black/40 border-t border-white/10 flex items-center justify-end px-2 text-[10px] text-muted-foreground">
-                                                Offset Array
-                                            </div>
-                                        </motion.div>
-                                    ))}
+                                                <div className="flex-1 p-2 flex flex-col gap-1">
+                                                    <div className="h-2 bg-emerald-500/20 rounded" />
+                                                    <div className="h-2 bg-emerald-500/20 rounded w-3/4" />
+                                                    <div className="h-2 bg-emerald-500/20 rounded w-5/6" />
+                                                    <div className="flex-1" />
+                                                    <div className="flex justify-center">
+                                                        <File className="w-8 h-8 text-white/20 group-hover:text-emerald-400/50 transition-colors" />
+                                                    </div>
+                                                    <div className="flex-1" />
+                                                </div>
+                                                <div className="h-6 bg-black/40 border-t border-white/10 flex items-center justify-end px-2 text-[10px] text-muted-foreground">
+                                                    Offset Array
+                                                </div>
+                                            </motion.div>
+                                        ))}
+                                    </div>
                                 </div>
-                            </div>
+                                );
+                            })()}
                         </motion.div>
                     )}
 
