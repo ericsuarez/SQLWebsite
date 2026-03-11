@@ -1,9 +1,9 @@
-import { Settings, Database, Server, HardDrive, Cpu, Shield, AlertTriangle, BookOpen } from 'lucide-react';
+import { Settings, Database, Server, HardDrive, Cpu, Shield, AlertTriangle, BookOpen, Siren } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { useLanguage } from '../../contexts/LanguageContext';
 import type { TranslationKey } from '../../i18n/translations';
 
-export type ModuleId = 'architecture' | 'storage' | 'memory' | 'execution' | 'dba' | 'ha' | 'indexes';
+export type ModuleId = 'architecture' | 'storage' | 'memory' | 'execution' | 'dba' | 'ha' | 'indexes' | 'realcases';
 
 interface SidebarProps {
     currentModule: ModuleId;
@@ -16,7 +16,8 @@ const modules: { id: ModuleId; titleKey: TranslationKey; icon: any; color: strin
     { id: 'memory', titleKey: 'memoryOperations', icon: Cpu, color: 'text-purple-400' },
     { id: 'execution', titleKey: 'queryExecution', icon: Settings, color: 'text-amber-400' },
     { id: 'dba', titleKey: 'dbaScenarios', icon: AlertTriangle, color: 'text-rose-400' },
-    { id: 'ha', titleKey: 'highAvailability', icon: Shield, color: 'text-cyan-400' },
+    { id: 'realcases', titleKey: 'realCasesTitle', icon: Siren, color: 'text-cyan-400' },
+    { id: 'ha', titleKey: 'highAvailability', icon: Shield, color: 'text-sky-400' },
     { id: 'indexes', titleKey: 'indexVisualizer', icon: BookOpen, color: 'text-teal-400' },
 ];
 

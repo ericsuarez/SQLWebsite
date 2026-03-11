@@ -9,6 +9,7 @@ import { QueryExecution } from './components/Execution/QueryExecution';
 import { DBAScenarios } from './components/DBA/DBAScenarios';
 import { HighAvailability } from './components/HA/HighAvailability';
 import { IndexVisualizer } from './components/Storage/IndexVisualizer';
+import { RealCasesPage } from './components/DBA/RealCasesPage';
 
 function App() {
   return (
@@ -33,6 +34,8 @@ function App() {
               <QueryExecution />
             ) : currentModule === 'dba' ? (
               <DBAScenarios />
+            ) : currentModule === 'realcases' ? (
+              <RealCasesPage />
             ) : currentModule === 'ha' ? (
               <HighAvailability />
             ) : currentModule === 'indexes' ? (
