@@ -427,7 +427,12 @@ function CaseDetail({ rc, onBack }: { rc: RealCase; onBack: () => void }) {
                         </div>
 
                         {/* Main 2-col grid */}
-                        <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1.08fr)_minmax(360px,0.92fr)] gap-4 flex-1 min-h-0 overflow-y-auto pb-6">
+                        <div
+                            className={cn(
+                                "grid grid-cols-1 xl:grid-cols-[minmax(0,1.08fr)_minmax(360px,0.92fr)] gap-4 flex-1 min-h-0",
+                                isFullscreen ? "overflow-hidden pb-0" : "overflow-y-auto pb-6",
+                            )}
+                        >
 
                             {/* LEFT (Scrolls independently if needed via parent flex) */}
                             <div className="flex flex-col gap-4">
