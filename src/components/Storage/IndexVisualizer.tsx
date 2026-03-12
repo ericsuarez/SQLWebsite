@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     ListOrdered, Table2, Code2, ChevronRight, CheckCircle2, XCircle,
-    GitCompare, BarChart3, Hash, Play, Pause, SkipBack, ChevronLeft,
+    GitCompare, BarChart3, Hash, Play, Pause, ChevronLeft,
     ChevronRight as ChevronRightIcon, Cpu, RotateCcw, ArrowRight,
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
@@ -28,10 +28,10 @@ const TABLE = [
 
 // ── Step definitions ─────────────────────────────────────────────────────────
 interface SearchStep {
-    title: string;
-    desc: string;
+    title: { en: string; es: string };
+    desc: { en: string; es: string };
     highlight: { level: 'root' | 'branch' | 'leaf' | 'table'; idx?: number };
-    sql: string;
+    sql: { en: string; es: string };
     reads: number;
     found?: boolean;
 }
@@ -41,25 +41,109 @@ const CI_SCENARIOS: { query: string; steps: SearchStep[] }[] = [
     {
         query: 'SELECT * FROM Employees WHERE Id = 9',
         steps: [
-            { title: 'Root Page (P-1)', desc: 'SQL Server reads the root page. Keys: 1–18 | 18–35. Id=9 → go LEFT branch.', highlight: { level: 'root' }, sql: 'Logical Read: Page P-1 (Root)\nCompare Id=9 vs split key 18 → left branch', reads: 1, },
-            { title: 'Branch Page (P-2)', desc: 'Branch page covers Ids 1–18. Sub-keys: 1 | 5 | 9 | 12. Id=9 → go to Leaf L-2.', highlight: { level: 'branch', idx: 0 }, sql: 'Logical Read: Page P-2 (Branch)\nCompare 9 vs 5→12 → Leaf L-2', reads: 2, },
-            { title: 'Leaf Page (L-2) — DATA FOUND', desc: 'Leaf page L-2 contains the actual data rows for Ids 7, 9, 12. Row Id=9 found in this page. Full row returned immediately — 0 extra reads.', highlight: { level: 'leaf', idx: 1 }, sql: 'Logical Read: Page L-2 (Leaf)\nRow Id=9 → Grace | IT | $110,000\nTotal reads: 3 (Root→Branch→Leaf)', reads: 3, found: true },
+            {
+                title: { en: 'Root Page (P-1)', es: 'Página raíz (P-1)' },
+                desc: {
+                    en: 'SQL Server reads the root page. Keys: 1-18 | 18-35. Id=9 -> go LEFT branch.',
+                    es: 'SQL Server lee la página raíz. Claves: 1-18 | 18-35. Id=9 -> rama IZQ.',
+                },
+                highlight: { level: 'root' },
+                sql: {
+                    en: 'Logical Read: Page P-1 (Root)\nCompare Id=9 vs split key 18 -> left branch',
+                    es: 'Lectura lógica: Página P-1 (Raíz)\nComparar Id=9 vs clave de separación 18 -> rama izquierda',
+                },
+                reads: 1,
+            },
+            {
+                title: { en: 'Branch Page (P-2)', es: 'Página rama (P-2)' },
+                desc: {
+                    en: 'Branch page covers Ids 1-18. Sub-keys: 1 | 5 | 9 | 12. Id=9 -> go to Leaf L-2.',
+                    es: 'La rama cubre Ids 1-18. Subclaves: 1 | 5 | 9 | 12. Id=9 -> hoja L-2.',
+                },
+                highlight: { level: 'branch', idx: 0 },
+                sql: {
+                    en: 'Logical Read: Page P-2 (Branch)\nCompare 9 vs 5-12 -> Leaf L-2',
+                    es: 'Lectura lógica: Página P-2 (Rama)\nComparar 9 con 5-12 -> Hoja L-2',
+                },
+                reads: 2,
+            },
+            {
+                title: { en: 'Leaf Page (L-2) - DATA FOUND', es: 'Página hoja (L-2) - FILA ENCONTRADA' },
+                desc: {
+                    en: 'Leaf page L-2 contains the data rows for Ids 7, 9, 12. Row Id=9 is here. Full row returned - 0 extra reads.',
+                    es: 'La hoja L-2 contiene las filas de Ids 7, 9, 12. La fila Id=9 está aquí. Fila completa devuelta - 0 lecturas extra.',
+                },
+                highlight: { level: 'leaf', idx: 1 },
+                sql: {
+                    en: 'Logical Read: Page L-2 (Leaf)\nRow Id=9 -> Grace | IT | $110,000\nTotal reads: 3 (Root->Branch->Leaf)',
+                    es: 'Lectura lógica: Página L-2 (Hoja)\nFila Id=9 -> Grace | IT | $110,000\nLecturas totales: 3 (Raíz->Rama->Hoja)',
+                },
+                reads: 3,
+                found: true,
+            },
         ],
     },
     {
         query: 'SELECT * FROM Employees WHERE Id = 27',
         steps: [
-            { title: 'Root Page (P-1)', desc: 'Root page read. Id=27 > split 18 → go RIGHT branch.', highlight: { level: 'root' }, sql: 'Logical Read: Page P-1 (Root)\nId=27 > 18 → right branch P-3', reads: 1 },
-            { title: 'Branch Page (P-3)', desc: 'Branch covers Ids 18–35. Sub-keys: 18 | 22 | 27 | 31 | 35. Id=27 → Leaf L-4.', highlight: { level: 'branch', idx: 1 }, sql: 'Logical Read: Page P-3 (Branch)\nId=27 → between 22 and 31 → Leaf L-4', reads: 2 },
-            { title: 'Leaf Page (L-4) — DATA FOUND', desc: 'L-4 holds Ids 22, 27. Row Id=27 found with full data. No extra lookup.', highlight: { level: 'leaf', idx: 3 }, sql: 'Logical Read: Page L-4 (Leaf)\nRow Id=27 → Leo | HR | $48,000\nTotal reads: 3', reads: 3, found: true },
+            {
+                title: { en: 'Root Page (P-1)', es: 'Página raíz (P-1)' },
+                desc: { en: 'Root page read. Id=27 > split 18 -> go RIGHT branch.', es: 'Lectura de raíz. Id=27 > separación 18 -> rama DER.' },
+                highlight: { level: 'root' },
+                sql: { en: 'Logical Read: Page P-1 (Root)\nId=27 > 18 -> right branch P-3', es: 'Lectura lógica: Página P-1 (Raíz)\nId=27 > 18 -> rama derecha P-3' },
+                reads: 1,
+            },
+            {
+                title: { en: 'Branch Page (P-3)', es: 'Página rama (P-3)' },
+                desc: {
+                    en: 'Branch covers Ids 18-35. Sub-keys: 18 | 22 | 27 | 31 | 35. Id=27 -> Leaf L-4.',
+                    es: 'La rama cubre Ids 18-35. Subclaves: 18 | 22 | 27 | 31 | 35. Id=27 -> hoja L-4.',
+                },
+                highlight: { level: 'branch', idx: 1 },
+                sql: { en: 'Logical Read: Page P-3 (Branch)\nId=27 -> between 22 and 31 -> Leaf L-4', es: 'Lectura lógica: Página P-3 (Rama)\nId=27 -> entre 22 y 31 -> Hoja L-4' },
+                reads: 2,
+            },
+            {
+                title: { en: 'Leaf Page (L-4) - DATA FOUND', es: 'Página hoja (L-4) - FILA ENCONTRADA' },
+                desc: { en: 'L-4 holds Ids 22, 27. Row Id=27 found with full data. No extra lookup.', es: 'L-4 contiene Ids 22, 27. Se encuentra Id=27 con datos completos. Sin lookup extra.' },
+                highlight: { level: 'leaf', idx: 3 },
+                sql: { en: 'Logical Read: Page L-4 (Leaf)\nRow Id=27 -> Leo | HR | $48,000\nTotal reads: 3', es: 'Lectura lógica: Página L-4 (Hoja)\nFila Id=27 -> Leo | HR | $48,000\nLecturas totales: 3' },
+                reads: 3,
+                found: true,
+            },
         ],
     },
     {
         query: 'SELECT * FROM Employees WHERE Id BETWEEN 5 AND 12',
         steps: [
-            { title: 'Root Page — Range Scan Start', desc: 'SQL finds the start of the range: Id=5. Navigates from root.', highlight: { level: 'root' }, sql: 'Range Scan: find first key Id=5\nRoot: Id=5 < 18 → left branch', reads: 1 },
-            { title: 'Branch → Leaf L-1', desc: 'Goes to L-1 which contains Id=1, 5. Picks up Id=5 (Elena).', highlight: { level: 'branch', idx: 0 }, sql: 'Branch P-2: Id=5 → Leaf L-1\nPage L-1: rows 1,5 → pick Id=5', reads: 2 },
-            { title: 'Leaf L-1 + L-2 — Sequential Scan', desc: 'Follows the leaf-level linked list. Picks Ids 5, 7, 9, 12. All in 2 consecutive leaf reads — sequential I/O!', highlight: { level: 'leaf', idx: 0 }, sql: 'L-1 → 5 (Elena), L-2 → 7 (Frank), 9 (Grace), 12 (Henry)\nTotal reads: 4 (sequential pages)', reads: 4, found: true },
+            {
+                title: { en: 'Root Page - Range Scan Start', es: 'Página raíz - Inicio de range scan' },
+                desc: { en: 'SQL finds the start of the range: Id=5. Navigates from root.', es: 'SQL localiza el inicio del rango: Id=5. Navega desde la raíz.' },
+                highlight: { level: 'root' },
+                sql: { en: 'Range Scan: find first key Id=5\nRoot: Id=5 < 18 -> left branch', es: 'Range scan: buscar primera clave Id=5\nRaíz: Id=5 < 18 -> rama izquierda' },
+                reads: 1,
+            },
+            {
+                title: { en: 'Branch -> Leaf L-1', es: 'Rama -> Hoja L-1' },
+                desc: { en: 'Goes to L-1 which contains Id=1, 5. Picks up Id=5 (Elena).', es: 'Va a L-1 que contiene Id=1, 5. Toma Id=5 (Elena).' },
+                highlight: { level: 'branch', idx: 0 },
+                sql: { en: 'Branch P-2: Id=5 -> Leaf L-1\nPage L-1: rows 1,5 -> pick Id=5', es: 'Rama P-2: Id=5 -> Hoja L-1\nPágina L-1: filas 1,5 -> seleccionar Id=5' },
+                reads: 2,
+            },
+            {
+                title: { en: 'Leaf L-1 + L-2 - Sequential Scan', es: 'Hoja L-1 + L-2 - Escaneo secuencial' },
+                desc: {
+                    en: 'Follows the leaf-level linked list. Picks Ids 5, 7, 9, 12. All in 2 consecutive leaf reads - sequential I/O.',
+                    es: 'Sigue la lista enlazada a nivel hoja. Recoge Ids 5, 7, 9, 12. Todo en 2 lecturas de hoja consecutivas - I/O secuencial.',
+                },
+                highlight: { level: 'leaf', idx: 0 },
+                sql: {
+                    en: 'L-1 -> 5 (Elena), L-2 -> 7 (Frank), 9 (Grace), 12 (Henry)\nTotal reads: 4 (sequential pages)',
+                    es: 'L-1 -> 5 (Elena), L-2 -> 7 (Frank), 9 (Grace), 12 (Henry)\nLecturas totales: 4 (páginas secuenciales)',
+                },
+                reads: 4,
+                found: true,
+            },
         ],
     },
 ];
@@ -69,18 +153,86 @@ const NCI_SCENARIOS: { query: string; steps: SearchStep[] }[] = [
     {
         query: 'SELECT Name FROM Employees WHERE Salary = 62000',
         steps: [
-            { title: 'NCI Root (NCI-1)', desc: 'NCI is sorted by Salary. Root splits at 91k. Salary=62k < 91k → left branch.', highlight: { level: 'root' }, sql: 'NCI Root: 62k < 91k → left branch NCI-2', reads: 1 },
-            { title: 'NCI Branch (NCI-2)', desc: 'Branch covers 48k–91k. Keys: 48k | 62k | 72k | 76k. 62k → Leaf NL-3.', highlight: { level: 'branch', idx: 0 }, sql: 'NCI-2: 62k → between 48k and 72k → Leaf NL-3', reads: 2 },
-            { title: 'NCI Leaf NL-3 — Key Found + RID', desc: 'Found Salary=62k in NL-3. Leaf holds RID pointer → CI Leaf L-1. Key lookup needed to get Name!', highlight: { level: 'leaf', idx: 2 }, sql: 'NL-3: Salary=62k found\nRID pointer → CI Leaf L-1 (key lookup!)', reads: 3 },
-            { title: 'Key Lookup — CI Leaf L-2 (Frank)', desc: 'SQL follows the RID/CI key to fetch the full row. Extra read to the clustered index. Name=Frank returned. Total: 4 reads.', highlight: { level: 'table' }, sql: 'Key Lookup: CI Leaf L-2\nRow: Frank | HR | $62,000\n⚠️ Extra read = 4 total (NCI not covering!)', reads: 4, found: true },
+            {
+                title: { en: 'NCI Root (NCI-1)', es: 'Raíz NCI (NCI-1)' },
+                desc: {
+                    en: 'NCI is sorted by Salary. Root splits at 91k. Salary=62k < 91k -> left branch.',
+                    es: 'El NCI está ordenado por Salary. La raíz separa en 91k. Salary=62k < 91k -> rama izquierda.',
+                },
+                highlight: { level: 'root' },
+                sql: { en: 'NCI Root: 62k < 91k -> left branch NCI-2', es: 'Raíz NCI: 62k < 91k -> rama izquierda NCI-2' },
+                reads: 1,
+            },
+            {
+                title: { en: 'NCI Branch (NCI-2)', es: 'Rama NCI (NCI-2)' },
+                desc: {
+                    en: 'Branch covers 48k-91k. Keys: 48k | 62k | 72k | 76k. 62k -> Leaf NL-3.',
+                    es: 'La rama cubre 48k-91k. Claves: 48k | 62k | 72k | 76k. 62k -> hoja NL-3.',
+                },
+                highlight: { level: 'branch', idx: 0 },
+                sql: { en: 'NCI-2: 62k -> between 48k and 72k -> Leaf NL-3', es: 'NCI-2: 62k -> entre 48k y 72k -> Hoja NL-3' },
+                reads: 2,
+            },
+            {
+                title: { en: 'NCI Leaf NL-3 - Key Found + RID/CI key', es: 'Hoja NCI NL-3 - Clave encontrada + puntero' },
+                desc: {
+                    en: 'Salary=62k is found in NL-3. The leaf stores a RID/clustered key. A key lookup is needed to fetch Name.',
+                    es: 'Se encuentra Salary=62k en NL-3. La hoja guarda el RID/clave clustered. Hace falta key lookup para obtener Name.',
+                },
+                highlight: { level: 'leaf', idx: 2 },
+                sql: {
+                    en: 'NL-3: Salary=62k found\nRID/CI key -> clustered index leaf L-2 (key lookup)',
+                    es: 'NL-3: Salary=62k encontrado\nRID/clave clustered -> hoja del índice clustered L-2 (key lookup)',
+                },
+                reads: 3,
+            },
+            {
+                title: { en: 'Key Lookup - CI Leaf L-2 (Frank)', es: 'Key Lookup - Hoja CI L-2 (Frank)' },
+                desc: {
+                    en: 'SQL uses the RID/clustered key to SEEK the clustered index and fetch missing columns. Often root/branch pages are cached, so the extra cost can look like +1 leaf read. Total: 4 reads.',
+                    es: 'SQL usa el RID/clave clustered para hacer un SEEK en el clustered index y traer columnas faltantes. A menudo raíz/ramas ya están en memoria, así que el coste visible parece +1 lectura de hoja. Total: 4 lecturas.',
+                },
+                highlight: { level: 'table' },
+                sql: {
+                    en: 'Key Lookup: CI Leaf L-2\nRow: Frank | HR | $62,000\nExtra read -> total = 4 (NCI not covering)',
+                    es: 'Key Lookup: Hoja CI L-2\nFila: Frank | HR | $62,000\nLectura extra -> total = 4 (NCI no cubriente)',
+                },
+                reads: 4,
+                found: true,
+            },
         ],
     },
     {
         query: 'SELECT Name,Dept FROM Employees WHERE Salary = 62000 -- COVERING',
         steps: [
-            { title: 'NCI Root (NCI-1)', desc: 'Same NCI traversal: Salary=62k < 91k → left.', highlight: { level: 'root' }, sql: 'NCI Root: 62k < 91k → left branch NCI-2', reads: 1 },
-            { title: 'NCI Branch (NCI-2)', desc: '62k → Leaf NL-3 (same path as before).', highlight: { level: 'branch', idx: 0 }, sql: 'NCI-2 → NL-3', reads: 2 },
-            { title: 'NCI Leaf NL-3 — FULLY SATISFIED ✅', desc: 'With INCLUDE(Name, Dept) the leaf page already has Name and Dept! No key lookup. 3 reads total vs 4 before.', highlight: { level: 'leaf', idx: 2 }, sql: 'Covering index: Name+Dept in leaf!\nNO key lookup needed.\nFrank | HR  — Total reads: 3 ✅', reads: 3, found: true },
+            {
+                title: { en: 'NCI Root (NCI-1)', es: 'Raíz NCI (NCI-1)' },
+                desc: { en: 'Same traversal: Salary=62k < 91k -> left.', es: 'Misma ruta: Salary=62k < 91k -> izquierda.' },
+                highlight: { level: 'root' },
+                sql: { en: 'NCI Root: 62k < 91k -> left branch NCI-2', es: 'Raíz NCI: 62k < 91k -> rama izquierda NCI-2' },
+                reads: 1,
+            },
+            {
+                title: { en: 'NCI Branch (NCI-2)', es: 'Rama NCI (NCI-2)' },
+                desc: { en: '62k -> Leaf NL-3 (same path as before).', es: '62k -> hoja NL-3 (misma ruta).' },
+                highlight: { level: 'branch', idx: 0 },
+                sql: { en: 'NCI-2 -> NL-3', es: 'NCI-2 -> NL-3' },
+                reads: 2,
+            },
+            {
+                title: { en: 'NCI Leaf NL-3 - FULLY SATISFIED', es: 'Hoja NCI NL-3 - SATISFECHO COMPLETAMENTE' },
+                desc: {
+                    en: 'With INCLUDE(Name, Dept) the leaf page already has Name and Dept. No key lookup. 3 reads total vs 4 before.',
+                    es: 'Con INCLUDE(Name, Dept) la hoja ya tiene Name y Dept. Sin key lookup. 3 lecturas vs 4 antes.',
+                },
+                highlight: { level: 'leaf', idx: 2 },
+                sql: {
+                    en: 'Covering index: Name+Dept in leaf\nNO key lookup needed\nFrank | HR - Total reads: 3',
+                    es: 'Índice cubriente: Name+Dept en la hoja\nNO se necesita key lookup\nFrank | HR - Lecturas totales: 3',
+                },
+                reads: 3,
+                found: true,
+            },
         ],
     },
 ];
@@ -102,11 +254,12 @@ function NodeBox({ label, sub, active, passed, color, activeColor }: {
 }
 
 // ── Step Player (shared for CI and NCI) ──────────────────────────────────────
-function StepPlayer({ scenarios, accent, tableLabel }: {
+function StepPlayer({ scenarios, accent, tree }: {
     scenarios: { query: string; steps: SearchStep[] }[];
     accent: { border: string; text: string; bg: string; activeColor: string; nodeColor: string };
-    tableLabel?: string;
+    tree: 'clustered' | 'nonclustered';
 }) {
+    const { t, language } = useLanguage();
     const [scenIdx, setScenIdx] = useState(0);
     const [stepIdx, setStepIdx] = useState(0);
     const [playing, setPlaying] = useState(false);
@@ -146,13 +299,13 @@ function StepPlayer({ scenarios, accent, tableLabel }: {
         <div className="flex flex-col gap-4">
             {/* Scenario selector */}
             <div className="flex flex-wrap gap-2">
-                {scenarios.map((sc, i) => (
+                {scenarios.map((_, i) => (
                     <button key={i} onClick={() => changeScen(i)}
                         className={cn('px-3 py-1.5 rounded-lg text-xs font-mono transition-all border',
                             i === scenIdx
                                 ? `${accent.bg} ${accent.text} border-opacity-50 ${accent.border}`
                                 : 'bg-white/5 text-white/50 border-white/10 hover:text-white')}>
-                        {i === 0 ? '▶' : i === 1 ? '▷' : '≥'} Scenario {i + 1}
+                        {i === 0 ? '▶' : i === 1 ? '▷' : '≥'} {language === 'es' ? 'Escenario' : 'Scenario'} {i + 1}
                     </button>
                 ))}
             </div>
@@ -169,19 +322,39 @@ function StepPlayer({ scenarios, accent, tableLabel }: {
                     <button key={i} onClick={() => setStepIdx(i)}
                         className={cn('h-2 rounded-full transition-all', i === stepIdx ? `w-8 ${accent.bg.replace('/10', '')}` : i < stepIdx ? 'w-4 bg-white/30' : 'w-4 bg-white/10')} />
                 ))}
-                <span className="ml-auto text-xs text-muted-foreground">Step {stepIdx + 1} / {total}</span>
+                <span className="ml-auto text-xs text-muted-foreground">{language === 'es' ? 'Paso' : 'Step'} {stepIdx + 1} / {total}</span>
             </div>
 
             {/* B-Tree visualization */}
             <div className="flex flex-col items-center gap-3 py-4 bg-black/20 rounded-2xl border border-white/5">
                 {/* Root */}
-                <NodeBox label="ROOT" sub="P-1 (Root)" active={rootActive} passed={stepIdx > 0}
+                <NodeBox
+                    label={language === 'es' ? 'RAIZ' : 'ROOT'}
+                    sub={
+                        tree === 'clustered'
+                            ? language === 'es'
+                                ? 'P-1 (Raíz)'
+                                : 'P-1 (Root)'
+                            : language === 'es'
+                                ? 'NCI-1 (Raíz)'
+                                : 'NCI-1 (Root)'
+                    }
+                    active={rootActive}
+                    passed={stepIdx > 0}
                     color={accent.nodeColor} activeColor={accent.activeColor} />
                 <div className={cn('w-px h-6 transition-all', stepIdx >= 1 ? 'bg-white/40' : 'bg-white/10')} />
 
                 {/* Branch */}
                 <div className="flex gap-8 items-center">
-                    {[{ label: 'BRANCH L', sub: 'P-2 (1–18)' }, { label: 'BRANCH R', sub: 'P-3 (18–35)' }].map((b, i) => (
+                    {(tree === 'clustered'
+                        ? [
+                            { label: language === 'es' ? 'RAMA IZQ' : 'BRANCH L', sub: 'P-2 (1-18)' },
+                            { label: language === 'es' ? 'RAMA DER' : 'BRANCH R', sub: 'P-3 (18-35)' },
+                        ]
+                        : [
+                            { label: language === 'es' ? 'RAMA IZQ' : 'BRANCH L', sub: 'NCI-2 (48k-91k)' },
+                            { label: language === 'es' ? 'RAMA DER' : 'BRANCH R', sub: 'NCI-3 (91k-130k)' },
+                        ]).map((b, i) => (
                         <NodeBox key={i} label={b.label} sub={b.sub}
                             active={branchActive && hl.idx === i}
                             passed={stepIdx > 1}
@@ -192,7 +365,9 @@ function StepPlayer({ scenarios, accent, tableLabel }: {
 
                 {/* Leaves */}
                 <div className="flex gap-2 flex-wrap justify-center">
-                    {['L-1\n(1,5)', 'L-2\n(7,9,12)', 'L-3\n(15,18)', 'L-4\n(22,27)', 'L-5\n(31,35)'].map((lbl, i) => {
+                    {(tree === 'clustered'
+                        ? ['L-1\n(1,5)', 'L-2\n(7,9,12)', 'L-3\n(15,18)', 'L-4\n(22,27)', 'L-5\n(31,35)']
+                        : ['NL-1\n(48k)', 'NL-2\n(55k)', 'NL-3\n(62k,72k)', 'NL-4\n(76k+)', 'NL-5\n(91k+)']).map((lbl, i) => {
                         const [lpage, sub] = lbl.split('\n');
                         return (
                             <NodeBox key={i} label={lpage} sub={sub}
@@ -209,7 +384,7 @@ function StepPlayer({ scenarios, accent, tableLabel }: {
                         className="flex items-center gap-2 mt-1">
                         <ArrowRight className="w-4 h-4 text-amber-400" />
                         <div className="bg-amber-500/20 border border-amber-500/40 rounded-xl px-4 py-2 text-xs font-bold text-amber-300">
-                            KEY LOOKUP → CI Leaf
+                            {language === 'es' ? 'KEY LOOKUP -> Hoja CI' : 'KEY LOOKUP -> CI Leaf'}
                         </div>
                     </motion.div>
                 )}
@@ -231,11 +406,13 @@ function StepPlayer({ scenarios, accent, tableLabel }: {
                                 : <ChevronRight className="w-4 h-4 text-white/60" />}
                         </div>
                         <div className="flex-1 min-w-0">
-                            <div className={cn('font-bold text-sm', step.found ? 'text-emerald-300' : tableActive ? 'text-amber-300' : 'text-white')}>{step.title}</div>
-                            <div className="text-xs text-muted-foreground mt-1 leading-relaxed">{step.desc}</div>
-                            <div className="mt-3 bg-black/40 rounded-xl p-3 font-mono text-[10px] text-white/60 whitespace-pre leading-relaxed">{step.sql}</div>
+                            <div className={cn('font-bold text-sm', step.found ? 'text-emerald-300' : tableActive ? 'text-amber-300' : 'text-white')}>{step.title[language]}</div>
+                            <div className="text-xs text-muted-foreground mt-1 leading-relaxed">{step.desc[language]}</div>
+                            <div className="mt-3 bg-black/40 rounded-xl p-3 font-mono text-[10px] text-white/60 whitespace-pre leading-relaxed">{step.sql[language]}</div>
                             <div className="flex items-center gap-2 mt-2">
-                                <span className="text-[10px] text-muted-foreground">Logical reads so far:</span>
+                                <span className="text-[10px] text-muted-foreground">
+                                    {language === 'es' ? 'Lecturas lógicas (hasta ahora):' : 'Logical reads so far:'}
+                                </span>
                                 <div className="flex gap-1">
                                     {Array.from({ length: step.reads }).map((_, i) => (
                                         <div key={i} className={cn('w-4 h-4 rounded text-[9px] font-bold flex items-center justify-center',
@@ -258,20 +435,22 @@ function StepPlayer({ scenarios, accent, tableLabel }: {
                 <div className="flex items-center gap-2">
                     <button onClick={() => { setPlaying(false); prev(); }} disabled={stepIdx === 0}
                         className="px-3 py-2 bg-white/5 hover:bg-white/10 text-sm rounded-lg flex items-center gap-1 disabled:opacity-30 transition-all">
-                        <ChevronLeft className="w-4 h-4" /> Prev
+                        <ChevronLeft className="w-4 h-4" /> {language === 'es' ? 'Anterior' : 'Prev'}
                     </button>
                     <button onClick={() => setPlaying(p => !p)}
                         className={cn('px-4 py-2 rounded-lg font-bold text-sm flex items-center gap-2 transition-all',
                             playing ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40' : `${accent.bg} ${accent.text} border ${accent.border}`)}>
-                        {playing ? <><Pause className="w-4 h-4" /> Pause</> : <><Play className="w-4 h-4" /> Auto Play</>}
+                        {playing
+                            ? <><Pause className="w-4 h-4" /> {language === 'es' ? 'Pausa' : 'Pause'}</>
+                            : <><Play className="w-4 h-4" /> {t('autoPlay')}</>}
                     </button>
                     <button onClick={() => { setPlaying(false); next(); }} disabled={isLast}
                         className="px-3 py-2 bg-white/5 hover:bg-white/10 text-sm rounded-lg flex items-center gap-1 disabled:opacity-30 transition-all">
-                        Next <ChevronRightIcon className="w-4 h-4" />
+                        {language === 'es' ? 'Siguiente' : 'Next'} <ChevronRightIcon className="w-4 h-4" />
                     </button>
                 </div>
                 <div className={cn('text-xs font-bold px-2 py-1 rounded', step.found ? 'text-emerald-400' : 'text-muted-foreground')}>
-                    {step.reads} reads
+                    {step.reads} {language === 'es' ? 'lecturas' : 'reads'}
                 </div>
             </div>
         </div>
@@ -355,11 +534,13 @@ ORDER BY demand_score DESC;`;
                                         </div>
                                     ))}
                                 </div>
-                                <div className="mt-auto bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-3 font-mono text-xs text-emerald-300">
-                                    <div className="text-[10px] font-bold uppercase text-emerald-400 mb-1">Leaf Pages contain:</div>
-                                    [Key + ALL row data] → 0 extra reads
-                                </div>
-                            </div>
+                                 <div className="mt-auto bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-3 font-mono text-xs text-emerald-300">
+                                    <div className="text-[10px] font-bold uppercase text-emerald-400 mb-1">
+                                        {language === 'es' ? 'Las páginas hoja contienen:' : 'Leaf pages contain:'}
+                                    </div>
+                                    {language === 'es' ? '[Clave + TODOS los datos] -> 0 lecturas extra' : '[Key + ALL row data] -> 0 extra reads'}
+                                 </div>
+                             </div>
                             <div className="glass-panel p-6 rounded-2xl border-t-4 border-cyan-500 flex flex-col gap-4">
                                 <div className="flex items-center gap-3">
                                     <div className="p-2 bg-cyan-500/20 rounded-xl"><Hash className="w-6 h-6 text-cyan-400" /></div>
@@ -377,11 +558,15 @@ ORDER BY demand_score DESC;`;
                                         </div>
                                     ))}
                                 </div>
-                                <div className="mt-auto bg-cyan-500/10 border border-cyan-500/20 rounded-xl p-3 font-mono text-xs text-cyan-300">
-                                    <div className="text-[10px] font-bold uppercase text-cyan-400 mb-1">Leaf Pages contain:</div>
-                                    [Key + RID/CI Key] → extra lookup = +1 read
-                                </div>
-                            </div>
+                                 <div className="mt-auto bg-cyan-500/10 border border-cyan-500/20 rounded-xl p-3 font-mono text-xs text-cyan-300">
+                                    <div className="text-[10px] font-bold uppercase text-cyan-400 mb-1">
+                                        {language === 'es' ? 'Las páginas hoja contienen:' : 'Leaf pages contain:'}
+                                    </div>
+                                    {language === 'es'
+                                        ? '[Clave + RID/Clave clustered] -> lookup extra = +1 lectura'
+                                        : '[Key + RID/CI Key] -> extra lookup = +1 read'}
+                                 </div>
+                             </div>
                             {/* Performance table */}
                             <div className="lg:col-span-2 glass-panel p-6 rounded-2xl">
                                 <h4 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
@@ -395,11 +580,31 @@ ORDER BY demand_score DESC;`;
                                     </tr></thead>
                                     <tbody className="divide-y divide-white/5">
                                         {([
-                                            [t('perfPointLookup'),'✅ 3 reads (R→B→L)','⚠️ 4 reads (+lookup)'],
-                                            [t('perfRangeScan'),'✅ Sequential pages','⚠️ Random I/O hops'],
-                                            [t('perfCovering'),'⚠️ Always full row','✅ INCLUDE columns'],
-                                            [t('perfInsertPerf'),'⚠️ Page splits risk','✅ Separate structure'],
-                                            [t('perfCount'),'1 per table','Up to 999 per table'],
+                                            [
+                                                t('perfPointLookup'),
+                                                language === 'es' ? '✅ 3 lecturas (R->Rama->Hoja)' : '✅ 3 reads (R->B->L)',
+                                                language === 'es' ? '⚠️ 4 lecturas (+lookup)' : '⚠️ 4 reads (+lookup)',
+                                            ],
+                                            [
+                                                t('perfRangeScan'),
+                                                language === 'es' ? '✅ Páginas secuenciales' : '✅ Sequential pages',
+                                                language === 'es' ? '⚠️ Saltos de I/O aleatorio' : '⚠️ Random I/O hops',
+                                            ],
+                                            [
+                                                t('perfCovering'),
+                                                language === 'es' ? '⚠️ Siempre fila completa' : '⚠️ Always full row',
+                                                language === 'es' ? '✅ Columnas INCLUDE' : '✅ INCLUDE columns',
+                                            ],
+                                            [
+                                                t('perfInsertPerf'),
+                                                language === 'es' ? '⚠️ Riesgo de page splits' : '⚠️ Page splits risk',
+                                                language === 'es' ? '✅ Estructura separada' : '✅ Separate structure',
+                                            ],
+                                            [
+                                                t('perfCount'),
+                                                language === 'es' ? '1 por tabla' : '1 per table',
+                                                language === 'es' ? 'Hasta 999 por tabla' : 'Up to 999 per table',
+                                            ],
                                         ] as [string,string,string][]).map(([sc,ci,nci])=>(
                                             <tr key={sc} className="hover:bg-white/5">
                                                 <td className="py-2.5 px-3 text-white/80">{sc}</td>
@@ -416,7 +621,7 @@ ORDER BY demand_score DESC;`;
                                     <div>
                                         <h4 className="text-lg font-bold text-emerald-400 flex items-center gap-2">
                                             <BarChart3 className="w-5 h-5" />
-                                            {language === 'es' ? 'Demanda de indices faltantes' : 'Missing index demand'}
+                                            {language === 'es' ? 'Demanda de índices faltantes' : 'Missing index demand'}
                                         </h4>
                                         <p className="mt-2 text-sm text-muted-foreground">
                                             {language === 'es'
@@ -426,17 +631,19 @@ ORDER BY demand_score DESC;`;
 
                                         <div className="mt-5 grid gap-3 md:grid-cols-3">
                                             {([
-                                                ['Sales.RegionID, SaleDate', 98, '18K logical reads -> 240'],
-                                                ['Orders.CustomerID', 74, 'Scan diario -> seek reusable'],
-                                                ['Products.Price INCLUDE(Name)', 61, 'Lookup cost desaparece'],
-                                            ] as [string, number, string][]).map(([label, pct, note]) => (
+                                                ['Sales.RegionID, SaleDate', 98, { en: '18K logical reads -> 240', es: '18K lecturas lógicas -> 240' }],
+                                                ['Orders.CustomerID', 74, { en: 'Daily scan -> reusable seek', es: 'Scan diario -> seek reutilizable' }],
+                                                ['Products.Price INCLUDE(Name)', 61, { en: 'Lookup cost disappears', es: 'Desaparece el coste del lookup' }],
+                                            ] as [string, number, { en: string; es: string }][]).map(([label, pct, note]) => (
                                                 <div key={label} className="rounded-2xl border border-white/10 bg-black/30 p-4">
                                                     <div className="text-sm font-bold text-white">{label}</div>
                                                     <div className="mt-3 h-2 rounded-full bg-white/10">
                                                         <div className="h-2 rounded-full bg-emerald-500" style={{ width: `${pct}%` }} />
                                                     </div>
-                                                    <div className="mt-2 text-xs text-emerald-300">{pct}% demand score</div>
-                                                    <div className="mt-1 text-xs text-white/50">{note}</div>
+                                                    <div className="mt-2 text-xs text-emerald-300">
+                                                        {pct}% {language === 'es' ? 'score de demanda' : 'demand score'}
+                                                    </div>
+                                                    <div className="mt-1 text-xs text-white/50">{note[language]}</div>
                                                 </div>
                                             ))}
                                         </div>
@@ -458,12 +665,18 @@ ORDER BY demand_score DESC;`;
                         <motion.div key="clustered" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
                             className="grid grid-cols-1 xl:grid-cols-2 gap-6">
                             <div className="glass-panel p-6 rounded-2xl border-t-4 border-emerald-500">
-                                <h3 className="text-xl font-bold text-emerald-400 mb-1">{t('clusteredTitle')} — B-Tree Search</h3>
-                                <p className="text-sm text-muted-foreground mb-5">Select a scenario and step through the exact pages SQL Server reads.</p>
+                                <h3 className="text-xl font-bold text-emerald-400 mb-1">
+                                    {t('clusteredTitle')} {language === 'es' ? '- Búsqueda en B-Tree' : '- B-Tree search'}
+                                </h3>
+                                <p className="text-sm text-muted-foreground mb-5">
+                                    {language === 'es'
+                                        ? 'Selecciona un escenario y recorre las páginas exactas que lee SQL Server.'
+                                        : 'Select a scenario and step through the exact pages SQL Server reads.'}
+                                </p>
                                 <StepPlayer scenarios={CI_SCENARIOS} accent={{
                                     border: 'border-emerald-500/40', text: 'text-emerald-300',
                                     bg: 'bg-emerald-500/10', activeColor: '#10b981', nodeColor: 'bg-emerald-500/25 border-emerald-500',
-                                }} />
+                                 }} tree="clustered" />
                             </div>
                             <div className="glass-panel rounded-2xl overflow-hidden self-start">
                                 <div className="flex items-center gap-2 px-5 py-3 border-b border-white/10 bg-black/20">
@@ -472,7 +685,7 @@ ORDER BY demand_score DESC;`;
                                 </div>
                                 <table className="w-full text-xs font-mono">
                                     <thead><tr className="border-b border-white/10 bg-black/20">
-                                        {['Id (PK/CI)','Name','Dept','Salary'].map(h=>(
+                                        {(language === 'es' ? ['Id (PK/CI)', 'Nombre', 'Depto', 'Salario'] : ['Id (PK/CI)', 'Name', 'Dept', 'Salary']).map((h) => (
                                             <th key={h} className="text-left py-2 px-4 text-muted-foreground">{h}</th>
                                         ))}
                                     </tr></thead>
@@ -494,15 +707,26 @@ ORDER BY demand_score DESC;`;
                         <motion.div key="nonclustered" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
                             className="flex flex-col gap-6">
                             <div className="glass-panel p-6 rounded-2xl border-t-4 border-cyan-500">
-                                <h3 className="text-xl font-bold text-cyan-400 mb-1">{t('nonClusteredTitle')} — B-Tree Search</h3>
+                                <h3 className="text-xl font-bold text-cyan-400 mb-1">
+                                    {t('nonClusteredTitle')} {language === 'es' ? '- Búsqueda en B-Tree' : '- B-Tree search'}
+                                </h3>
                                 <p className="text-sm text-muted-foreground mb-5">
-                                    Scenario 1: NCI WITHOUT covering columns → key lookup (+1 read).<br />
-                                    Scenario 2: NCI WITH INCLUDE → 0 key lookup, saves 1 read.
+                                    {language === 'es' ? (
+                                        <>
+                                            Escenario 1: NCI sin columnas cubrientes: key lookup (+1 lectura).<br />
+                                            Escenario 2: NCI con INCLUDE: 0 key lookup, ahorra 1 lectura.
+                                        </>
+                                    ) : (
+                                        <>
+                                            Scenario 1: NCI WITHOUT covering columns: key lookup (+1 read).<br />
+                                            Scenario 2: NCI WITH INCLUDE: 0 key lookup, saves 1 read.
+                                        </>
+                                    )}
                                 </p>
                                 <StepPlayer scenarios={NCI_SCENARIOS} accent={{
                                     border: 'border-cyan-500/40', text: 'text-cyan-300',
                                     bg: 'bg-cyan-500/10', activeColor: '#06b6d4', nodeColor: 'bg-cyan-500/25 border-cyan-500',
-                                }} />
+                                 }} tree="nonclustered" />
                             </div>
 
                             {/* Fragmentation guide */}
