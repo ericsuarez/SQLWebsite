@@ -25,6 +25,7 @@ const MODULE_COMPONENTS: Record<ModuleId, ModuleComponent> = {
   ha: lazyNamed(() => import('./components/HA/HighAvailability'), 'HighAvailability'),
   indexes: lazyNamed(() => import('./components/Storage/IndexVisualizer'), 'IndexVisualizer'),
   realcases: lazyNamed(() => import('./components/DBA/RealCasesPage'), 'RealCasesPage'),
+  xevents: lazyNamed(() => import('./components/DBA/ExtendedEventsLab'), 'ExtendedEventsLab'),
   osconfig: lazyNamed(() => import('./components/OS/OSLevelConfig'), 'OSLevelConfig'),
   perfmon: lazyNamed(() => import('./components/PerfMon/PerfMonVisualizer'), 'PerfMonVisualizer'),
   sqlos: lazyNamed(() => import('./components/SQLOS/SQLOSDeepDive'), 'SQLOSDeepDive'),

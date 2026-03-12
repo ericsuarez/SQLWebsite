@@ -705,22 +705,10 @@ function CaseDetail({ rc, onBack }: { rc: RealCase; onBack: () => void }) {
                 {/* ── FIX PANEL ─────────────────────────────────────────── */}
                 {activePanel === 'fix' && (
                     <motion.div key="fix" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
-                        className={cn('grid grid-cols-1 gap-4', rc.xeScript ? 'xl:grid-cols-3' : 'xl:grid-cols-2')}>
+                        className="grid grid-cols-1 gap-4 xl:grid-cols-2">
                         <SectionBox icon={Search} label={t('detectionTsql')} accent="text-blue-300 bg-blue-500/10">
                             <CopyCodeBlock code={pick(language, rc.detectionQuery)} accent="blue" />
                         </SectionBox>
-                        {rc.xeScript && (
-                            <SectionBox
-                                icon={Activity}
-                                label={language === 'es' ? 'Extended Events' : 'Extended Events'}
-                                accent="text-orange-300 bg-orange-500/10"
-                            >
-                                {rc.xeWhy && (
-                                    <p className="mb-4 text-sm leading-7 text-white/75">{pick(language, rc.xeWhy)}</p>
-                                )}
-                                <CopyCodeBlock code={pick(language, rc.xeScript)} accent="amber" />
-                            </SectionBox>
-                        )}
                         <SectionBox icon={Wrench} label={t('resolutionBestPractice')} accent="text-emerald-300 bg-emerald-500/10">
                             <CopyCodeBlock code={resolutionText} accent="emerald" />
                         </SectionBox>

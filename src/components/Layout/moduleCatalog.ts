@@ -11,6 +11,7 @@ import {
   Settings,
   Shield,
   Siren,
+  Radar,
   Wrench,
   Zap,
   type LucideIcon,
@@ -99,7 +100,14 @@ export const MODULE_GROUPS: ModuleGroupDefinition[] = [
         titleKey: 'realCasesTitle',
         icon: Siren,
         color: 'text-cyan-400',
-        aliases: ['real cases', 'incidents', 'postmortem', 'xe', 'casos reales', 'incidentes'],
+        aliases: ['real cases', 'incidents', 'postmortem', 'casos reales', 'incidentes'],
+      },
+      {
+        id: 'xevents',
+        titleKey: 'tabXEvents',
+        icon: Radar,
+        color: 'text-orange-300',
+        aliases: ['xevents', 'extended events', 'xe', 'attention', 'deadlock graph', 'blocked process', 'event file'],
       },
       {
         id: 'ha',
@@ -183,4 +191,3 @@ export function normalizeSearchValue(input: string) {
     .replace(/[\u0300-\u036f]/g, '')
     .trim();
 }
-
