@@ -609,7 +609,6 @@ export function SQLOSDeepDive() {
                   {language === 'es' ? 'Maquina de estados (visual)' : 'State machine (visual)'}
                 </p>
                 <div className="mt-4 relative">
-                  <div className="pointer-events-none absolute left-0 right-0 top-7 h-px bg-white/10" />
                   <div className="grid grid-cols-3 gap-3">
                     {([
                       { id: 'running', label: 'RUNNING', sub: 'CPU', tone: 'emerald' },

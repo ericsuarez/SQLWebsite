@@ -359,7 +359,7 @@ export function OSLevelConfig() {
                 <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-white/40">
                   {language === 'es' ? 'Valor habitual' : 'Typical value'}
                 </p>
-                <div className="mt-3 text-2xl font-black text-white/70">
+                <div className="mt-3 min-h-[2.6rem] text-xl font-black leading-tight text-white/70 sm:text-2xl break-words">
                   {formatValue(activeItem.defaultValue, activeItem.unit)}
                 </div>
               </div>
@@ -368,7 +368,7 @@ export function OSLevelConfig() {
                 <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-emerald-300">
                   {language === 'es' ? 'Objetivo' : 'Target'}
                 </p>
-                <div className="mt-3 text-2xl font-black text-emerald-300">
+                <div className="mt-3 min-h-[2.6rem] text-xl font-black leading-tight text-emerald-300 sm:text-2xl break-words">
                   {formatValue(activeItem.recommendedValue, activeItem.unit)}
                 </div>
               </div>
@@ -377,7 +377,7 @@ export function OSLevelConfig() {
                 <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-rose-300">
                   {language === 'es' ? 'Zona peligrosa' : 'Danger zone'}
                 </p>
-                <div className="mt-3 text-lg font-black text-rose-300">
+                <div className="mt-3 min-h-[2.3rem] text-base font-black leading-tight text-rose-300 sm:text-lg break-words">
                   {activeItem.dangerZone ?? (language === 'es' ? 'Depende del host' : 'Depends on the host')}
                 </div>
               </div>

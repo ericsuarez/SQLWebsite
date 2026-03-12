@@ -169,7 +169,6 @@ export function MemoryOperations() {
     const systemMemory = 16384; // 16GB Total
 
     const [isTsqlOpen, setIsTsqlOpen] = useState(false);
-    const [tsqlType, setTsqlType] = useState<'clerks'>('clerks');
     const selectedClerk = MEMORY_CLERKS.find((clerk) => clerk.id === selectedClerkId) ?? MEMORY_CLERKS[0];
     const memoryConfigScript = `EXEC sp_configure 'show advanced options', 1;
 RECONFIGURE;
@@ -275,7 +274,7 @@ WHERE name IN ('min server memory (MB)', 'max server memory (MB)');`;
                         )}
                     >
                         <Sliders className="w-4 h-4" />
-                        Advanced (Clerks & LPIM)
+                        {language === 'es' ? 'Avanzado (Clerks)' : 'Advanced (Clerks)'}
                     </button>
                 </div>
             </div>
@@ -299,7 +298,7 @@ WHERE name IN ('min server memory (MB)', 'max server memory (MB)');`;
                                         <h3 className="text-xl font-bold text-white flex items-center gap-2">
                                             <Cpu className="w-5 h-5 text-purple-400" /> {t('sysRamArch')}
                                             <button
-                                                onClick={() => { setTsqlType('clerks'); setIsTsqlOpen(true); }}
+                                                onClick={() => setIsTsqlOpen(true)}
                                                 className="ml-4 px-2 py-1 bg-white/5 hover:bg-white/10 border border-white/10 rounded flex items-center gap-1.5 text-xs text-muted-foreground transition-colors"
                                             >
                                                 <Code2 className="w-3.5 h-3.5" /> {t('viewTsql')}
@@ -445,7 +444,7 @@ WHERE name IN ('min server memory (MB)', 'max server memory (MB)');`;
                                             <p className="text-muted-foreground text-sm mt-2">{t('memClerksDesc')}</p>
                                         </div>
                                         <button
-                                            onClick={() => { setTsqlType('clerks'); setIsTsqlOpen(true); }}
+                                            onClick={() => setIsTsqlOpen(true)}
                                             className="px-2 py-1 bg-white/5 hover:bg-white/10 border border-white/10 rounded flex items-center gap-1.5 text-xs text-muted-foreground transition-colors"
                                         >
                                             <Code2 className="w-3.5 h-3.5" /> {t('viewTsql')}
@@ -609,30 +608,18 @@ WHERE name IN ('min server memory (MB)', 'max server memory (MB)');`;
             <TSqlModal
                 isOpen={isTsqlOpen}
                 onClose={() => setIsTsqlOpen(false)}
-                title={tsqlType === 'clerks' ? t('memTsqlTitle') : t('memLpimTsqlTitle')}
-                description={tsqlType === 'clerks' ? t('memTsqlDesc') : t('memLpimTsqlDesc')}
+                title={t('memTsqlTitle')}
+                description={t('memTsqlDesc')}
                 diagnosticScript={{
-                    '2019': tsqlType === 'clerks'
-                        ? `-- Top Memory Clerks by usage\nSELECT TOP 15\n  type AS clerk_type,\n  name AS clerk_name,\n  SUM(pages_kb) / 1024 AS used_mb,\n  SUM(virtual_memory_committed_kb) / 1024 AS vm_mb,\n  SUM(awe_allocated_kb) / 1024 AS awe_mb,\n  COUNT(*) AS numa_nodes\nFROM sys.dm_os_memory_clerks\nGROUP BY type, name\nORDER BY used_mb DESC;\n\n-- Total memory by clerk category\nSELECT type,\n  SUM(pages_kb) / 1024 AS total_mb,\n  ROUND(SUM(pages_kb) * 100.0 / SUM(SUM(pages_kb)) OVER(), 1) AS pct\nFROM sys.dm_os_memory_clerks\nGROUP BY type\nORDER BY total_mb DESC;`
-                        : `DBCC MEMORYSTATUS;`,
-                    '2022': tsqlType === 'clerks'
-                        ? `-- Top Memory Clerks by usage\nSELECT TOP 15\n  type AS clerk_type,\n  name AS clerk_name,\n  SUM(pages_kb) / 1024 AS used_mb,\n  SUM(virtual_memory_committed_kb) / 1024 AS vm_mb,\n  SUM(awe_allocated_kb) / 1024 AS awe_mb,\n  COUNT(*) AS numa_nodes\nFROM sys.dm_os_memory_clerks\nGROUP BY type, name\nORDER BY used_mb DESC;\n\n-- Total memory by clerk category\nSELECT type,\n  SUM(pages_kb) / 1024 AS total_mb,\n  ROUND(SUM(pages_kb) * 100.0 / SUM(SUM(pages_kb)) OVER(), 1) AS pct\nFROM sys.dm_os_memory_clerks\nGROUP BY type\nORDER BY total_mb DESC;`
-                        : `DBCC MEMORYSTATUS;`,
-                    '2025': tsqlType === 'clerks'
-                        ? `-- Top Memory Clerks by usage\nSELECT TOP 15\n  type AS clerk_type,\n  name AS clerk_name,\n  SUM(pages_kb) / 1024 AS used_mb,\n  SUM(virtual_memory_committed_kb) / 1024 AS vm_mb,\n  SUM(awe_allocated_kb) / 1024 AS awe_mb,\n  COUNT(*) AS numa_nodes\nFROM sys.dm_os_memory_clerks\nGROUP BY type, name\nORDER BY used_mb DESC;\n\n-- Total memory by clerk category\nSELECT type,\n  SUM(pages_kb) / 1024 AS total_mb,\n  ROUND(SUM(pages_kb) * 100.0 / SUM(SUM(pages_kb)) OVER(), 1) AS pct\nFROM sys.dm_os_memory_clerks\nGROUP BY type\nORDER BY total_mb DESC;`
-                        : `DBCC MEMORYSTATUS;`
+                    '2019': `-- Top Memory Clerks by usage\nSELECT TOP 15\n  type AS clerk_type,\n  name AS clerk_name,\n  SUM(pages_kb) / 1024 AS used_mb,\n  SUM(virtual_memory_committed_kb) / 1024 AS vm_mb,\n  SUM(awe_allocated_kb) / 1024 AS awe_mb,\n  COUNT(*) AS numa_nodes\nFROM sys.dm_os_memory_clerks\nGROUP BY type, name\nORDER BY used_mb DESC;\n\n-- Total memory by clerk category\nSELECT type,\n  SUM(pages_kb) / 1024 AS total_mb,\n  ROUND(SUM(pages_kb) * 100.0 / SUM(SUM(pages_kb)) OVER(), 1) AS pct\nFROM sys.dm_os_memory_clerks\nGROUP BY type\nORDER BY total_mb DESC;`,
+                    '2022': `-- Top Memory Clerks by usage\nSELECT TOP 15\n  type AS clerk_type,\n  name AS clerk_name,\n  SUM(pages_kb) / 1024 AS used_mb,\n  SUM(virtual_memory_committed_kb) / 1024 AS vm_mb,\n  SUM(awe_allocated_kb) / 1024 AS awe_mb,\n  COUNT(*) AS numa_nodes\nFROM sys.dm_os_memory_clerks\nGROUP BY type, name\nORDER BY used_mb DESC;\n\n-- Total memory by clerk category\nSELECT type,\n  SUM(pages_kb) / 1024 AS total_mb,\n  ROUND(SUM(pages_kb) * 100.0 / SUM(SUM(pages_kb)) OVER(), 1) AS pct\nFROM sys.dm_os_memory_clerks\nGROUP BY type\nORDER BY total_mb DESC;`,
+                    '2025': `-- Top Memory Clerks by usage\nSELECT TOP 15\n  type AS clerk_type,\n  name AS clerk_name,\n  SUM(pages_kb) / 1024 AS used_mb,\n  SUM(virtual_memory_committed_kb) / 1024 AS vm_mb,\n  SUM(awe_allocated_kb) / 1024 AS awe_mb,\n  COUNT(*) AS numa_nodes\nFROM sys.dm_os_memory_clerks\nGROUP BY type, name\nORDER BY used_mb DESC;\n\n-- Total memory by clerk category\nSELECT type,\n  SUM(pages_kb) / 1024 AS total_mb,\n  ROUND(SUM(pages_kb) * 100.0 / SUM(SUM(pages_kb)) OVER(), 1) AS pct\nFROM sys.dm_os_memory_clerks\nGROUP BY type\nORDER BY total_mb DESC;`,
                 }}
-                remediationTitle={tsqlType === 'clerks' ? t('memRemediationTitle') : t('memLpimRemediationTitle')}
+                remediationTitle={t('memRemediationTitle')}
                 remediationScript={{
-                    '2019': tsqlType === 'clerks'
-                        ? `EXEC sp_configure 'show advanced options', 1;\nRECONFIGURE;\nEXEC sp_configure 'max server memory (MB)', 8192;\nRECONFIGURE;`
-                        : `-- 1. Open secpol.msc\n-- 2. Local Policies -> User Rights Assignment\n-- 3. Double-click "Lock pages in memory"\n-- 4. Add the SQL Server service account\n-- 5. Restart SQL Server service`,
-                    '2022': tsqlType === 'clerks'
-                        ? `EXEC sp_configure 'show advanced options', 1;\nRECONFIGURE;\nEXEC sp_configure 'max server memory (MB)', 8192;\nRECONFIGURE;`
-                        : `-- 1. Open secpol.msc\n-- 2. Local Policies -> User Rights Assignment\n-- 3. Double-click "Lock pages in memory"\n-- 4. Add the SQL Server service account\n-- 5. Restart SQL Server service`,
-                    '2025': tsqlType === 'clerks'
-                        ? `EXEC sp_configure 'show advanced options', 1;\nRECONFIGURE;\nEXEC sp_configure 'max server memory (MB)', 8192;\nRECONFIGURE;`
-                        : `-- 1. Open secpol.msc\n-- 2. Local Policies -> User Rights Assignment\n-- 3. Double-click "Lock pages in memory"\n-- 4. Add the SQL Server service account\n-- 5. Restart SQL Server service`
+                    '2019': `EXEC sp_configure 'show advanced options', 1;\nRECONFIGURE;\nEXEC sp_configure 'max server memory (MB)', 8192;\nRECONFIGURE;`,
+                    '2022': `EXEC sp_configure 'show advanced options', 1;\nRECONFIGURE;\nEXEC sp_configure 'max server memory (MB)', 8192;\nRECONFIGURE;`,
+                    '2025': `EXEC sp_configure 'show advanced options', 1;\nRECONFIGURE;\nEXEC sp_configure 'max server memory (MB)', 8192;\nRECONFIGURE;`,
                 }}
             />
         </div>

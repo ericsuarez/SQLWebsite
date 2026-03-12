@@ -8,6 +8,7 @@ import {
   VERSION_UPDATE_TRACKS,
   type LocalizedText,
 } from '../../data/advancedSQLData';
+import { SERVICING_EXPLAINERS, SERVICING_MODELS, type ServicingTone, type ServicingTrackId } from '../../data/servicingModelData';
 import { RELEASE_AREA_META, SQL_SERVER_RELEASE_AREAS, type ReleaseAreaId } from '../../data/versionHistoryData';
 import { cn } from '../../lib/utils';
 import { CopyCodeBlock } from '../Shared/CopyCodeBlock';
@@ -75,6 +76,60 @@ const AREA_STYLES: Record<
   },
 };
 
+const SERVICING_TONE_STYLES: Record<
+  ServicingTone,
+  {
+    border: string;
+    bg: string;
+    text: string;
+    chip: string;
+    glow: string;
+  }
+> = {
+  lime: {
+    border: 'border-lime-500/30',
+    bg: 'bg-lime-500/10',
+    text: 'text-lime-300',
+    chip: 'border-lime-500/20 bg-lime-500/10 text-lime-200',
+    glow: 'shadow-[0_0_28px_rgba(163,230,53,0.10)]',
+  },
+  emerald: {
+    border: 'border-emerald-500/30',
+    bg: 'bg-emerald-500/10',
+    text: 'text-emerald-300',
+    chip: 'border-emerald-500/20 bg-emerald-500/10 text-emerald-200',
+    glow: 'shadow-[0_0_28px_rgba(16,185,129,0.10)]',
+  },
+  amber: {
+    border: 'border-amber-500/30',
+    bg: 'bg-amber-500/10',
+    text: 'text-amber-300',
+    chip: 'border-amber-500/20 bg-amber-500/10 text-amber-200',
+    glow: 'shadow-[0_0_28px_rgba(251,191,36,0.10)]',
+  },
+  rose: {
+    border: 'border-rose-500/30',
+    bg: 'bg-rose-500/10',
+    text: 'text-rose-300',
+    chip: 'border-rose-500/20 bg-rose-500/10 text-rose-200',
+    glow: 'shadow-[0_0_28px_rgba(251,113,133,0.10)]',
+  },
+  cyan: {
+    border: 'border-cyan-500/30',
+    bg: 'bg-cyan-500/10',
+    text: 'text-cyan-300',
+    chip: 'border-cyan-500/20 bg-cyan-500/10 text-cyan-200',
+    glow: 'shadow-[0_0_28px_rgba(34,211,238,0.10)]',
+  },
+  violet: {
+    border: 'border-violet-500/30',
+    bg: 'bg-violet-500/10',
+    text: 'text-violet-300',
+    chip: 'border-violet-500/20 bg-violet-500/10 text-violet-200',
+    glow: 'shadow-[0_0_28px_rgba(167,139,250,0.10)]',
+  },
+};
+
 function pick(language: 'en' | 'es', text: LocalizedText) {
   return language === 'es' ? text.es : text.en;
 }
@@ -83,7 +138,8 @@ export function VersionHistory() {
   const { language, t } = useLanguage();
   const [activeReleaseId, setActiveReleaseId] = useState('2022');
   const [activeAreaId, setActiveAreaId] = useState<ReleaseAreaId>('engine');
-  const [activeTrackId, setActiveTrackId] = useState<(typeof VERSION_UPDATE_TRACKS)[number]['id']>('current');
+  const [activeTrackId, setActiveTrackId] = useState<(typeof VERSION_UPDATE_TRACKS)[number]['id']>('cu-era');
+  const [activeServicingNodeId, setActiveServicingNodeId] = useState<string>(() => SERVICING_MODELS['cu-era'].defaultNodeId);
 
   const sortedReleases = useMemo(
     () => [...SQL_SERVER_RELEASES].sort((left, right) => right.year - left.year),
@@ -96,6 +152,15 @@ export function VersionHistory() {
   const releaseAreas = SQL_SERVER_RELEASE_AREAS[activeRelease.id] ?? [];
   const activeArea = releaseAreas.find((area) => area.id === activeAreaId) ?? releaseAreas[0];
 
+  const servicingTrack: ServicingTrackId = activeTrackId === 'sp-era' ? 'sp-era' : 'cu-era';
+  const servicingModel = SERVICING_MODELS[servicingTrack];
+  const activeServicingNode =
+    servicingModel.nodes.find((node) => node.id === activeServicingNodeId) ??
+    servicingModel.nodes.find((node) => node.id === servicingModel.defaultNodeId) ??
+    servicingModel.nodes[0];
+  const activeServicingExplainer =
+    SERVICING_EXPLAINERS.find((item) => item.id === activeServicingNode.explainerId) ?? SERVICING_EXPLAINERS[0];
+
   useEffect(() => {
     const nextAreas = SQL_SERVER_RELEASE_AREAS[activeReleaseId] ?? [];
     if (nextAreas.length === 0) {
@@ -106,6 +171,60 @@ export function VersionHistory() {
     }
     setActiveAreaId(nextAreas[0].id);
   }, [activeAreaId, activeReleaseId]);
+
+  useEffect(() => {
+    const nextModel = SERVICING_MODELS[servicingTrack];
+    if (!nextModel.nodes.some((node) => node.id === activeServicingNodeId)) {
+      setActiveServicingNodeId(nextModel.defaultNodeId);
+    }
+  }, [activeServicingNodeId, servicingTrack]);
+
+  const renderServicingNode = (
+    node: (typeof servicingModel.nodes)[number],
+    options?: {
+      wide?: boolean;
+    }
+  ) => {
+    const explainer = SERVICING_EXPLAINERS.find((item) => item.id === node.explainerId) ?? SERVICING_EXPLAINERS[0];
+    const style = SERVICING_TONE_STYLES[explainer.tone];
+    const isActive = node.id === activeServicingNode.id;
+    const uniqueBadges = Array.from(new Set([...(node.badges ?? []), ...explainer.badges])).slice(0, 3);
+
+    return (
+      <motion.button
+        key={node.id}
+        whileHover={{ y: -1 }}
+        onClick={() => setActiveServicingNodeId(node.id)}
+        className={cn(
+          'rounded-3xl border p-4 text-left transition-all',
+          options?.wide ? 'sm:col-span-2' : '',
+          isActive ? cn(style.border, style.bg, style.glow) : 'border-white/10 bg-black/20 hover:border-white/20 hover:bg-white/[0.06]'
+        )}
+      >
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <div className={cn('text-sm font-black tracking-wide', isActive ? 'text-white' : 'text-white/80')}>{pick(language, node.title)}</div>
+            <div className="mt-1 text-[10px] font-bold uppercase tracking-[0.18em] text-white/45">{pick(language, node.subtitle)}</div>
+          </div>
+          {uniqueBadges.length > 0 ? (
+            <div className="flex flex-wrap justify-end gap-1.5">
+              {uniqueBadges.map((badge) => (
+                <span
+                  key={`${node.id}-badge-${badge}`}
+                  className={cn(
+                    'rounded-full border px-2 py-0.5 text-[10px] font-black uppercase tracking-[0.18em] whitespace-nowrap',
+                    style.chip
+                  )}
+                >
+                  {badge}
+                </span>
+              ))}
+            </div>
+          ) : null}
+        </div>
+      </motion.button>
+    );
+  };
 
   return (
     <div className="flex h-full flex-col gap-6 text-slate-200">
@@ -170,10 +289,7 @@ export function VersionHistory() {
                       )}
                     />
                     <div className="min-w-0 flex-1">
-                      <div className={cn('text-sm font-black tracking-wide', isActive ? 'text-white' : 'text-white/75')}>{release.year}</div>
-                      <div className="mt-0.5 truncate text-[10px] font-bold uppercase tracking-[0.18em] text-white/45">
-                        {pick(language, release.era)}
-                      </div>
+                      <div className={cn('text-lg font-black tracking-wide', isActive ? 'text-white' : 'text-white/80')}>{release.year}</div>
                     </div>
                   </div>
                 </motion.button>
@@ -448,18 +564,177 @@ export function VersionHistory() {
             </div>
 
             <div className="mt-5 rounded-3xl border border-white/10 bg-black/20 p-5">
-              <h4 className="text-lg font-bold text-white">{pick(language, activeTrack.label)}</h4>
-              <p className="mt-3 text-sm leading-7 text-white/80">{pick(language, activeTrack.summary)}</p>
-              <p className="mt-4 text-sm leading-7 text-white/65">{pick(language, activeTrack.detail)}</p>
-              <div className="mt-5 flex flex-wrap gap-2">
-                {activeTrack.badges.map((badge) => (
-                  <span
-                    key={`${activeTrack.id}-${badge}`}
-                    className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-[11px] font-bold text-white/75"
+              <div className="flex flex-wrap items-start justify-between gap-4">
+                <div className="min-w-[240px] flex-1">
+                  <h4 className="text-lg font-bold text-white">{pick(language, activeTrack.label)}</h4>
+                  <p className="mt-3 text-sm leading-7 text-white/80">{pick(language, activeTrack.summary)}</p>
+                  <p className="mt-3 text-sm leading-7 text-white/65">{pick(language, activeTrack.detail)}</p>
+                </div>
+                <div className="flex flex-wrap justify-end gap-2">
+                  {activeTrack.badges.map((badge) => (
+                    <span
+                      key={`${activeTrack.id}-${badge}`}
+                      className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-[11px] font-bold text-white/75"
+                    >
+                      {badge}
+                    </span>
+                  ))}
+                </div>
+              </div>
+
+              <div className="mt-5 h-px bg-white/10" />
+
+              <div className="mt-5">
+                <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-white/40">
+                  {language === 'es' ? 'Mapa de ramas' : 'Branch map'}
+                </p>
+
+                {(() => {
+                  const baselineNodes = [...servicingModel.nodes]
+                    .filter((node) => node.lane === 'baseline')
+                    .sort((left, right) => left.order - right.order);
+                  const gdrNodes = [...servicingModel.nodes]
+                    .filter((node) => node.lane === 'gdr')
+                    .sort((left, right) => left.order - right.order);
+                  const cuNodes = [...servicingModel.nodes]
+                    .filter((node) => node.lane === 'cu')
+                    .sort((left, right) => left.order - right.order);
+
+                  const baselineLane = servicingModel.lanes.find((lane) => lane.id === 'baseline');
+                  const gdrLane = servicingModel.lanes.find((lane) => lane.id === 'gdr');
+                  const cuLane = servicingModel.lanes.find((lane) => lane.id === 'cu');
+
+                  if (servicingTrack === 'sp-era') {
+                    return (
+                      <div className="mt-4 space-y-3">
+                        {baselineLane ? (
+                          <div className="rounded-2xl border border-white/10 bg-black/25 px-4 py-3">
+                            <div className="text-xs font-black tracking-wide text-white">{pick(language, baselineLane.label)}</div>
+                            <div className="mt-1 text-xs text-white/60">{pick(language, baselineLane.description)}</div>
+                          </div>
+                        ) : null}
+                        <div className="grid gap-3">{baselineNodes.map((node) => renderServicingNode(node))}</div>
+                      </div>
+                    );
+                  }
+
+                  const gdrStyle = SERVICING_TONE_STYLES[gdrLane?.tone ?? 'cyan'];
+                  const cuStyle = SERVICING_TONE_STYLES[cuLane?.tone ?? 'amber'];
+
+                  return (
+                    <div className="mt-4 space-y-3">
+                      <div className="grid gap-3 sm:grid-cols-2">
+                        {baselineNodes.map((node) => renderServicingNode(node, { wide: true }))}
+                      </div>
+
+                      <div className="flex items-center justify-center gap-3 text-xs text-white/45">
+                        <span className="h-px w-10 bg-white/10" />
+                        <span className="font-bold uppercase tracking-[0.18em]">
+                          {language === 'es' ? 'Elige rama' : 'Choose branch'}
+                        </span>
+                        <span className="h-px w-10 bg-white/10" />
+                      </div>
+
+                      <div className="grid gap-3 sm:grid-cols-2">
+                        <div className="space-y-3">
+                          {gdrLane ? (
+                            <div className={cn('rounded-2xl border bg-black/25 px-4 py-3', gdrStyle.border, gdrStyle.bg)}>
+                              <div className={cn('text-xs font-black tracking-wide', gdrStyle.text)}>{pick(language, gdrLane.label)}</div>
+                              <div className="mt-1 text-xs text-white/60">{pick(language, gdrLane.description)}</div>
+                            </div>
+                          ) : null}
+                          <div className="grid gap-3">{gdrNodes.map((node) => renderServicingNode(node))}</div>
+                        </div>
+
+                        <div className="space-y-3">
+                          {cuLane ? (
+                            <div className={cn('rounded-2xl border bg-black/25 px-4 py-3', cuStyle.border, cuStyle.bg)}>
+                              <div className={cn('text-xs font-black tracking-wide', cuStyle.text)}>{pick(language, cuLane.label)}</div>
+                              <div className="mt-1 text-xs text-white/60">{pick(language, cuLane.description)}</div>
+                            </div>
+                          ) : null}
+                          <div className="grid gap-3">{cuNodes.map((node) => renderServicingNode(node))}</div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()}
+
+                <p className="mt-4 text-xs leading-relaxed text-white/55">{pick(language, servicingModel.footnote)}</p>
+              </div>
+
+              <div className="mt-5">
+                <AnimatePresence mode="wait">
+                  <motion.div
+                    key={activeServicingNode.id}
+                    initial={{ opacity: 0, y: 10, filter: 'blur(10px)' }}
+                    animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+                    exit={{ opacity: 0, y: -10, filter: 'blur(10px)' }}
+                    transition={{ duration: 0.22 }}
+                    className="rounded-3xl border border-white/10 bg-black/25 p-5"
                   >
-                    {badge}
-                  </span>
-                ))}
+                    <div className="flex flex-wrap items-start justify-between gap-4">
+                      <div className="min-w-[220px] flex-1">
+                        <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-white/40">
+                          {language === 'es' ? 'Seleccionado' : 'Selected'}
+                        </p>
+                        <div className="mt-2 flex flex-wrap items-center gap-2">
+                          <h5 className="text-xl font-bold text-white">{pick(language, activeServicingNode.title)}</h5>
+                          <span
+                            className={cn(
+                              'rounded-full border px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em] whitespace-nowrap',
+                              SERVICING_TONE_STYLES[activeServicingExplainer.tone].chip
+                            )}
+                          >
+                            {pick(language, activeServicingExplainer.label)}
+                          </span>
+                        </div>
+                        <p className="mt-2 text-sm text-white/65">{pick(language, activeServicingNode.subtitle)}</p>
+                      </div>
+                    </div>
+
+                    <p className="mt-4 text-sm leading-7 text-white/80">{pick(language, activeServicingExplainer.summary)}</p>
+
+                    <div className="mt-4 grid gap-3">
+                      <div className="rounded-2xl border border-white/10 bg-black/30 p-4">
+                        <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-white/40">
+                          {language === 'es' ? 'Incluye' : 'Includes'}
+                        </p>
+                        <div className="mt-3 flex flex-wrap gap-2">
+                          {activeServicingExplainer.includes.map((item, index) => (
+                            <span
+                              key={`servicing-${activeServicingNode.id}-include-${index}`}
+                              className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-[11px] font-bold text-white/75"
+                            >
+                              {pick(language, item)}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div className="rounded-2xl border border-white/10 bg-black/30 p-4">
+                        <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-white/40">
+                          {language === 'es' ? 'Cuando usarlo' : 'When to use'}
+                        </p>
+                        <p className="mt-3 text-sm leading-relaxed text-white/75">{pick(language, activeServicingExplainer.whenToUse)}</p>
+                      </div>
+
+                      <div className="rounded-2xl border border-rose-500/20 bg-rose-500/10 p-4">
+                        <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-rose-200/90">
+                          {language === 'es' ? 'Riesgos y matices' : 'Risks and nuances'}
+                        </p>
+                        <div className="mt-3 space-y-2 text-sm leading-relaxed text-rose-100/90">
+                          {activeServicingExplainer.pitfalls.map((item, index) => (
+                            <div key={`servicing-${activeServicingNode.id}-pitfall-${index}`} className="flex gap-3">
+                              <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-rose-200/80" />
+                              <span className="flex-1">{pick(language, item)}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </motion.div>
+                </AnimatePresence>
               </div>
             </div>
           </div>
