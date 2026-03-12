@@ -421,6 +421,7 @@ export function SQLOSDeepDive() {
   const { t, language } = useLanguage();
   const [activeTab, setActiveTab] = useState<'threads' | 'schedulers' | 'sync' | 'waits'>('threads');
   const [threadStepIndex, setThreadStepIndex] = useState(0);
+  const [threadPlaying, setThreadPlaying] = useState(false);
   const [activeSyncId, setActiveSyncId] = useState<'lock' | 'latch' | 'spinlock'>('lock');
   const [activeWaitId, setActiveWaitId] = useState<(typeof WAIT_CATEGORIES)[number]['id']>('cpu');
   const [schedulerProfile, setSchedulerProfile] = useState<SchedulerProfileId>('steady');
@@ -496,6 +497,14 @@ export function SQLOSDeepDive() {
     return () => window.clearInterval(handle);
   }, [activeTab, schedulerPlaying]);
 
+  useEffect(() => {
+    if (activeTab !== 'threads' || !threadPlaying) return;
+    const handle = window.setInterval(() => {
+      setThreadStepIndex((current) => (current + 1) % THREAD_FLOW.length);
+    }, 2200);
+    return () => window.clearInterval(handle);
+  }, [activeTab, threadPlaying]);
+
   return (
     <div className="flex h-full flex-col gap-6 text-slate-200">
       <div className="glass-panel relative overflow-hidden border border-white/10 p-6">
@@ -548,20 +557,41 @@ export function SQLOSDeepDive() {
                   <h3 className="text-2xl font-bold text-emerald-400">{t('sqlosThreadsTitle')}</h3>
                   <p className="mt-2 text-sm text-muted-foreground">{t('sqlosThreadsDesc')}</p>
                 </div>
-                <button
-                  onClick={() => setThreadStepIndex((current) => (current + 1) % THREAD_FLOW.length)}
-                  className="inline-flex items-center gap-2 rounded-2xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-2 text-sm font-bold text-emerald-300"
-                >
-                  <Play className="h-4 w-4" />
-                  {language === 'es' ? 'Siguiente estado' : 'Next state'}
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => {
+                      setThreadPlaying(false);
+                      setThreadStepIndex((current) => (current + 1) % THREAD_FLOW.length);
+                    }}
+                    className="inline-flex items-center gap-2 rounded-2xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-2 text-sm font-bold text-emerald-300"
+                  >
+                    <SkipForward className="h-4 w-4" />
+                    {language === 'es' ? 'Paso' : 'Step'}
+                  </button>
+                  <button
+                    onClick={() => setThreadPlaying((v) => !v)}
+                    className={cn(
+                      'inline-flex items-center gap-2 rounded-2xl border px-4 py-2 text-sm font-bold transition-all',
+                      threadPlaying
+                        ? 'border-emerald-500/30 bg-emerald-500/15 text-emerald-200'
+                        : 'border-white/10 bg-black/20 text-muted-foreground hover:bg-white/5 hover:text-white'
+                    )}
+                    title={language === 'es' ? 'Auto-play de estados' : 'Autoplay thread states'}
+                  >
+                    {threadPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+                    {language === 'es' ? 'Auto' : 'Auto'}
+                  </button>
+                </div>
               </div>
 
               <div className="mt-6 flex flex-wrap gap-2">
                 {THREAD_FLOW.map((step, index) => (
                   <button
                     key={step.id}
-                    onClick={() => setThreadStepIndex(index)}
+                    onClick={() => {
+                      setThreadPlaying(false);
+                      setThreadStepIndex(index);
+                    }}
                     className={cn(
                       'rounded-full border px-3 py-1.5 text-xs font-bold uppercase tracking-[0.18em] transition-all',
                       index === threadStepIndex
@@ -572,6 +602,56 @@ export function SQLOSDeepDive() {
                     {index + 1}. {step.state}
                   </button>
                 ))}
+              </div>
+
+              <div className="mt-6 rounded-3xl border border-white/10 bg-black/30 p-5 overflow-hidden">
+                <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-white/40">
+                  {language === 'es' ? 'Maquina de estados (visual)' : 'State machine (visual)'}
+                </p>
+                <div className="mt-4 relative">
+                  <div className="pointer-events-none absolute left-0 right-0 top-7 h-px bg-white/10" />
+                  <div className="grid grid-cols-3 gap-3">
+                    {([
+                      { id: 'running', label: 'RUNNING', sub: 'CPU', tone: 'emerald' },
+                      { id: 'suspended', label: 'SUSPENDED', sub: 'WAIT', tone: 'rose' },
+                      { id: 'runnable', label: 'RUNNABLE', sub: 'QUEUE', tone: 'amber' },
+                    ] as const).map((node) => {
+                      const isActive = activeThread.state === node.id;
+                      const tone =
+                        node.tone === 'emerald'
+                          ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-200'
+                          : node.tone === 'rose'
+                            ? 'border-rose-500/30 bg-rose-500/10 text-rose-200'
+                            : 'border-amber-500/30 bg-amber-500/10 text-amber-200';
+                      return (
+                        <div
+                          key={node.id}
+                          className={cn(
+                            'rounded-3xl border p-4 transition-all',
+                            isActive ? tone : 'border-white/10 bg-black/20 text-white/60'
+                          )}
+                        >
+                          <div className="text-xs font-black uppercase tracking-[0.18em]">{node.label}</div>
+                          <div className="mt-2 text-[11px] font-mono text-white/50">{node.sub}</div>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  <motion.div
+                    className="absolute top-7 h-3.5 w-3.5 rounded-full bg-white shadow-[0_0_18px_rgba(255,255,255,0.22)]"
+                    style={{ transform: 'translate(-50%, -50%)' }}
+                    animate={{
+                      left:
+                        activeThread.state === 'running'
+                          ? '16.666%'
+                          : activeThread.state === 'suspended'
+                            ? '50%'
+                            : '83.333%',
+                    }}
+                    transition={{ type: 'spring', stiffness: 140, damping: 18 }}
+                  />
+                </div>
               </div>
 
               <div className="mt-6 grid gap-5 lg:grid-cols-3">
