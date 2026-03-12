@@ -1,23 +1,18 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Database, Zap, FileWarning, ShieldCheck, HardDrive, Cpu, Code2, ShieldAlert } from 'lucide-react';
+import { Database, Zap, FileWarning, HardDrive, Code2 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { TSqlModal } from '../Shared/TSqlModal';
 export function DBAScenarios() {
     const { t } = useLanguage();
-    const [activeTab, setActiveTab] = useState<'pageSplit' | 'ifi' | 'lpim' | 'creation'>('pageSplit');
+    const [activeTab, setActiveTab] = useState<'pageSplit' | 'creation'>('pageSplit');
 
     // Page Split
     const [fillFactor, setFillFactor] = useState(100);
     const [pages, setPages] = useState<number[][]>([[1, 2, 3, 4, 5]]);
     const maxRows = 6;
 
-    // IFI & LPIM
-    const [ifiEnabled, setIfiEnabled] = useState(false);
-    const [lpimEnabled, setLpimEnabled] = useState(false);
-    const [dbStatus, setDbStatus] = useState<'idle' | 'creating' | 'done'>('idle');
-    const [progress, setProgress] = useState(0);
     const [isTsqlOpen, setIsTsqlOpen] = useState(false);
 
     const insertRow = () => {
@@ -31,16 +26,7 @@ export function DBAScenarios() {
         setPages(np);
     };
     const resetPages = () => setPages([[1, 2]]);
-    const createDatabase = () => { setDbStatus('creating'); setProgress(0); };
     const frag = Math.round(pages.length > 1 ? (pages.filter(p => (p.length / maxRows) < 0.8).length / pages.length) * 100 : 0);
-
-    useEffect(() => {
-        if (dbStatus === 'creating') {
-            const step = ifiEnabled ? 100 : 5;
-            const iv = setInterval(() => setProgress(p => { if (p >= 100) { clearInterval(iv); setDbStatus('done'); return 100; } return Math.min(100, p + step); }), 100);
-            return () => clearInterval(iv);
-        }
-    }, [dbStatus, ifiEnabled]);
 
     return (
         <div className="flex flex-col h-full gap-6">
@@ -50,10 +36,10 @@ export function DBAScenarios() {
             </div>
 
             <div className="flex gap-2 flex-wrap border-b border-white/10 pb-3">
-                {(['pageSplit', 'ifi', 'lpim', 'creation'] as const).map(tab => (
+                {(['pageSplit', 'creation'] as const).map(tab => (
                     <button key={tab} onClick={() => setActiveTab(tab)}
                         className={cn('px-4 py-2 rounded-lg font-bold transition-all text-sm', activeTab === tab ? 'bg-rose-500/20 text-rose-400 border border-rose-500/50' : 'bg-white/5 text-muted-foreground hover:bg-white/10')}>
-                        {t(tab === 'pageSplit' ? 'tabPageSplit' : tab === 'ifi' ? 'tabIfi' : tab === 'lpim' ? 'lpimTitle' : 'tabCreation')}
+                        {t(tab === 'pageSplit' ? 'tabPageSplit' : 'tabCreation')}
                     </button>
                 ))}
             </div>

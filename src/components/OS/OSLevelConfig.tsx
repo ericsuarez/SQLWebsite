@@ -15,6 +15,8 @@ import { cn } from '../../lib/utils';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { OS_CONFIG_ITEMS } from '../../data/advancedSQLData';
 import { CopyCodeBlock } from '../Shared/CopyCodeBlock';
+import { IfiLab } from './labs/IfiLab';
+import { LpimLab } from './labs/LpimLab';
 
 const ICONS: Record<string, any> = {
   HardDrive,
@@ -380,6 +382,18 @@ export function OSLevelConfig() {
                 </div>
               </div>
             </div>
+
+            {activeItem.id === 'ifi' && (
+              <div className="mt-6">
+                <IfiLab />
+              </div>
+            )}
+
+            {activeItem.id === 'lpim' && (
+              <div className="mt-6">
+                <LpimLab />
+              </div>
+            )}
 
             <div className="mt-6 grid gap-4 lg:grid-cols-2">
               <div className="rounded-3xl border border-white/10 bg-black/30 p-5">
