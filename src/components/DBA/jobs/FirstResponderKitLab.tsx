@@ -221,7 +221,7 @@ export function FirstResponderKitLab() {
                       </div>
                     </div>
                     <CopyCodeBlock code={(selected as (typeof BLITZ_FINDINGS)[number]).tsql} accent="cyan" />
-                    <CopyCodeBlock code={JOB_TSQL_SNIPPETS.blitz} accent="sky" />
+                    <CopyCodeBlock code={JOB_TSQL_SNIPPETS.blitz} accent="cyan" />
                   </>
                 ) : (
                   <>
@@ -259,7 +259,7 @@ export function FirstResponderKitLab() {
                       </div>
                     </div>
                     <CopyCodeBlock code={(selected as (typeof BLITZCACHE_ROWS)[number]).tsql} accent="cyan" />
-                    <CopyCodeBlock code={JOB_TSQL_SNIPPETS.blitzCache} accent="sky" />
+                    <CopyCodeBlock code={JOB_TSQL_SNIPPETS.blitzCache} accent="blue" />
                   </>
                 )}
               </div>
@@ -272,4 +272,3 @@ export function FirstResponderKitLab() {
     </div>
   );
 }
-

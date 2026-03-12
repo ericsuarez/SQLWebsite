@@ -15,7 +15,9 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     const [language, setLanguage] = useState<Language>('en'); // Default to English as per new request
 
     const t = (key: TranslationKey): string => {
-        return translations[language][key] || translations['en'][key] || key;
+        const activeTranslations = translations[language] as Partial<Record<TranslationKey, string>>;
+        const fallbackTranslations = translations.en as Record<TranslationKey, string>;
+        return activeTranslations[key] || fallbackTranslations[key] || key;
     };
 
     return (

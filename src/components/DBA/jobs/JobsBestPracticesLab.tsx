@@ -322,7 +322,7 @@ export function JobsBestPracticesLab() {
             </p>
             <div className="mt-5 space-y-4">
               <CopyCodeBlock code={JOB_TSQL_SNIPPETS.olaBackups} accent="emerald" />
-              <CopyCodeBlock code={JOB_TSQL_SNIPPETS.blitz} accent="sky" />
+              <CopyCodeBlock code={JOB_TSQL_SNIPPETS.blitz} accent="cyan" />
             </div>
           </div>
 
@@ -374,4 +374,3 @@ export function JobsBestPracticesLab() {
     </div>
   );
 }
-

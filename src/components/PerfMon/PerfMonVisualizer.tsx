@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { Activity, Gauge, Cpu, HardDrive, Database, AlertCircle, Play, Square, Zap, Info } from 'lucide-react';
+import { Gauge, Cpu, HardDrive, Database, AlertCircle, Play, Square, Info } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { PERFMON_COUNTERS } from '../../data/advancedSQLData';
@@ -9,7 +9,7 @@ export function PerfMonVisualizer() {
     const { t } = useLanguage();
     const [isStressing, setIsStressing] = useState(false);
     const [liveData, setLiveData] = useState<Record<string, number>>({});
-    const animationRef = useRef<number>();
+    const animationRef = useRef<number | null>(null);
     const lastTickRef = useRef<number>(Date.now());
 
     // Initialize with default values
@@ -50,7 +50,9 @@ export function PerfMonVisualizer() {
         };
         animationRef.current = requestAnimationFrame(tick);
         return () => {
-            if (animationRef.current) cancelAnimationFrame(animationRef.current);
+            if (animationRef.current !== null) {
+                cancelAnimationFrame(animationRef.current);
+            }
         };
     }, [isStressing]);
 
@@ -106,7 +108,7 @@ export function PerfMonVisualizer() {
 
             <div className="p-6 sm:p-8 flex flex-col gap-10">
                 {/* Categories */}
-                {['memory', 'io', 'cpu'].map(cat => {
+                {(['memory', 'io', 'cpu'] as const).map(cat => {
                     const icon = cat === 'memory' ? <Database className="w-6 h-6 text-indigo-400" /> : 
                                  cat === 'io' ? <HardDrive className="w-6 h-6 text-emerald-400" /> : 
                                  <Cpu className="w-6 h-6 text-amber-400" />;

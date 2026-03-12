@@ -214,6 +214,17 @@ function CaseDetail({ rc, onBack }: { rc: RealCase; onBack: () => void }) {
         return () => document.removeEventListener('fullscreenchange', onFullscreenChange);
     }, []);
 
+    const leaveFullscreen = async () => {
+        if (document.fullscreenElement) {
+            try {
+                await document.exitFullscreen();
+            } catch {
+                // Ignore browser-specific fullscreen exit failures and fall back to state sync.
+            }
+        }
+        setIsFullscreen(false);
+    };
+
     useEffect(() => {
         if (!isFullscreen) return;
 
@@ -331,17 +342,6 @@ function CaseDetail({ rc, onBack }: { rc: RealCase; onBack: () => void }) {
                 : tone === 'warn'
                     ? 'border-amber-500/30 bg-amber-500/10 text-amber-300'
                     : 'border-white/10 bg-black/20 text-white/50';
-
-    const leaveFullscreen = async () => {
-        if (document.fullscreenElement) {
-            try {
-                await document.exitFullscreen();
-            } catch {
-                // Ignore browser-specific fullscreen exit failures and fall back to state sync.
-            }
-        }
-        setIsFullscreen(false);
-    };
 
     const toggleFullscreen = async () => {
         const node = containerRef.current;

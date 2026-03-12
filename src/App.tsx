@@ -1,85 +1,79 @@
-// React import omitted — JSX transform handles it
-import { RootLayout } from './components/Layout/RootLayout';
+import { Suspense, lazy, type ComponentType, type LazyExoticComponent } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
+import { RootLayout } from './components/Layout/RootLayout';
+import type { ModuleId } from './components/Layout/Sidebar';
 
-import { ArchitectureOverview } from './components/Architecture/ArchitectureOverview';
-import { StorageEngine } from './components/Storage/StorageEngine';
-import { MemoryOperations } from './components/Memory/MemoryOperations';
-import { QueryExecution } from './components/Execution/QueryExecution';
-import { DBAScenarios } from './components/DBA/DBAScenarios';
-import { HighAvailability } from './components/HA/HighAvailability';
-import { IndexVisualizer } from './components/Storage/IndexVisualizer';
-import { RealCasesPage } from './components/DBA/RealCasesPage';
-import { OSLevelConfig } from './components/OS/OSLevelConfig';
-import { PerfMonVisualizer } from './components/PerfMon/PerfMonVisualizer';
-import { SQLOSDeepDive } from './components/SQLOS/SQLOSDeepDive';
-import { ModernFeatures } from './components/Modern/ModernFeatures';
-import { TLogInternals } from './components/Internals/TLogInternals';
-import { TempDBAndIO } from './components/Internals/TempDBAndIO';
-import { ReplicationInternals } from './components/Internals/ReplicationInternals';
-import { VersionHistory } from './components/Internals/VersionHistory';
+type ModuleComponent = LazyExoticComponent<ComponentType>;
+
+function lazyNamed<TModule extends Record<string, ComponentType>, TKey extends keyof TModule>(
+  loader: () => Promise<TModule>,
+  exportName: TKey,
+): ModuleComponent {
+  return lazy(async () => {
+    const module = await loader();
+    return { default: module[exportName] };
+  });
+}
+
+const MODULE_COMPONENTS: Record<ModuleId, ModuleComponent> = {
+  architecture: lazyNamed(() => import('./components/Architecture/ArchitectureOverview'), 'ArchitectureOverview'),
+  storage: lazyNamed(() => import('./components/Storage/StorageEngine'), 'StorageEngine'),
+  memory: lazyNamed(() => import('./components/Memory/MemoryOperations'), 'MemoryOperations'),
+  execution: lazyNamed(() => import('./components/Execution/QueryExecution'), 'QueryExecution'),
+  dba: lazyNamed(() => import('./components/DBA/DBAScenarios'), 'DBAScenarios'),
+  ha: lazyNamed(() => import('./components/HA/HighAvailability'), 'HighAvailability'),
+  indexes: lazyNamed(() => import('./components/Storage/IndexVisualizer'), 'IndexVisualizer'),
+  realcases: lazyNamed(() => import('./components/DBA/RealCasesPage'), 'RealCasesPage'),
+  osconfig: lazyNamed(() => import('./components/OS/OSLevelConfig'), 'OSLevelConfig'),
+  perfmon: lazyNamed(() => import('./components/PerfMon/PerfMonVisualizer'), 'PerfMonVisualizer'),
+  sqlos: lazyNamed(() => import('./components/SQLOS/SQLOSDeepDive'), 'SQLOSDeepDive'),
+  modern: lazyNamed(() => import('./components/Modern/ModernFeatures'), 'ModernFeatures'),
+  'tlog-internals': lazyNamed(() => import('./components/Internals/TLogInternals'), 'TLogInternals'),
+  'tempdb-io': lazyNamed(() => import('./components/Internals/TempDBAndIO'), 'TempDBAndIO'),
+  replication: lazyNamed(() => import('./components/Internals/ReplicationInternals'), 'ReplicationInternals'),
+  'version-history': lazyNamed(() => import('./components/Internals/VersionHistory'), 'VersionHistory'),
+};
+
+function ModuleFallback({ currentModule }: { currentModule: ModuleId }) {
+  return (
+    <div className="w-full h-full flex items-center justify-center glass-panel rounded-2xl relative overflow-hidden">
+      <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent pointer-events-none" />
+      <div className="text-center p-8 z-10">
+        <div className="mx-auto mb-4 h-12 w-12 rounded-full border-2 border-white/15 border-t-primary animate-spin" />
+        <h2 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-white/50 capitalize">
+          {currentModule.replace(/-/g, ' ')}
+        </h2>
+        <p className="mt-3 text-muted-foreground text-sm max-w-lg mx-auto">
+          Loading interactive module content...
+        </p>
+      </div>
+    </div>
+  );
+}
 
 function App() {
   return (
     <RootLayout>
-      {(currentModule) => (
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={currentModule}
-            initial={{ opacity: 0, y: 10, filter: 'blur(10px)' }}
-            animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-            exit={{ opacity: 0, y: -10, filter: 'blur(10px)' }}
-            transition={{ duration: 0.3 }}
-            className="w-full h-full"
-          >
-            {currentModule === 'architecture' ? (
-              <ArchitectureOverview />
-            ) : currentModule === 'storage' ? (
-              <StorageEngine />
-            ) : currentModule === 'memory' ? (
-              <MemoryOperations />
-            ) : currentModule === 'execution' ? (
-              <QueryExecution />
-            ) : currentModule === 'dba' ? (
-              <DBAScenarios />
-            ) : currentModule === 'realcases' ? (
-              <RealCasesPage />
-            ) : currentModule === 'ha' ? (
-              <HighAvailability />
-            ) : currentModule === 'indexes' ? (
-              <IndexVisualizer />
-            ) : currentModule === 'osconfig' ? (
-              <OSLevelConfig />
-            ) : currentModule === 'perfmon' ? (
-              <PerfMonVisualizer />
-            ) : currentModule === 'sqlos' ? (
-              <SQLOSDeepDive />
-            ) : currentModule === 'modern' ? (
-              <ModernFeatures />
-            ) : currentModule === 'tlog-internals' ? (
-              <TLogInternals />
-            ) : currentModule === 'tempdb-io' ? (
-              <TempDBAndIO />
-            ) : currentModule === 'replication' ? (
-              <ReplicationInternals />
-            ) : currentModule === 'version-history' ? (
-              <VersionHistory />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center glass-panel rounded-2xl relative overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent pointer-events-none" />
-                <div className="text-center p-8 z-10">
-                  <h2 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-white/50 mb-4 capitalize">
-                    {(currentModule as string).replace('-', ' ')} Module
-                  </h2>
-                  <p className="text-muted-foreground text-lg max-w-lg mx-auto">
-                    Interactive simulation content for the {currentModule as string} layer will be loaded here.
-                  </p>
-                </div>
-              </div>
-            )}
-          </motion.div>
-        </AnimatePresence>
-      )}
+      {(currentModule) => {
+        const ActiveModule = MODULE_COMPONENTS[currentModule];
+
+        return (
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={currentModule}
+              initial={{ opacity: 0, y: 10, filter: 'blur(10px)' }}
+              animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+              exit={{ opacity: 0, y: -10, filter: 'blur(10px)' }}
+              transition={{ duration: 0.3 }}
+              className="w-full h-full"
+            >
+              <Suspense fallback={<ModuleFallback currentModule={currentModule} />}>
+                <ActiveModule />
+              </Suspense>
+            </motion.div>
+          </AnimatePresence>
+        );
+      }}
     </RootLayout>
   );
 }

@@ -107,8 +107,8 @@ function IndexCard({ sample }: { sample: OlaIndexSample }) {
 
 export function OlaHallengrenSimulator() {
   const { language } = useLanguage();
-  const [reorgFromPct, setReorgFromPct] = useState(OLA_DEFAULT_THRESHOLDS.reorganizeFromPct);
-  const [rebuildFromPct, setRebuildFromPct] = useState(OLA_DEFAULT_THRESHOLDS.rebuildFromPct);
+  const [reorgFromPct, setReorgFromPct] = useState<number>(OLA_DEFAULT_THRESHOLDS.reorganizeFromPct);
+  const [rebuildFromPct, setRebuildFromPct] = useState<number>(OLA_DEFAULT_THRESHOLDS.rebuildFromPct);
   const [playing, setPlaying] = useState(false);
   const [cursor, setCursor] = useState(0);
   const [phase, setPhase] = useState<PhaseId>('queue');
@@ -479,4 +479,3 @@ export function OlaHallengrenSimulator() {
     </div>
   );
 }
-

@@ -259,6 +259,10 @@ export function StorageEngine() {
         setTimeout(() => setGamLog(null), 3000);
     };
 
+    const addBackupLog = (msg: string) => {
+        setBackupLog(prev => [{ time: new Date().toLocaleTimeString(), msg }, ...prev].slice(0, 5));
+    };
+
     // Simulate database activity filling the log
     useEffect(() => {
         if (activeTab !== 'backups') return;
@@ -275,11 +279,7 @@ export function StorageEngine() {
         }, 1500);
 
         return () => clearInterval(interval);
-    }, [activeTab, recoveryMode]);
-
-    const addBackupLog = (msg: string) => {
-        setBackupLog(prev => [{ time: new Date().toLocaleTimeString(), msg }, ...prev].slice(0, 5));
-    };
+    }, [activeTab, recoveryMode, ui.checkpointSimple]);
 
     const takeFullBackup = () => {
         addBackupLog(t('backupLogActivity').replace('{type}', 'FULL (.bak)'));

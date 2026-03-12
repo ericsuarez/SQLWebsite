@@ -4,11 +4,13 @@
    ──────────────────────────────────────────────────── */
 
 // ─── OS-Level Config ──────────────────────────────────
+import type { TranslationKey } from '../i18n/translations';
+
 export interface OSConfigItem {
   id: string;
-  titleKey: string;
-  descKey: string;
-  impactKey: string;
+  titleKey: TranslationKey;
+  descKey: TranslationKey;
+  impactKey: TranslationKey;
   category: 'virtualization' | 'network' | 'policy' | 'power';
   icon: string;
   defaultValue: number | boolean | string;
@@ -41,8 +43,8 @@ export const OS_CONFIG_ITEMS: OSConfigItem[] = [
 // ─── PerfMon Counters ─────────────────────────────────
 export interface PerfCounter {
   id: string;
-  nameKey: string;
-  descKey: string;
+  nameKey: TranslationKey;
+  descKey: TranslationKey;
   category: 'memory' | 'io' | 'cpu';
   unit: string;
   healthy: number;
@@ -75,9 +77,9 @@ export const PERFMON_COUNTERS: PerfCounter[] = [
 // ─── SQLOS Deep Dive ──────────────────────────────────
 export interface SQLOSState {
   id: string;
-  labelKey: string;
+  labelKey: TranslationKey;
   color: string;
-  descKey: string;
+  descKey: TranslationKey;
 }
 
 export const SQLOS_STATES: SQLOSState[] = [
@@ -88,11 +90,11 @@ export const SQLOS_STATES: SQLOSState[] = [
 
 export interface SyncPrimitive {
   id: string;
-  nameKey: string;
-  levelKey: string;
-  granularityKey: string;
-  durationKey: string;
-  exampleKey: string;
+  nameKey: TranslationKey;
+  levelKey: TranslationKey;
+  granularityKey: TranslationKey;
+  durationKey: TranslationKey;
+  exampleKey: TranslationKey;
   color: string;
 }
 
@@ -104,10 +106,16 @@ export const SYNC_PRIMITIVES: SyncPrimitive[] = [
 
 export interface WaitCategory {
   id: string;
-  nameKey: string;
-  descKey: string;
+  nameKey: TranslationKey;
+  descKey: TranslationKey;
   color: string;
-  waits: { name: string; descKey: string; fixKey: string }[];
+  waits: WaitDefinition[];
+}
+
+interface WaitDefinition {
+  name: string;
+  descKey: TranslationKey;
+  fixKey: TranslationKey;
 }
 
 export const WAIT_CATEGORIES: WaitCategory[] = [
@@ -133,24 +141,6 @@ export const WAIT_CATEGORIES: WaitCategory[] = [
 ];
 
 // ─── Modern Features ──────────────────────────────────
-export interface ModernFeature {
-  id: string;
-  titleKey: string;
-  descKey: string;
-  detailKey: string;
-  version: string;
-  color: string;
-  icon: string;
-}
-
-export const MODERN_FEATURES: ModernFeature[] = [
-  { id: 'adr', titleKey: 'modAdrTitle', descKey: 'modAdrDesc', detailKey: 'modAdrDetail', version: '2019+', color: 'emerald', icon: 'RotateCcw' },
-  { id: 'iqp', titleKey: 'modIqpTitle', descKey: 'modIqpDesc', detailKey: 'modIqpDetail', version: '2019+', color: 'blue', icon: 'Brain' },
-  { id: 'hybridBp', titleKey: 'modHybridTitle', descKey: 'modHybridDesc', detailKey: 'modHybridDetail', version: '2019+', color: 'violet', icon: 'Cpu' },
-  { id: 'hekaton', titleKey: 'modHekatonTitle', descKey: 'modHekatonDesc', detailKey: 'modHekatonDetail', version: '2014+', color: 'amber', icon: 'Zap' },
-  { id: 'sqlpal', titleKey: 'modSqlpalTitle', descKey: 'modSqlpalDesc', detailKey: 'modSqlpalDetail', version: '2017+', color: 'cyan', icon: 'Layers' },
-];
-
 export interface LocalizedText {
   en: string;
   es: string;
