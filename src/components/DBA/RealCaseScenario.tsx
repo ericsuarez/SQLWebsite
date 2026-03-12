@@ -184,6 +184,7 @@ function CaseDetail({ rc, onBack }: { rc: RealCase; onBack: () => void }) {
     const [activePanel, setActivePanel] = useState<'flow' | 'schema' | 'fix'>('flow');
     const [isFullscreen, setIsFullscreen] = useState(false);
     const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+    const containerRef = useRef<HTMLDivElement | null>(null);
 
     const step = rc.steps[stepIdx];
     const total = rc.steps.length;
@@ -205,13 +206,24 @@ function CaseDetail({ rc, onBack }: { rc: RealCase; onBack: () => void }) {
     }, [playing, total]);
 
     useEffect(() => {
+        const onFullscreenChange = () => {
+            setIsFullscreen(document.fullscreenElement === containerRef.current);
+        };
+
+        document.addEventListener('fullscreenchange', onFullscreenChange);
+        return () => document.removeEventListener('fullscreenchange', onFullscreenChange);
+    }, []);
+
+    useEffect(() => {
         if (!isFullscreen) return;
 
         const prevOverflow = document.body.style.overflow;
         document.body.style.overflow = 'hidden';
 
         const onKeyDown = (ev: KeyboardEvent) => {
-            if (ev.key === 'Escape') setIsFullscreen(false);
+            if (ev.key === 'Escape') {
+                void leaveFullscreen();
+            }
         };
         window.addEventListener('keydown', onKeyDown);
 
@@ -320,12 +332,47 @@ function CaseDetail({ rc, onBack }: { rc: RealCase; onBack: () => void }) {
                     ? 'border-amber-500/30 bg-amber-500/10 text-amber-300'
                     : 'border-white/10 bg-black/20 text-white/50';
 
+    const leaveFullscreen = async () => {
+        if (document.fullscreenElement) {
+            try {
+                await document.exitFullscreen();
+            } catch {
+                // Ignore browser-specific fullscreen exit failures and fall back to state sync.
+            }
+        }
+        setIsFullscreen(false);
+    };
+
+    const toggleFullscreen = async () => {
+        const node = containerRef.current;
+        if (!node) return;
+
+        if (document.fullscreenElement === node || isFullscreen) {
+            await leaveFullscreen();
+            return;
+        }
+
+        try {
+            await node.requestFullscreen();
+            setIsFullscreen(true);
+        } catch {
+            // If fullscreen API is blocked, keep the state unchanged.
+        }
+    };
+
+    const handleBack = async () => {
+        if (document.fullscreenElement) {
+            await leaveFullscreen();
+        }
+        onBack();
+    };
+
     const content = (
         <div className={cn("flex flex-col h-full", isFullscreen ? "gap-3" : "gap-4")}>
             {/* Header bar */}
             <div className="flex items-center justify-between flex-wrap gap-3">
                 <div className="flex items-center gap-3">
-                    <button onClick={onBack}
+                    <button onClick={() => void handleBack()}
                         className="flex items-center gap-2 text-sm text-muted-foreground hover:text-white transition-colors bg-white/5 hover:bg-white/10 rounded-lg px-3 py-1.5 border border-white/10">
                         <ChevronLeft className="w-4 h-4" /> {t('backToCases')}
                     </button>
@@ -344,7 +391,7 @@ function CaseDetail({ rc, onBack }: { rc: RealCase; onBack: () => void }) {
                         ))}
                     </div>
                     <button
-                        onClick={() => setIsFullscreen(v => !v)}
+                        onClick={() => void toggleFullscreen()}
                         className={cn(
                             'rounded-xl border border-white/10 bg-white/5 p-2 text-muted-foreground transition-colors hover:bg-white/10 hover:text-white',
                             isFullscreen && 'bg-white/10 text-white',
@@ -430,7 +477,7 @@ function CaseDetail({ rc, onBack }: { rc: RealCase; onBack: () => void }) {
                         <div
                             className={cn(
                                 "grid grid-cols-1 xl:grid-cols-[minmax(0,1.08fr)_minmax(360px,0.92fr)] gap-4 flex-1 min-h-0",
-                                isFullscreen ? "overflow-hidden pb-0" : "overflow-y-auto pb-6",
+                                isFullscreen ? "overflow-y-auto pb-2 pr-1" : "overflow-y-auto pb-6",
                             )}
                         >
 
@@ -632,12 +679,21 @@ function CaseDetail({ rc, onBack }: { rc: RealCase; onBack: () => void }) {
             </AnimatePresence>
         </div>
     );
-    if (!isFullscreen) return content;
-
     return (
-        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xl p-4 md:p-6 overflow-hidden">
-            <div className="mx-auto h-full max-w-[1700px]">
-                <div className="h-full rounded-3xl border border-white/10 bg-background/40 backdrop-blur-xl p-4 md:p-6 shadow-glass">
+        <div
+            ref={containerRef}
+            className={cn(
+                'h-full',
+                isFullscreen && 'bg-zinc-950 px-4 py-4 md:px-6 md:py-6'
+            )}
+        >
+            <div className={cn('mx-auto h-full', isFullscreen && 'max-w-[1700px]')}>
+                <div
+                    className={cn(
+                        'h-full',
+                        isFullscreen && 'rounded-3xl border border-white/10 bg-background/80 p-4 shadow-glass backdrop-blur-xl md:p-6'
+                    )}
+                >
                     {content}
                 </div>
             </div>
