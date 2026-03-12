@@ -20,7 +20,6 @@ const MODULE_COMPONENTS: Record<ModuleId, ModuleComponent> = {
   storage: lazyNamed(() => import('./components/Storage/StorageEngine'), 'StorageEngine'),
   memory: lazyNamed(() => import('./components/Memory/MemoryOperations'), 'MemoryOperations'),
   execution: lazyNamed(() => import('./components/Execution/QueryExecution'), 'QueryExecution'),
-  dba: lazyNamed(() => import('./components/DBA/DBAScenarios'), 'DBAScenarios'),
   jobs: lazyNamed(() => import('./components/DBA/IndustryStandardJobs'), 'IndustryStandardJobs'),
   ha: lazyNamed(() => import('./components/HA/HighAvailability'), 'HighAvailability'),
   indexes: lazyNamed(() => import('./components/Storage/IndexVisualizer'), 'IndexVisualizer'),

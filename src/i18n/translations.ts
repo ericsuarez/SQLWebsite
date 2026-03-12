@@ -33,7 +33,7 @@ export const translations = {
         tabTempdbIo: 'TempDB & Advanced I/O',
         tabReplication: 'Replication Topologies',
         tabVersionHistory: 'Versions & History',
-        tabXEvents: 'Extended Events Lab',
+        tabXEvents: 'Extended Events',
 
         // OS Level Config
         osConfigMainDesc: 'Explore critical OS-level settings that directly impact SQL Server performance. Misconfigurations here are often invisible to DBADMVs.',
@@ -1504,7 +1504,7 @@ export const translations = {
         tabTempdbIo: 'TempDB y E/S avanzada',
         tabReplication: 'Topologias de replicacion',
         tabVersionHistory: 'Versiones e historia',
-        tabXEvents: 'Laboratorio de Extended Events',
+        tabXEvents: 'Extended Events',
     }
 };
 

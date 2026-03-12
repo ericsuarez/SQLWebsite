@@ -396,14 +396,14 @@ export function QueryExecution() {
                             exit={{ opacity: 0, y: -10 }}
                             className="min-h-full w-full overflow-y-auto pb-4"
                         >
-                            <div className="max-w-4xl mx-auto glass-panel p-8 rounded-2xl border-t-4 border-cyan-500 flex flex-col gap-6">
+                            <div className="glass-panel flex w-full min-h-full flex-col gap-6 rounded-3xl border border-cyan-500/20 p-4 sm:p-6">
                                 <h3 className="text-2xl font-bold flex items-center gap-2 text-cyan-400">
                                     <FileSearch className="w-6 h-6" /> {t('dmvTitle')}
                                 </h3>
                                 <p className="text-muted-foreground">{t('dmvDesc')}</p>
 
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-4">
-                                    <div className="bg-black/30 p-5 rounded-xl border border-white/5 hover:border-emerald-500/40 transition-colors">
+                                <div className="mt-2 grid grid-cols-1 gap-4 xl:grid-cols-3">
+                                    <div className="min-w-0 rounded-2xl border border-white/5 bg-black/30 p-5 transition-colors hover:border-emerald-500/40">
                                         <div className="flex items-center gap-3 mb-3">
                                             <Activity className="text-emerald-400 w-5 h-5" />
                                             <h4 className="font-bold text-emerald-400">{t('dmvExecTitle')}</h4>
@@ -416,7 +416,7 @@ export function QueryExecution() {
                                             ))}
                                         </div>
                                     </div>
-                                    <div className="bg-black/30 p-5 rounded-xl border border-white/5 hover:border-purple-500/40 transition-colors">
+                                    <div className="min-w-0 rounded-2xl border border-white/5 bg-black/30 p-5 transition-colors hover:border-purple-500/40">
                                         <div className="flex items-center gap-3 mb-3">
                                             <Cpu className="text-purple-400 w-5 h-5" />
                                             <h4 className="font-bold text-purple-400">{t('dmvOsTitle')}</h4>
@@ -429,7 +429,7 @@ export function QueryExecution() {
                                             ))}
                                         </div>
                                     </div>
-                                    <div className="bg-black/30 p-5 rounded-xl border border-white/5 hover:border-amber-500/40 transition-colors">
+                                    <div className="min-w-0 rounded-2xl border border-white/5 bg-black/30 p-5 transition-colors hover:border-amber-500/40">
                                         <div className="flex items-center gap-3 mb-3">
                                             <Database className="text-amber-400 w-5 h-5" />
                                             <h4 className="font-bold text-amber-400">{t('dmvDbTitle')}</h4>
@@ -445,7 +445,7 @@ export function QueryExecution() {
                                 </div>
 
                                 {/* Real T-SQL examples */}
-                                <div className="mt-2">
+                                <div className="min-w-0">
                                     <h4 className="text-lg font-bold text-cyan-300 mb-3 flex items-center gap-2">
                                         <Code2 className="w-5 h-5" /> {t('dmvExamplesLabel')}
                                     </h4>

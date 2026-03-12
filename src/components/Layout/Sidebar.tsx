@@ -4,7 +4,7 @@ import { cn } from '../../lib/utils';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { ALL_MODULES, MODULE_GROUPS, normalizeSearchValue, type ModuleGroupId } from './moduleCatalog';
 
-export type ModuleId = 'architecture' | 'storage' | 'memory' | 'execution' | 'dba' | 'jobs' | 'ha' | 'indexes' | 'realcases' | 'xevents' | 'osconfig' | 'perfmon' | 'sqlos' | 'modern' | 'tlog-internals' | 'tempdb-io' | 'replication' | 'version-history';
+export type ModuleId = 'architecture' | 'storage' | 'memory' | 'execution' | 'jobs' | 'ha' | 'indexes' | 'realcases' | 'xevents' | 'osconfig' | 'perfmon' | 'sqlos' | 'modern' | 'tlog-internals' | 'tempdb-io' | 'replication' | 'version-history';
 
 interface SidebarProps {
     currentModule: ModuleId;

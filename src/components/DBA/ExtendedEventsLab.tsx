@@ -131,8 +131,8 @@ export function ExtendedEventsLab() {
             </h3>
             <p className="mt-3 max-w-4xl text-sm leading-7 text-white/80">
               {language === 'es'
-                ? 'Laboratorio dedicado a incidentes que desaparecen antes de abrir una DMV. Primero defines la sesion XE, luego lanzas el play y ves como aparece la evidencia paso a paso.'
-                : 'Dedicated lab for incidents that disappear before you can inspect a DMV. First define the XE session, then run play and follow evidence step by step.'}
+                ? 'Ruta dedicada a incidentes que desaparecen antes de abrir una DMV. Primero defines la sesion XE y luego entras en play para ver como aparece la evidencia paso a paso.'
+                : 'Dedicated path for incidents that disappear before you can inspect a DMV. First define the XE session, then enter play to follow the evidence step by step.'}
             </p>
           </div>
         </div>

@@ -1,5 +1,4 @@
 import {
-  AlertTriangle,
   BookOpen,
   Cpu,
   Database,
@@ -81,13 +80,6 @@ export const MODULE_GROUPS: ModuleGroupDefinition[] = [
     id: 'operations',
     label: { en: 'Operations & DBA', es: 'Operaciones y DBA' },
     modules: [
-      {
-        id: 'dba',
-        titleKey: 'dbaScenarios',
-        icon: AlertTriangle,
-        color: 'text-rose-400',
-        aliases: ['dba', 'ownership', 'runbook', 'automation', 'operacion'],
-      },
       {
         id: 'jobs',
         titleKey: 'tabIndustryJobs',

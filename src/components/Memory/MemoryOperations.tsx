@@ -359,7 +359,7 @@ GROUP BY type;`,
 const CLERK_LABS: ClerkLab[] = [
   {
     id: 'plan-churn',
-    title: { es: 'Lab: Churn de planes ad-hoc', en: 'Lab: Ad-hoc plan churn' },
+    title: { es: 'Churn de planes ad-hoc', en: 'Ad-hoc plan churn' },
     objective: {
       es: 'Detectar cuando SQLCP desplaza memoria util por planes de un solo uso.',
       en: 'Detect when SQLCP displaces useful memory due to single-use plans.',
@@ -383,7 +383,7 @@ ORDER BY cp.size_in_bytes DESC;`,
   },
   {
     id: 'grant-pressure',
-    title: { es: 'Lab: Presion de memory grants', en: 'Lab: Memory grant pressure' },
+    title: { es: 'Presion de memory grants', en: 'Memory grant pressure' },
     objective: {
       es: 'Mostrar cola de memory grants y como impacta en latencia.',
       en: 'Show memory grant queueing and its latency impact.',
@@ -408,7 +408,7 @@ ORDER BY wait_time_ms DESC;`,
   },
   {
     id: 'xe-overhead',
-    title: { es: 'Lab: XE con overhead de memoria', en: 'Lab: XE memory overhead' },
+    title: { es: 'XE con overhead de memoria', en: 'XE memory overhead' },
     objective: {
       es: 'Comparar sesiones XE eficientes vs sesiones sin filtros.',
       en: 'Compare efficient XE sessions vs noisy unfiltered sessions.',
@@ -610,7 +610,7 @@ WHERE name IN ('min server memory (MB)', 'max server memory (MB)');`;
                         )}
                     >
                         <PieChart className="w-4 h-4" />
-                        {language === 'es' ? 'Clerks de Memoria (Lab)' : 'Memory Clerks (Lab)'}
+                        {language === 'es' ? 'Clerks de Memoria' : 'Memory Clerks'}
                     </button>
                     <button
                         onClick={() => setActiveTab('memory-config')}
@@ -620,7 +620,7 @@ WHERE name IN ('min server memory (MB)', 'max server memory (MB)');`;
                         )}
                     >
                         <Sliders className="w-4 h-4" />
-                        {language === 'es' ? 'Max/Min Memoria (Lab)' : 'Max/Min Memory (Lab)'}
+                        {language === 'es' ? 'Max/Min Memoria' : 'Max/Min Memory'}
                     </button>
                 </div>
             </div>
@@ -858,7 +858,7 @@ WHERE name IN ('min server memory (MB)', 'max server memory (MB)');`;
                                         </div>
                                         <div className="rounded-2xl border border-white/10 bg-black/30 p-3 text-xs leading-relaxed text-white/70">
                                             <div className="font-bold uppercase tracking-[0.18em] text-white/45">
-                                                {language === 'es' ? 'Pista de laboratorio' : 'Lab hint'}
+                                                {language === 'es' ? 'Pista operativa' : 'Operational hint'}
                                             </div>
                                             <p className="mt-2">{language === 'es' ? selectedClerk.labHint.es : selectedClerk.labHint.en}</p>
                                         </div>
@@ -875,7 +875,7 @@ WHERE name IN ('min server memory (MB)', 'max server memory (MB)');`;
                                     <div className="flex items-center justify-between gap-3 flex-wrap">
                                         <h4 className="text-lg font-bold text-cyan-300 flex items-center gap-2">
                                             <FlaskConical className="w-5 h-5" />
-                                            {language === 'es' ? 'Labs de memory clerks' : 'Memory clerk labs'}
+                                            {language === 'es' ? 'Escenarios de memory clerks' : 'Memory clerk scenarios'}
                                         </h4>
                                         <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-bold text-white/65">
                                             {language === 'es' ? 'Incluye scripts' : 'Includes scripts'}
@@ -883,8 +883,8 @@ WHERE name IN ('min server memory (MB)', 'max server memory (MB)');`;
                                     </div>
                                     <p className="text-sm text-white/65 mt-2">
                                         {language === 'es'
-                                            ? 'Cada laboratorio trae diagnostico y una accion de remediacion para validar mejoras.'
-                                            : 'Each lab includes diagnostics and a remediation action to validate improvements.'}
+                                            ? 'Cada escenario trae diagnostico y una accion de remediacion para validar mejoras.'
+                                            : 'Each scenario includes diagnostics and a remediation action to validate improvements.'}
                                     </p>
 
                                     <div className="mt-4 grid gap-2">
@@ -1078,7 +1078,7 @@ WHERE counter_name IN ('Page life expectancy', 'Memory Grants Pending', 'Free li
                                 <div className="glass-panel p-6 rounded-3xl border border-white/10">
                                     <h4 className="text-lg font-bold text-white flex items-center gap-2">
                                         <Server className="w-5 h-5 text-violet-300" />
-                                        {language === 'es' ? 'Lab de ajuste operativo' : 'Operational tuning lab'}
+                                        {language === 'es' ? 'Ajuste operativo' : 'Operational tuning'}
                                     </h4>
                                     <div className="mt-3 space-y-2 text-sm text-white/70">
                                         <p>{language === 'es' ? '1) Toma baseline de PLE, Memory Grants Pending y waits de I/O.' : '1) Capture baseline PLE, Memory Grants Pending, and I/O waits.'}</p>
