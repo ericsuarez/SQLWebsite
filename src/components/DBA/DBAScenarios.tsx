@@ -16,7 +16,7 @@ export function DBAScenarios() {
     const [isTsqlOpen, setIsTsqlOpen] = useState(false);
 
     const insertRow = () => {
-        let np = [...pages]; let lp = [...np[np.length - 1]];
+        const np = [...pages]; const lp = [...np[np.length - 1]];
         const max = Math.ceil(maxRows * (fillFactor / 100));
         if (lp.length >= max) {
             const mid = Math.floor(lp.length / 2);
@@ -91,92 +91,6 @@ export function DBAScenarios() {
                     </div>
                 )}
 
-                {/* IFI */}
-                {activeTab === 'ifi' && (
-                    <div className="glass-panel p-6 rounded-2xl border-orange-500/30 flex flex-col gap-6">
-                        <h3 className="text-xl font-bold flex items-center gap-2 text-orange-400">
-                            <ShieldCheck className="w-5 h-5" />{t('ifiTitle')}
-                            <button onClick={() => setIsTsqlOpen(true)} className="ml-4 px-2 py-1 bg-white/5 hover:bg-white/10 border border-white/10 rounded flex items-center gap-1.5 text-xs text-muted-foreground transition-colors"><Code2 className="w-3.5 h-3.5" />{t('viewTsql')}</button>
-                        </h3>
-                        <p className="text-muted-foreground">{t('ifiDesc')}</p>
-                        <div className="bg-black/40 p-6 rounded-xl border border-white/10 flex flex-col gap-6">
-                            <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-3">
-                                    <div className={cn('w-12 h-6 rounded-full p-1 cursor-pointer transition-colors', ifiEnabled ? 'bg-emerald-500' : 'bg-white/10')} onClick={() => setIfiEnabled(x => !x)}>
-                                        <motion.div className="w-4 h-4 rounded-full bg-white shadow-sm" animate={{ x: ifiEnabled ? 24 : 0 }} />
-                                    </div>
-                                    <span className="font-bold">{t('enableIfi')}</span>
-                                </div>
-                                <button onClick={createDatabase} disabled={dbStatus === 'creating'} className="px-6 py-2 bg-orange-500/20 hover:bg-orange-500/30 border border-orange-500/50 text-orange-300 rounded-lg font-bold transition-all disabled:opacity-50">{t('allocateBtn')}</button>
-                            </div>
-                            {dbStatus !== 'idle' && (
-                                <div className="flex flex-col gap-2">
-                                    <div className="flex justify-between text-sm font-bold">
-                                        <span className={dbStatus === 'done' ? 'text-emerald-400' : 'text-orange-400 animate-pulse'}>{dbStatus === 'creating' ? (ifiEnabled ? 'Calling SetFileValidData()...' : t('zeroingDisk')) : t('allocationComplete')}</span>
-                                        <span className="text-muted-foreground">10,000 MB</span>
-                                    </div>
-                                    <div className="h-4 bg-white/5 rounded-full overflow-hidden border border-white/10">
-                                        <motion.div className={cn('h-full', ifiEnabled ? 'bg-emerald-500 shadow-[0_0_10px_#10b981]' : 'bg-orange-500')} initial={{ width: 0 }} animate={{ width: `${progress}%` }} transition={{ duration: 0.1 }} />
-                                    </div>
-                                    <div className="flex justify-between items-center mt-1">
-                                        {!ifiEnabled && dbStatus === 'creating' && <p className="text-xs text-rose-400">{t('noticeDelay')}</p>}
-                                        <div className="flex items-center gap-2 text-xs font-mono ml-auto bg-black/50 px-3 py-1.5 rounded text-muted-foreground border border-white/10">
-                                            <Cpu className="w-3 h-3 text-cyan-400" />{t('apiCallLabel')}
-                                            <span className={ifiEnabled ? 'text-emerald-400 font-bold' : 'text-orange-400'}>{ifiEnabled ? 'SetFileValidData(hFile, 10GB)' : 'WriteFile(hFile, 0x00...)'}</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                )}
-
-                {/* LPIM */}
-                {activeTab === 'lpim' && (
-                    <div className="glass-panel p-6 rounded-2xl border-emerald-500/30 flex flex-col gap-6">
-                        <h3 className="text-xl font-bold flex items-center gap-2 text-emerald-400">
-                            <ShieldAlert className="w-5 h-5" /> {t('lpimTitle')}
-                            <button onClick={() => setIsTsqlOpen(true)} className="ml-4 px-2 py-1 bg-white/5 hover:bg-white/10 border border-white/10 rounded flex items-center gap-1.5 text-xs text-muted-foreground transition-colors"><Code2 className="w-3.5 h-3.5" /> {t('viewTsql')}</button>
-                        </h3>
-                        <p className="text-muted-foreground">{t('lpimDesc')}</p>
-                        <div className="bg-black/40 p-6 rounded-xl border border-white/10 flex flex-col gap-6">
-                            <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-3">
-                                    <div className={cn('w-12 h-6 rounded-full p-1 cursor-pointer transition-colors', lpimEnabled ? 'bg-emerald-500' : 'bg-white/10')} onClick={() => setLpimEnabled(x => !x)}>
-                                        <motion.div className="w-4 h-4 rounded-full bg-white shadow-sm" animate={{ x: lpimEnabled ? 24 : 0 }} />
-                                    </div>
-                                    <span className="font-bold">{lpimEnabled ? t('lpimEnabled') : t('lpimDisabled')}</span>
-                                </div>
-                            </div>
-
-                            <div className="relative h-32 mt-4 flex items-center bg-black/30 rounded-xl overflow-hidden border border-white/5">
-                                <div className="w-1/2 flex flex-col items-center justify-center p-4 h-full border-r border-white/10 relative z-10">
-                                    <span className="text-sm font-bold text-white mb-2">RAM</span>
-                                    <HardDrive className="w-8 h-8 text-white/50" />
-                                </div>
-                                <div className="w-1/2 flex flex-col items-center justify-center p-4 h-full relative z-10">
-                                    <span className="text-sm font-bold text-white mb-2">Pagefile.sys (Disk)</span>
-                                    <HardDrive className="w-8 h-8 text-rose-400/50" />
-                                </div>
-
-                                {/* Animation representing paging */}
-                                {!lpimEnabled && (
-                                    <motion.div
-                                        animate={{ x: [0, 150, 0] }}
-                                        transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}
-                                        className="absolute left-[20%] w-8 h-8 bg-amber-500/50 rounded-lg blur-sm z-0"
-                                    />
-                                )}
-                                {lpimEnabled && (
-                                    <div className="absolute left-[40%] rounded-full w-20 h-20 bg-emerald-500/10 border-4 border-emerald-500/30 flex items-center justify-center z-20">
-                                        <ShieldAlert className="w-8 h-8 text-emerald-400" />
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                    </div>
-                )}
-
                 {/* CREATION */}
                 {activeTab === 'creation' && (
                     <div className="glass-panel p-6 rounded-2xl border-purple-500/30 flex flex-col gap-6">
@@ -210,24 +124,18 @@ export function DBAScenarios() {
             <TSqlModal
                 isOpen={isTsqlOpen}
                 onClose={() => setIsTsqlOpen(false)}
-                title={activeTab === 'pageSplit' ? t('dbaTsqlSplitTitle') : activeTab === 'ifi' ? t('dbaTsqlIfiTitle') : ''}
-                description={activeTab === 'pageSplit' ? t('dbaTsqlSplitDesc') : activeTab === 'ifi' ? t('dbaTsqlIfiDesc') : ''}
+                title={t('dbaTsqlSplitTitle')}
+                description={t('dbaTsqlSplitDesc')}
                 diagnosticScript={{
-                    '2019': activeTab === 'pageSplit'
-                        ? `SELECT dm.index_id, dm.avg_fragmentation_in_percent\nFROM sys.dm_db_index_physical_stats (DB_ID(), NULL, NULL, NULL, 'LIMITED') dm\nWHERE avg_fragmentation_in_percent > 10.0;`
-                        : `SELECT servicename, instant_file_initialization_enabled FROM sys.dm_server_services;`,
-                    '2022': activeTab === 'pageSplit'
-                        ? `SELECT dm.index_id, dm.avg_fragmentation_in_percent\nFROM sys.dm_db_index_physical_stats (DB_ID(), NULL, NULL, NULL, 'LIMITED') dm\nWHERE avg_fragmentation_in_percent > 10.0;`
-                        : `SELECT servicename, instant_file_initialization_enabled FROM sys.dm_server_services;`,
-                    '2025': activeTab === 'pageSplit'
-                        ? `SELECT dm.index_id, dm.avg_fragmentation_in_percent\nFROM sys.dm_db_index_physical_stats (DB_ID(), NULL, NULL, NULL, 'LIMITED') dm\nWHERE avg_fragmentation_in_percent > 10.0;`
-                        : `SELECT servicename, instant_file_initialization_enabled FROM sys.dm_server_services;`,
+                    '2019': `SELECT dm.index_id, dm.avg_fragmentation_in_percent\nFROM sys.dm_db_index_physical_stats (DB_ID(), NULL, NULL, NULL, 'LIMITED') dm\nWHERE avg_fragmentation_in_percent > 10.0;`,
+                    '2022': `SELECT dm.index_id, dm.avg_fragmentation_in_percent\nFROM sys.dm_db_index_physical_stats (DB_ID(), NULL, NULL, NULL, 'LIMITED') dm\nWHERE avg_fragmentation_in_percent > 10.0;`,
+                    '2025': `SELECT dm.index_id, dm.avg_fragmentation_in_percent\nFROM sys.dm_db_index_physical_stats (DB_ID(), NULL, NULL, NULL, 'LIMITED') dm\nWHERE avg_fragmentation_in_percent > 10.0;`,
                 }}
-                remediationTitle={activeTab === 'pageSplit' ? t('dbaRemediationSplitTitle') : t('dbaRemediationIfiTitle')}
+                remediationTitle={t('dbaRemediationSplitTitle')}
                 remediationScript={{
-                    '2019': activeTab === 'pageSplit' ? `ALTER INDEX ALL ON TableName REBUILD WITH (FILLFACTOR = 80, ONLINE = ON);` : `-- Enable via Local Security Policy`,
-                    '2022': activeTab === 'pageSplit' ? `ALTER INDEX ALL ON TableName REBUILD WITH (FILLFACTOR = 80, ONLINE = ON, RESUMABLE = ON);` : `-- Enable via Local Security Policy`,
-                    '2025': activeTab === 'pageSplit' ? `ALTER INDEX ALL ON TableName REBUILD WITH (FILLFACTOR = 80, ONLINE = ON, RESUMABLE = ON);` : `-- Enable via Local Security Policy`,
+                    '2019': `ALTER INDEX ALL ON TableName REBUILD WITH (FILLFACTOR = 80, ONLINE = ON);`,
+                    '2022': `ALTER INDEX ALL ON TableName REBUILD WITH (FILLFACTOR = 80, ONLINE = ON, RESUMABLE = ON);`,
+                    '2025': `ALTER INDEX ALL ON TableName REBUILD WITH (FILLFACTOR = 80, ONLINE = ON, RESUMABLE = ON);`,
                 }}
             />
         </div>
