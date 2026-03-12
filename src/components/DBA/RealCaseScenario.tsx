@@ -65,6 +65,13 @@ function pick(language: 'en' | 'es', text: LocalizedCaseText) {
     return language === 'es' ? text.es : text.en;
 }
 
+function detectionModeLabel(language: 'en' | 'es', mode?: RealCase['detectionMode']) {
+    if (mode === 'xe') return language === 'es' ? 'Solo XE' : 'XE only';
+    if (mode === 'hybrid') return language === 'es' ? 'DMV + XE' : 'DMV + XE';
+    if (mode === 'hypervisor') return language === 'es' ? 'Guest + hipervisor' : 'Guest + hypervisor';
+    return language === 'es' ? 'DMVs' : 'DMVs';
+}
+
 function phaseLabel(language: 'en' | 'es', phase: ExecPhase) {
     const labels: Record<ExecPhase, { en: string; es: string }> = {
         parse: { en: 'Parse', es: 'Parseo' },
@@ -131,7 +138,9 @@ function CaseGrid({ cases, onSelect }: { cases: RealCase[]; onSelect: (c: RealCa
                     <div className="flex items-center gap-3">
                         <span className="text-3xl">{c.icon}</span>
                         <div>
-                            <div className={cn('font-bold text-sm', COLOR_TEXT[c.color])}>{t(c.nameKey as any)}</div>
+                            <div className={cn('font-bold text-sm', COLOR_TEXT[c.color])}>
+                                {c.title ? pick(language, c.title) : t(c.nameKey as any)}
+                            </div>
                             <div className="flex items-center gap-1 mt-0.5">
                                 <Clock className="w-3 h-3 text-muted-foreground" />
                                 <span className="text-[10px] text-muted-foreground">
@@ -140,7 +149,22 @@ function CaseGrid({ cases, onSelect }: { cases: RealCase[]; onSelect: (c: RealCa
                             </div>
                         </div>
                     </div>
-                    <p className="text-xs text-muted-foreground leading-relaxed line-clamp-3">{t(c.descKey as any)}</p>
+                    <div className="flex flex-wrap gap-1.5">
+                        <span className="rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.16em] text-white/55">
+                            {detectionModeLabel(language, c.detectionMode)}
+                        </span>
+                        {c.badges?.slice(0, 2).map((badge) => (
+                            <span
+                                key={`${c.id}-${badge}`}
+                                className="rounded-full border border-white/10 bg-black/30 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.16em] text-white/45"
+                            >
+                                {badge}
+                            </span>
+                        ))}
+                    </div>
+                    <p className="text-xs text-muted-foreground leading-relaxed line-clamp-3">
+                        {c.description ? pick(language, c.description) : t(c.descKey as any)}
+                    </p>
                     <div className="flex justify-end">
                         <span className={cn('text-xs font-bold flex items-center gap-1 group-hover:gap-2 transition-all', COLOR_TEXT[c.color])}>
                             {t('explore')} <ArrowRight className="w-3 h-3" />
@@ -247,6 +271,11 @@ function CaseDetail({ rc, onBack }: { rc: RealCase; onBack: () => void }) {
     const resolution = CASE_RESOLUTION_SCRIPTS[rc.id];
     const clrText = COLOR_TEXT[rc.color];
     const clrBg = COLOR_BG[rc.color];
+    const caseTitle = rc.title ? pick(language, rc.title) : t(rc.nameKey as any);
+    const caseDescription = rc.description ? pick(language, rc.description) : t(rc.descKey as any);
+    const caseDetails = rc.details ? pick(language, rc.details) : t(rc.detailsKey as any);
+    const resolutionSummary = rc.resolution ? pick(language, rc.resolution) : t(rc.resolutionKey as any);
+    const resolutionText = resolution ? pick(language, resolution) : resolutionSummary;
 
     const highlightLabel = (h: string | undefined) => {
         if (!h) return t('queryEvent');
@@ -262,15 +291,15 @@ function CaseDetail({ rc, onBack }: { rc: RealCase; onBack: () => void }) {
         ['schema', t('tabSchemaQuery')],
         ['fix', t('tabDetectionFix')],
     ];
-    const resolutionText = resolution ? pick(language, resolution) : t(rc.resolutionKey as any);
     const waitType = step.sqlos?.waitType ?? 'none';
     const needsPhysicalIo =
         step.highlight === 'io' ||
         /PAGEIOLATCH|ASYNC_IO|WRITELOG|IO_COMPLETION|LOGBUFFER/i.test(waitType);
     const overviewCards = [
-        { label: t('rootCauseLabel'), value: t(rc.detailsKey as any) },
-        { label: t('impactLabel'), value: t(rc.descKey as any) },
-        { label: t('bestPracticeLabel'), value: t(rc.resolutionKey as any) },
+        { label: t('rootCauseLabel'), value: caseDetails },
+        { label: t('impactLabel'), value: caseDescription },
+        { label: t('bestPracticeLabel'), value: resolutionSummary },
+        ...(rc.detectionSummary ? [{ label: language === 'es' ? 'Detecci\u00f3n real' : 'Real detection path', value: pick(language, rc.detectionSummary) }] : []),
     ];
     const flowCards = [
         {
@@ -377,9 +406,12 @@ function CaseDetail({ rc, onBack }: { rc: RealCase; onBack: () => void }) {
                         <ChevronLeft className="w-4 h-4" /> {t('backToCases')}
                     </button>
                     <span className="text-2xl">{rc.icon}</span>
-                    <h2 className={cn('text-xl font-bold', clrText)}>{t(rc.nameKey as any)}</h2>
+                    <h2 className={cn('text-xl font-bold', clrText)}>{caseTitle}</h2>
                 </div>
                 <div className="flex items-center gap-2">
+                    <span className={cn('hidden rounded-full border px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.18em] md:inline-flex', clrBg, clrText)}>
+                        {detectionModeLabel(language, rc.detectionMode)}
+                    </span>
                     {/* Panel switcher */}
                     <div className="flex gap-1 p-1 bg-white/5 rounded-xl border border-white/10">
                         {panels.map(([id, lbl]) => (
@@ -423,7 +455,7 @@ function CaseDetail({ rc, onBack }: { rc: RealCase; onBack: () => void }) {
                             </span>
                         </div>
 
-                        <div className="grid gap-4 xl:grid-cols-3">
+                        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
                             {overviewCards.map((card) => (
                                 <div key={card.label} className="rounded-2xl border border-white/10 bg-black/25 p-4">
                                     <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-white/40">{card.label}</div>
@@ -492,7 +524,9 @@ function CaseDetail({ rc, onBack }: { rc: RealCase; onBack: () => void }) {
                                         <SectionBox icon={Activity}
                                             label={`${t('stepLabel')} ${stepIdx + 1} - ${t('stepObservation')}`}
                                             accent={`${clrText} ${clrBg}`}>
-                                            <p className="text-sm text-white/85 leading-relaxed">{t(step.logKey as any)}</p>
+                                            <p className="text-sm text-white/85 leading-relaxed">
+                                                {step.log ? pick(language, step.log) : t(step.logKey as any)}
+                                            </p>
                                             {step.highlight && (
                                                 <div className={cn('mt-3 inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold border',
                                                     step.highlight === 'lock'  ? 'bg-amber-500/15 border-amber-500/30 text-amber-300' :
@@ -571,7 +605,11 @@ function CaseDetail({ rc, onBack }: { rc: RealCase; onBack: () => void }) {
                                                     <div className="flex items-center gap-2 flex-wrap">
                                                         <span className={cn('w-2.5 h-2.5 rounded-full shrink-0', DOT[s.status] ?? DOT.idle)} />
                                                         <span className="font-mono text-xs font-black text-cyan-400 shrink-0">SPID {s.spid}</span>
-                                                        {s.labelKey && <span className="text-xs text-white/70 flex-1 min-w-0 truncate">{t(s.labelKey as any)}</span>}
+                                                        {(s.labelKey || s.label) && (
+                                                            <span className="text-xs text-white/70 flex-1 min-w-0 truncate">
+                                                                {s.label ? pick(language, s.label) : t(s.labelKey as any)}
+                                                            </span>
+                                                        )}
                                                         <span className={cn('ml-auto text-[10px] font-bold uppercase px-1.5 py-0.5 rounded',
                                                             s.status === 'running'    ? 'bg-emerald-500/20 text-emerald-400' :
                                                             s.status === 'suspended'  ? 'bg-rose-500/20 text-rose-400' :
@@ -667,10 +705,22 @@ function CaseDetail({ rc, onBack }: { rc: RealCase; onBack: () => void }) {
                 {/* ── FIX PANEL ─────────────────────────────────────────── */}
                 {activePanel === 'fix' && (
                     <motion.div key="fix" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
-                        className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+                        className={cn('grid grid-cols-1 gap-4', rc.xeScript ? 'xl:grid-cols-3' : 'xl:grid-cols-2')}>
                         <SectionBox icon={Search} label={t('detectionTsql')} accent="text-blue-300 bg-blue-500/10">
                             <CopyCodeBlock code={pick(language, rc.detectionQuery)} accent="blue" />
                         </SectionBox>
+                        {rc.xeScript && (
+                            <SectionBox
+                                icon={Activity}
+                                label={language === 'es' ? 'Extended Events' : 'Extended Events'}
+                                accent="text-orange-300 bg-orange-500/10"
+                            >
+                                {rc.xeWhy && (
+                                    <p className="mb-4 text-sm leading-7 text-white/75">{pick(language, rc.xeWhy)}</p>
+                                )}
+                                <CopyCodeBlock code={pick(language, rc.xeScript)} accent="amber" />
+                            </SectionBox>
+                        )}
                         <SectionBox icon={Wrench} label={t('resolutionBestPractice')} accent="text-emerald-300 bg-emerald-500/10">
                             <CopyCodeBlock code={resolutionText} accent="emerald" />
                         </SectionBox>

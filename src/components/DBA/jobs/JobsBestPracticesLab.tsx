@@ -14,7 +14,11 @@ function clamp(min: number, value: number, max: number) {
   return Math.max(min, Math.min(max, value));
 }
 
-export function JobsBestPracticesLab() {
+interface JobsBestPracticesLabProps {
+  compact?: boolean;
+}
+
+export function JobsBestPracticesLab({ compact = false }: JobsBestPracticesLabProps) {
   const { language } = useLanguage();
   const [strategy, setStrategy] = useState<StrategyId>('ola');
   const [owner, setOwner] = useState<OwnerId>('sa');
@@ -98,26 +102,39 @@ export function JobsBestPracticesLab() {
         : 'border-rose-500/25 bg-rose-500/10 text-rose-200';
 
   return (
-    <div className="grid gap-6 xl:grid-cols-[minmax(0,1.14fr)_420px]">
-      <div className="glass-panel rounded-2xl border border-white/10 p-6">
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div className="min-w-[280px] flex-1">
-            <h3 className="text-xl font-bold text-emerald-300 flex items-center gap-2">
-              <ClipboardList className="h-5 w-5" />
-              {language === 'es' ? 'Lab: buenas practicas de Jobs (SQL Agent)' : 'Lab: SQL Agent job best practices'}
-            </h3>
-            <p className="mt-2 text-sm text-muted-foreground">
+    <div className={cn('grid gap-4 lg:gap-6', compact ? 'grid-cols-1' : 'xl:grid-cols-[minmax(0,1.14fr)_420px]')}>
+      <div className="glass-panel rounded-2xl border border-white/10 p-4 sm:p-6">
+        {!compact ? (
+          <div className="flex flex-wrap items-start justify-between gap-4">
+            <div className="min-w-0 flex-1">
+              <h3 className="text-xl font-bold text-emerald-300 flex items-center gap-2">
+                <ClipboardList className="h-5 w-5" />
+                {language === 'es' ? 'Lab: buenas practicas de Jobs (SQL Agent)' : 'Lab: SQL Agent job best practices'}
+              </h3>
+              <p className="mt-2 text-sm text-muted-foreground">
+                {language === 'es'
+                  ? 'Configura un job ficticio y mira como cambian los riesgos: owner, notificaciones, logging, ventanas y estrategia (Ola vs Maintenance Plan).'
+                  : 'Configure a fake job and watch risk change: owner, notifications, logging, windows and strategy (Ola vs Maintenance Plan).'}
+              </p>
+            </div>
+            <span className={cn('rounded-full border px-3 py-1 text-[10px] font-bold uppercase tracking-[0.18em]', healthChip)}>
+              {language === 'es' ? 'salud' : 'health'} {health}%
+            </span>
+          </div>
+        ) : (
+          <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/10 p-3">
+            <div className="text-[11px] font-bold uppercase tracking-[0.22em] text-emerald-200">
+              {language === 'es' ? 'Play: configuracion en vivo' : 'Play: live configuration'}
+            </div>
+            <p className="mt-2 text-xs text-white/75">
               {language === 'es'
-                ? 'Configura un job ficticio y mira como cambian los riesgos: owner, notificaciones, logging, ventanas y estrategia (Ola vs Maintenance Plan).'
-                : 'Configure a fake job and watch risk change: owner, notifications, logging, windows and strategy (Ola vs Maintenance Plan).'}
+                ? 'Cambia opciones del job y mira como se mueve el riesgo operativo al instante.'
+                : 'Change job options and watch operational risk move instantly.'}
             </p>
           </div>
-          <span className={cn('rounded-full border px-3 py-1 text-[10px] font-bold uppercase tracking-[0.18em]', healthChip)}>
-            {language === 'es' ? 'salud' : 'health'} {health}%
-          </span>
-        </div>
+        )}
 
-        <div className="mt-6 grid gap-4 md:grid-cols-2">
+        <div className="mt-6 grid gap-4 lg:grid-cols-2">
           <div className="rounded-3xl border border-white/10 bg-black/20 p-5">
             <div className="text-[11px] font-bold uppercase tracking-[0.22em] text-white/40">
               {language === 'es' ? 'Configuracion' : 'Configuration'}
@@ -127,7 +144,7 @@ export function JobsBestPracticesLab() {
               <div className="grid gap-3 sm:grid-cols-2">
                 <div>
                   <div className="text-xs font-bold text-white/65">{language === 'es' ? 'Estrategia' : 'Strategy'}</div>
-                  <div className="mt-2 flex gap-2 rounded-2xl border border-white/10 bg-black/20 p-1">
+                  <div className="mt-2 flex flex-wrap gap-2 rounded-2xl border border-white/10 bg-black/20 p-1">
                     {(
                       [
                         { id: 'ola', label: { en: 'Ola', es: 'Ola' }, icon: Wrench },
@@ -312,7 +329,7 @@ export function JobsBestPracticesLab() {
           </div>
         </div>
 
-        <div className="mt-6 grid gap-4 md:grid-cols-2">
+        {!compact ? <div className="mt-6 grid gap-4 lg:grid-cols-2">
           <div className="glass-panel rounded-2xl border border-white/10 p-6">
             <h4 className="text-lg font-bold text-white">{language === 'es' ? 'Plantillas T-SQL (copiar y pegar)' : 'T-SQL templates (copy/paste)'}</h4>
             <p className="mt-2 text-sm text-muted-foreground">
@@ -355,10 +372,10 @@ export function JobsBestPracticesLab() {
               ))}
             </div>
           </div>
-        </div>
+        </div> : null}
       </div>
 
-      <div className="glass-panel rounded-2xl border border-white/10 p-6">
+      {!compact ? <div className="glass-panel rounded-2xl border border-white/10 p-6">
         <div className="flex items-center justify-between gap-3">
           <h4 className="text-lg font-bold text-white">{language === 'es' ? 'Tip pro' : 'Pro tip'}</h4>
           <span className="rounded-full border border-white/10 bg-black/25 px-3 py-1 text-xs font-bold text-white/70">
@@ -370,7 +387,7 @@ export function JobsBestPracticesLab() {
             ? 'La diferencia entre un DBA senior y un incendio es: jobs con visibilidad, alertas y runbooks. Los scripts de Ola/Brent ayudan, pero lo que escala es el proceso.'
             : 'The difference between senior DBA work and firefighting is: visible jobs, alerts and runbooks. Ola/Brent help, but process is what scales.'}
         </p>
-      </div>
+      </div> : null}
     </div>
   );
 }

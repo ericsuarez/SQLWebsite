@@ -1,9 +1,15 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Database, Cpu, HardDrive, MonitorIcon, ChevronRight, Play, Server, FileText, LayoutTemplate, Settings, Box, DatabaseBackup, Save } from 'lucide-react';
+import { AlertTriangle, Box, ChevronRight, Cpu, Database, DatabaseBackup, FileText, HardDrive, LayoutTemplate, MonitorIcon, Play, Save, Server, Settings, ShieldCheck } from 'lucide-react';
 import { useLanguage } from '../../contexts/LanguageContext';
 import type { TranslationKey } from '../../i18n/translations';
+import {
+    SYSTEM_DATABASE_ACTIONS,
+    SYSTEM_DATABASE_GUIDES,
+    type LocalizedText,
+} from '../../data/platformGuidesData';
 import { cn } from '../../lib/utils';
+import { CopyCodeBlock } from '../Shared/CopyCodeBlock';
 
 const layers: { id: string; titleKey: TranslationKey; icon: any; color: string; bg: string }[] = [
     { id: 'client', titleKey: 'layerClient', icon: MonitorIcon, color: 'border-blue-500/50', bg: 'bg-blue-500/10' },
@@ -16,7 +22,39 @@ export function ArchitectureOverview() {
     const [activeTab, setActiveTab] = useState<'engine' | 'sysdbs' | 'files'>('engine');
     const [activeLayer, setActiveLayer] = useState<string | null>(null);
     const [isSimulating, setIsSimulating] = useState(false);
-    const { t } = useLanguage();
+    const [activeSystemDb, setActiveSystemDb] = useState<(typeof SYSTEM_DATABASE_GUIDES)[number]['id']>('master');
+    const [activeSystemAction, setActiveSystemAction] = useState<(typeof SYSTEM_DATABASE_ACTIONS)[number]['id']>('server-config');
+    const { t, language } = useLanguage();
+
+    const pick = (text: LocalizedText) => language === 'es' ? text.es : text.en;
+
+    const activeSystemDbGuide =
+        SYSTEM_DATABASE_GUIDES.find((guide) => guide.id === activeSystemDb) ?? SYSTEM_DATABASE_GUIDES[0];
+    const activeSystemActionGuide =
+        SYSTEM_DATABASE_ACTIONS.find((action) => action.id === activeSystemAction) ?? SYSTEM_DATABASE_ACTIONS[0];
+
+    const systemDbStyles = {
+        master: {
+            card: 'border-rose-500/25 bg-rose-500/10 shadow-[0_0_20px_rgba(244,63,94,0.12)]',
+            badge: 'border-rose-500/20 bg-rose-500/10 text-rose-300',
+            icon: Settings,
+        },
+        model: {
+            card: 'border-blue-500/25 bg-blue-500/10 shadow-[0_0_20px_rgba(59,130,246,0.12)]',
+            badge: 'border-blue-500/20 bg-blue-500/10 text-blue-300',
+            icon: LayoutTemplate,
+        },
+        msdb: {
+            card: 'border-violet-500/25 bg-violet-500/10 shadow-[0_0_20px_rgba(139,92,246,0.12)]',
+            badge: 'border-violet-500/20 bg-violet-500/10 text-violet-300',
+            icon: Box,
+        },
+        tempdb: {
+            card: 'border-amber-500/25 bg-amber-500/10 shadow-[0_0_20px_rgba(251,191,36,0.12)]',
+            badge: 'border-amber-500/20 bg-amber-500/10 text-amber-300',
+            icon: Cpu,
+        },
+    } as const;
 
     const simulateFlow = () => {
         if (isSimulating) return;
@@ -217,58 +255,229 @@ export function ArchitectureOverview() {
                             initial={{ opacity: 0, y: 10 }}
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, y: -10 }}
-                            className="h-full w-full grid grid-cols-1 md:grid-cols-2 gap-6 overflow-y-auto pb-8"
+                            className="h-full w-full overflow-y-auto pb-8"
                         >
-                            <div className="col-span-full mb-2">
-                                <p className="text-muted-foreground text-lg">{t('sysDbsDesc')}</p>
-                            </div>
+                            <div className="grid gap-6 xl:grid-cols-[320px_minmax(0,1fr)]">
+                                <div className="space-y-6">
+                                    <div className="glass-panel rounded-3xl p-5">
+                                        <p className="text-sm leading-relaxed text-muted-foreground">
+                                            {t('sysDbsDesc')}
+                                        </p>
+                                        <div className="mt-5 space-y-3">
+                                            {SYSTEM_DATABASE_GUIDES.map((guide) => {
+                                                const style = systemDbStyles[guide.id];
+                                                const Icon = style.icon;
+                                                const isActive = activeSystemDb === guide.id;
 
-                            <div className="glass-panel p-6 rounded-2xl border-t-4 border-rose-500 hover:-translate-y-1 transition-transform">
-                                <div className="flex items-center gap-4 mb-4">
-                                    <div className="p-3 bg-rose-500/20 rounded-xl">
-                                        <Settings className="w-8 h-8 text-rose-400" />
+                                                return (
+                                                    <motion.button
+                                                        key={guide.id}
+                                                        whileHover={{ y: -2 }}
+                                                        onClick={() => {
+                                                            setActiveSystemDb(guide.id);
+                                                            const relatedAction = SYSTEM_DATABASE_ACTIONS.find((action) => action.target === guide.id);
+                                                            if (relatedAction) {
+                                                                setActiveSystemAction(relatedAction.id);
+                                                            }
+                                                        }}
+                                                        className={cn(
+                                                            'w-full rounded-3xl border p-4 text-left transition-all',
+                                                            isActive ? style.card : 'border-white/10 bg-black/25 hover:border-white/20 hover:bg-white/[0.06]'
+                                                        )}
+                                                    >
+                                                        <div className="flex items-start justify-between gap-3">
+                                                            <div className="flex items-center gap-3">
+                                                                <div className={cn('flex h-12 w-12 items-center justify-center rounded-2xl border', style.badge)}>
+                                                                    <Icon className="h-5 w-5" />
+                                                                </div>
+                                                                <div>
+                                                                    <div className="font-mono text-lg font-bold text-white">{guide.name}</div>
+                                                                    <div className="text-xs uppercase tracking-[0.2em] text-white/45">
+                                                                        {pick(guide.headline)}
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                            {isActive && <div className="mt-2 h-2.5 w-2.5 rounded-full bg-white shadow-glow" />}
+                                                        </div>
+                                                    </motion.button>
+                                                );
+                                            })}
+                                        </div>
                                     </div>
-                                    <h3 className="text-2xl font-bold font-mono text-white">master</h3>
-                                </div>
-                                <p className="text-muted-foreground leading-relaxed">
-                                    {t('masterDesc')}
-                                </p>
-                            </div>
 
-                            <div className="glass-panel p-6 rounded-2xl border-t-4 border-blue-500 hover:-translate-y-1 transition-transform">
-                                <div className="flex items-center gap-4 mb-4">
-                                    <div className="p-3 bg-blue-500/20 rounded-xl">
-                                        <LayoutTemplate className="w-8 h-8 text-blue-400" />
-                                    </div>
-                                    <h3 className="text-2xl font-bold font-mono text-white">model</h3>
-                                </div>
-                                <p className="text-muted-foreground leading-relaxed">
-                                    {t('modelDesc')}
-                                </p>
-                            </div>
+                                    <div className="glass-panel rounded-3xl p-5">
+                                        <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-white/40">
+                                            {language === 'es' ? 'Ruta de una acción' : 'Action route'}
+                                        </p>
+                                        <h3 className="mt-3 text-lg font-bold text-white">
+                                            {language === 'es'
+                                                ? 'Qué base del sistema toca primero cada tarea'
+                                                : 'Which system database a task touches first'}
+                                        </h3>
+                                        <div className="mt-4 space-y-3">
+                                            {SYSTEM_DATABASE_ACTIONS.map((action) => {
+                                                const isActive = activeSystemAction === action.id;
+                                                const targetStyle = systemDbStyles[action.target];
 
-                            <div className="glass-panel p-6 rounded-2xl border-t-4 border-purple-500 hover:-translate-y-1 transition-transform">
-                                <div className="flex items-center gap-4 mb-4">
-                                    <div className="p-3 bg-purple-500/20 rounded-xl">
-                                        <Box className="w-8 h-8 text-purple-400" />
+                                                return (
+                                                    <button
+                                                        key={action.id}
+                                                        onClick={() => {
+                                                            setActiveSystemAction(action.id);
+                                                            setActiveSystemDb(action.target);
+                                                        }}
+                                                        className={cn(
+                                                            'w-full rounded-2xl border px-4 py-3 text-left transition-all',
+                                                            isActive
+                                                                ? `${targetStyle.card} border-current`
+                                                                : 'border-white/10 bg-black/20 hover:border-white/20 hover:bg-white/[0.06]'
+                                                        )}
+                                                    >
+                                                        <div className="flex items-center justify-between gap-3">
+                                                            <span className="text-sm font-semibold text-white">{pick(action.label)}</span>
+                                                            <span className={cn('rounded-full border px-2 py-1 text-[10px] font-bold uppercase tracking-[0.18em]', targetStyle.badge)}>
+                                                                {action.target}
+                                                            </span>
+                                                        </div>
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
                                     </div>
-                                    <h3 className="text-2xl font-bold font-mono text-white">msdb</h3>
                                 </div>
-                                <p className="text-muted-foreground leading-relaxed">
-                                    {t('msdbDesc')}
-                                </p>
-                            </div>
 
-                            <div className="glass-panel p-6 rounded-2xl border-t-4 border-amber-500 hover:-translate-y-1 transition-transform">
-                                <div className="flex items-center gap-4 mb-4">
-                                    <div className="p-3 bg-amber-500/20 rounded-xl">
-                                        <Cpu className="w-8 h-8 text-amber-400" />
-                                    </div>
-                                    <h3 className="text-2xl font-bold font-mono text-white">tempdb</h3>
-                                </div>
-                                <p className="text-muted-foreground leading-relaxed">
-                                    {t('tempdbDesc')}
-                                </p>
+                                <AnimatePresence mode="wait">
+                                    <motion.div
+                                        key={activeSystemDb}
+                                        initial={{ opacity: 0, x: 16 }}
+                                        animate={{ opacity: 1, x: 0 }}
+                                        exit={{ opacity: 0, x: -16 }}
+                                        className="space-y-6"
+                                    >
+                                        <div className="glass-panel rounded-3xl p-6">
+                                            <div className="flex flex-wrap items-start justify-between gap-4">
+                                                <div className="max-w-4xl">
+                                                    <div className="flex items-center gap-4">
+                                                        <div className={cn('flex h-14 w-14 items-center justify-center rounded-2xl border', systemDbStyles[activeSystemDbGuide.id].badge)}>
+                                                            {React.createElement(systemDbStyles[activeSystemDbGuide.id].icon, { className: 'h-6 w-6' })}
+                                                        </div>
+                                                        <div>
+                                                            <h3 className="font-mono text-3xl font-bold text-white">{activeSystemDbGuide.name}</h3>
+                                                            <p className="mt-1 text-lg text-white/90">{pick(activeSystemDbGuide.headline)}</p>
+                                                        </div>
+                                                    </div>
+                                                    <p className="mt-5 text-sm leading-7 text-white/75">
+                                                        {pick(activeSystemDbGuide.summary)}
+                                                    </p>
+                                                </div>
+                                                <div className="flex max-w-sm flex-wrap gap-2">
+                                                    {activeSystemDbGuide.badges.map((badge) => (
+                                                        <span
+                                                            key={badge}
+                                                            className={cn(
+                                                                'rounded-full border px-3 py-1 text-[11px] font-bold',
+                                                                systemDbStyles[activeSystemDbGuide.id].badge
+                                                            )}
+                                                        >
+                                                            {badge}
+                                                        </span>
+                                                    ))}
+                                                </div>
+                                            </div>
+
+                                            <div className="mt-6 grid gap-4 xl:grid-cols-[minmax(0,1fr)_320px]">
+                                                <div className="rounded-3xl border border-white/10 bg-black/20 p-5">
+                                                    <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-white/40">
+                                                        {language === 'es' ? 'Operación seleccionada' : 'Selected action'}
+                                                    </p>
+                                                    <div className="mt-4 grid gap-4 md:grid-cols-[minmax(0,1fr)_72px_minmax(0,1fr)] md:items-center">
+                                                        <div className="rounded-2xl border border-white/10 bg-black/30 p-4">
+                                                            <div className="text-sm font-semibold text-white">{pick(activeSystemActionGuide.label)}</div>
+                                                            <p className="mt-2 text-sm leading-6 text-white/65">
+                                                                {pick(activeSystemActionGuide.detail)}
+                                                            </p>
+                                                        </div>
+                                                        <div className="flex items-center justify-center text-white/35">
+                                                            <HardDrive className="h-6 w-6" />
+                                                        </div>
+                                                        <div className={cn('rounded-2xl border p-4', systemDbStyles[activeSystemDbGuide.id].card)}>
+                                                            <div className="text-[11px] font-bold uppercase tracking-[0.22em] text-white/45">
+                                                                {language === 'es' ? 'Aterriza en' : 'Lands on'}
+                                                            </div>
+                                                            <div className="mt-2 font-mono text-2xl font-bold text-white">
+                                                                {activeSystemDbGuide.name}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <div className={cn('rounded-3xl border p-5', systemDbStyles[activeSystemDbGuide.id].card)}>
+                                                    <div className="text-[11px] font-bold uppercase tracking-[0.22em] text-white/45">
+                                                        {language === 'es' ? 'Regla de uso' : 'Operating rule'}
+                                                    </div>
+                                                    <p className="mt-4 text-sm leading-7 text-white/80">
+                                                        {pick(activeSystemDbGuide.workflow)}
+                                                    </p>
+                                                    {activeSystemDbGuide.note && (
+                                                        <div className="mt-4 rounded-2xl border border-white/10 bg-black/20 p-4 text-sm leading-6 text-white/70">
+                                                            {pick(activeSystemDbGuide.note)}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
+                                            <div className="space-y-6">
+                                                <div className="grid gap-4 md:grid-cols-2">
+                                                    <div className="glass-panel rounded-3xl p-5">
+                                                        <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.22em] text-emerald-300">
+                                                            <ShieldCheck className="h-4 w-4" />
+                                                            {language === 'es' ? 'Úsala para' : 'Use it for'}
+                                                        </div>
+                                                        <div className="mt-4 space-y-3">
+                                                            {activeSystemDbGuide.bestFor.map((item, index) => (
+                                                                <div key={`${activeSystemDbGuide.id}-best-${index}`} className="rounded-2xl border border-emerald-500/15 bg-emerald-500/10 p-4 text-sm leading-6 text-white/80">
+                                                                    {pick(item)}
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="glass-panel rounded-3xl p-5">
+                                                        <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.22em] text-amber-300">
+                                                            <AlertTriangle className="h-4 w-4" />
+                                                            {language === 'es' ? 'Evita esto' : 'Avoid this'}
+                                                        </div>
+                                                        <div className="mt-4 space-y-3">
+                                                            {activeSystemDbGuide.avoid.map((item, index) => (
+                                                                <div key={`${activeSystemDbGuide.id}-avoid-${index}`} className="rounded-2xl border border-amber-500/15 bg-amber-500/10 p-4 text-sm leading-6 text-white/80">
+                                                                    {pick(item)}
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div className="glass-panel rounded-3xl p-5">
+                                                <div className="text-[11px] font-bold uppercase tracking-[0.24em] text-white/40">
+                                                    {language === 'es' ? 'T-SQL listo para copiar' : 'Copy-paste T-SQL'}
+                                                </div>
+                                                <p className="mt-2 text-sm leading-6 text-white/65">
+                                                    {language === 'es'
+                                                        ? 'Chequeos rápidos y una operación típica para trabajar correctamente con esta base del sistema.'
+                                                        : 'Quick checks and a typical operation for working safely with this system database.'}
+                                                </p>
+                                                <CopyCodeBlock
+                                                    code={activeSystemDbGuide.script}
+                                                    accent={activeSystemDbGuide.accent}
+                                                    className="mt-4"
+                                                />
+                                            </div>
+                                        </div>
+                                    </motion.div>
+                                </AnimatePresence>
                             </div>
                         </motion.div>
                     )}

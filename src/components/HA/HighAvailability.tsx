@@ -1,9 +1,16 @@
 import { useState } from 'react';
-import { motion } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import { Server, Database, ShieldCheck, Activity, Send, AlertTriangle, CheckCircle2, Code2 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { useLanguage } from '../../contexts/LanguageContext';
+import {
+    DISASTER_RECOVERY_SCENARIOS,
+    DR_GOLDEN_RULES,
+    type DisasterRecoveryScenario,
+    type LocalizedText,
+} from '../../data/platformGuidesData';
 import { TSqlModal } from '../Shared/TSqlModal';
+import { CopyCodeBlock } from '../Shared/CopyCodeBlock';
 
 type CommitMode = 'synchronous' | 'asynchronous';
 
@@ -13,13 +20,16 @@ interface Transaction {
 }
 
 export function HighAvailability() {
-    const { t } = useLanguage();
+    const { t, language } = useLanguage();
     const [mode, setMode] = useState<CommitMode>('synchronous');
     const [transactions, setTransactions] = useState<Transaction[]>([]);
     const [primaryLSN, setPrimaryLSN] = useState<number>(1000);
     const [secondaryLSN, setSecondaryLSN] = useState<number>(1000);
-
     const [isTsqlOpen, setIsTsqlOpen] = useState(false);
+    const [activeDrScenarioId, setActiveDrScenarioId] = useState<DisasterRecoveryScenario['id']>('pitr');
+    const [activeDrStepIndex, setActiveDrStepIndex] = useState(0);
+
+    const pick = (text: LocalizedText) => language === 'es' ? text.es : text.en;
 
     const simulateCommit = () => {
         const newTxId = Date.now();
@@ -88,6 +98,10 @@ export function HighAvailability() {
     };
 
     const lsnLagging = primaryLSN > secondaryLSN;
+    const activeDrScenario =
+        DISASTER_RECOVERY_SCENARIOS.find((scenario) => scenario.id === activeDrScenarioId) ??
+        DISASTER_RECOVERY_SCENARIOS[0];
+    const activeDrStep = activeDrScenario.steps[activeDrStepIndex] ?? activeDrScenario.steps[0];
 
     return (
         <div className="flex flex-col h-full gap-6">
@@ -237,6 +251,221 @@ export function HighAvailability() {
                         <p className="text-sm text-balance text-muted-foreground mx-auto">
                             {mode === 'synchronous' ? t('syncExplanation') : t('asyncExplanation')}
                         </p>
+                    </div>
+                </div>
+            </div>
+
+            <div className="grid gap-6 xl:grid-cols-[minmax(0,1.12fr)_380px]">
+                <div className="glass-panel rounded-3xl p-6">
+                    <div className="flex flex-wrap items-start justify-between gap-4">
+                        <div className="max-w-4xl">
+                            <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-white/40">
+                                {language === 'es' ? 'Runbook de disaster recovery' : 'Disaster recovery runbook'}
+                            </p>
+                            <h3 className="mt-2 text-2xl font-bold text-white">
+                                {pick(activeDrScenario.headline)}
+                            </h3>
+                            <p className="mt-3 text-sm leading-7 text-white/70">
+                                {pick(activeDrScenario.summary)}
+                            </p>
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                            {activeDrScenario.badges.map((badge) => (
+                                <span
+                                    key={badge}
+                                    className="rounded-full border border-cyan-500/20 bg-cyan-500/10 px-3 py-1 text-[11px] font-bold text-cyan-300"
+                                >
+                                    {badge}
+                                </span>
+                            ))}
+                        </div>
+                    </div>
+
+                    <div className="mt-6 grid gap-3 md:grid-cols-3">
+                        {DISASTER_RECOVERY_SCENARIOS.map((scenario) => {
+                            const isActive = scenario.id === activeDrScenario.id;
+
+                            return (
+                                <button
+                                    key={scenario.id}
+                                    onClick={() => {
+                                        setActiveDrScenarioId(scenario.id);
+                                        setActiveDrStepIndex(0);
+                                    }}
+                                    className={cn(
+                                        'rounded-3xl border p-4 text-left transition-all',
+                                        isActive
+                                            ? 'border-cyan-500/25 bg-cyan-500/10 shadow-[0_0_22px_rgba(34,211,238,0.14)]'
+                                            : 'border-white/10 bg-black/20 hover:border-white/20 hover:bg-white/[0.06]'
+                                    )}
+                                >
+                                    <div className="text-sm font-semibold text-white">{pick(scenario.title)}</div>
+                                    <div className="mt-2 text-xs leading-6 text-white/60">
+                                        {pick(scenario.preferredPath)}
+                                    </div>
+                                </button>
+                            );
+                        })}
+                    </div>
+
+                    <div className="relative mt-8">
+                        <div className="absolute left-0 right-0 top-5 h-px bg-white/10" />
+                        <motion.div
+                            className="absolute left-0 top-5 h-px bg-gradient-to-r from-cyan-400 to-blue-400"
+                            animate={{ width: `${((activeDrStepIndex + 1) / activeDrScenario.steps.length) * 100}%` }}
+                            transition={{ type: 'spring', stiffness: 110, damping: 18 }}
+                        />
+                        <div className="grid gap-3 md:grid-cols-5">
+                            {activeDrScenario.steps.map((step, index) => {
+                                const isActive = index === activeDrStepIndex;
+
+                                return (
+                                    <button
+                                        key={`${activeDrScenario.id}-${step.id}`}
+                                        onClick={() => setActiveDrStepIndex(index)}
+                                        className={cn(
+                                            'relative rounded-3xl border p-4 pt-7 text-left transition-all',
+                                            isActive
+                                                ? 'border-cyan-500/25 bg-cyan-500/10'
+                                                : 'border-white/10 bg-black/20 hover:border-white/20 hover:bg-white/[0.06]'
+                                        )}
+                                    >
+                                        <div className="absolute left-4 top-3 h-4 w-4 rounded-full border border-white/20 bg-black/80">
+                                            {isActive && <div className="m-[3px] h-2 w-2 rounded-full bg-cyan-300 shadow-[0_0_14px_rgba(103,232,249,0.85)]" />}
+                                        </div>
+                                        <div className="text-[10px] font-bold uppercase tracking-[0.22em] text-white/40">
+                                            {language === 'es' ? `Paso ${index + 1}` : `Step ${index + 1}`}
+                                        </div>
+                                        <div className="mt-2 text-sm font-semibold leading-6 text-white">
+                                            {pick(step.title)}
+                                        </div>
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    </div>
+
+                    <div className="mt-6 grid gap-4 xl:grid-cols-[minmax(0,1fr)_320px]">
+                        <AnimatePresence mode="wait">
+                            <motion.div
+                                key={`${activeDrScenario.id}-${activeDrStep.id}`}
+                                initial={{ opacity: 0, y: 12 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, y: -12 }}
+                                className="rounded-3xl border border-white/10 bg-black/20 p-5"
+                            >
+                                <div className="text-[11px] font-bold uppercase tracking-[0.24em] text-white/40">
+                                    {language === 'es' ? 'Paso activo' : 'Active step'}
+                                </div>
+                                <h4 className="mt-3 text-xl font-bold text-white">
+                                    {language === 'es' ? `Paso ${activeDrStepIndex + 1}. ` : `Step ${activeDrStepIndex + 1}. `}
+                                    {pick(activeDrStep.title)}
+                                </h4>
+                                <p className="mt-4 text-sm leading-7 text-white/80">
+                                    {pick(activeDrStep.detail)}
+                                </p>
+                                <div className="mt-5 rounded-2xl border border-blue-500/20 bg-blue-500/10 p-4 text-sm leading-6 text-white/80">
+                                    {pick(activeDrStep.hint)}
+                                </div>
+                            </motion.div>
+                        </AnimatePresence>
+
+                        <div className="space-y-4">
+                            <div className="rounded-3xl border border-emerald-500/20 bg-emerald-500/10 p-5">
+                                <div className="text-[11px] font-bold uppercase tracking-[0.22em] text-emerald-300">
+                                    {language === 'es' ? 'Primer movimiento' : 'First move'}
+                                </div>
+                                <p className="mt-3 text-sm leading-7 text-white/80">
+                                    {pick(activeDrScenario.firstMove)}
+                                </p>
+                            </div>
+                            <div className="rounded-3xl border border-amber-500/20 bg-amber-500/10 p-5">
+                                <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.22em] text-amber-300">
+                                    <AlertTriangle className="h-4 w-4" />
+                                    {language === 'es' ? 'Trampa clásica' : 'Classic trap'}
+                                </div>
+                                <p className="mt-3 text-sm leading-7 text-white/80">
+                                    {pick(activeDrScenario.trap)}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="mt-6 grid gap-4 xl:grid-cols-2">
+                        <div className="rounded-3xl border border-white/10 bg-black/20 p-5">
+                            <div className="text-[11px] font-bold uppercase tracking-[0.24em] text-white/40">
+                                {language === 'es' ? 'Inventario y diagnóstico' : 'Inventory and diagnostics'}
+                            </div>
+                            <p className="mt-2 text-sm leading-6 text-white/65">
+                                {language === 'es'
+                                    ? 'Antes de restaurar, confirma backups, estado y evidencia técnica.'
+                                    : 'Before restoring, confirm backups, state and technical evidence.'}
+                            </p>
+                            <CopyCodeBlock code={activeDrScenario.diagnosticScript} accent="blue" className="mt-4" />
+                        </div>
+                        <div className="rounded-3xl border border-white/10 bg-black/20 p-5">
+                            <div className="text-[11px] font-bold uppercase tracking-[0.24em] text-white/40">
+                                {language === 'es' ? 'Acción principal' : 'Primary action'}
+                            </div>
+                            <p className="mt-2 text-sm leading-6 text-white/65">
+                                {pick(activeDrScenario.preferredPath)}
+                            </p>
+                            <CopyCodeBlock code={activeDrScenario.recoveryScript} accent="amber" className="mt-4" />
+                        </div>
+                    </div>
+                </div>
+
+                <div className="space-y-6">
+                    <div className="glass-panel rounded-3xl p-5">
+                        <div className="text-[11px] font-bold uppercase tracking-[0.24em] text-white/40">
+                            {language === 'es' ? 'Marco de decisión' : 'Decision frame'}
+                        </div>
+                        <div className="mt-4 grid gap-3">
+                            <div className="rounded-2xl border border-white/10 bg-black/25 p-4">
+                                <div className="text-[11px] uppercase tracking-[0.2em] text-white/40">RPO</div>
+                                <div className="mt-2 text-xl font-bold text-white">{activeDrScenario.rpo}</div>
+                            </div>
+                            <div className="rounded-2xl border border-white/10 bg-black/25 p-4">
+                                <div className="text-[11px] uppercase tracking-[0.2em] text-white/40">RTO</div>
+                                <div className="mt-2 text-xl font-bold text-white">{activeDrScenario.rto}</div>
+                            </div>
+                            <div className="rounded-2xl border border-cyan-500/20 bg-cyan-500/10 p-4">
+                                <div className="text-[11px] uppercase tracking-[0.2em] text-cyan-300">
+                                    {language === 'es' ? 'Camino recomendado' : 'Preferred path'}
+                                </div>
+                                <div className="mt-2 text-sm leading-6 text-white/85">
+                                    {pick(activeDrScenario.preferredPath)}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="glass-panel rounded-3xl p-5">
+                        <div className="text-[11px] font-bold uppercase tracking-[0.24em] text-white/40">
+                            {language === 'es' ? 'Reglas de oro' : 'Golden rules'}
+                        </div>
+                        <div className="mt-4 space-y-3">
+                            {DR_GOLDEN_RULES.map((rule, index) => (
+                                <div
+                                    key={`dr-rule-${index}`}
+                                    className="rounded-2xl border border-white/10 bg-black/20 p-4 text-sm leading-6 text-white/75"
+                                >
+                                    {pick(rule)}
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    <div className="glass-panel rounded-3xl p-5">
+                        <div className="text-[11px] font-bold uppercase tracking-[0.24em] text-white/40">
+                            {language === 'es' ? 'Validación post-recuperación' : 'Post-recovery validation'}
+                        </div>
+                        <p className="mt-2 text-sm leading-6 text-white/65">
+                            {language === 'es'
+                                ? 'Comprueba consistencia, estado operativo y la evidencia mínima antes de reabrir tráfico.'
+                                : 'Check consistency, operating state and minimum evidence before reopening traffic.'}
+                        </p>
+                        <CopyCodeBlock code={activeDrScenario.validationScript} accent="emerald" className="mt-4" />
                     </div>
                 </div>
             </div>

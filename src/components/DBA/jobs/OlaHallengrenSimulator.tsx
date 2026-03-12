@@ -105,7 +105,11 @@ function IndexCard({ sample }: { sample: OlaIndexSample }) {
   );
 }
 
-export function OlaHallengrenSimulator() {
+interface OlaHallengrenSimulatorProps {
+  compact?: boolean;
+}
+
+export function OlaHallengrenSimulator({ compact = false }: OlaHallengrenSimulatorProps) {
   const { language } = useLanguage();
   const [reorgFromPct, setReorgFromPct] = useState<number>(OLA_DEFAULT_THRESHOLDS.reorganizeFromPct);
   const [rebuildFromPct, setRebuildFromPct] = useState<number>(OLA_DEFAULT_THRESHOLDS.rebuildFromPct);
@@ -173,22 +177,45 @@ export function OlaHallengrenSimulator() {
       : `If frag < ${reorgFromPct}% => SKIP · If frag >= ${reorgFromPct}% and < ${rebuildFromPct}% => REORGANIZE · If frag >= ${rebuildFromPct}% => REBUILD`;
   }, [language, reorgFromPct, rebuildFromPct]);
 
+  const liveQueryText = useMemo(() => {
+    if (!sample) {
+      return language === 'es'
+        ? 'Sin indices pendientes. La cola de mantenimiento ha terminado.'
+        : 'No pending indexes. Maintenance queue has finished.';
+    }
+    const actionLabel = action.toUpperCase();
+    return `EXEC dbo.IndexOptimize @Databases='USER_DATABASES', @Indexes='${sample.name}', @Action='${actionLabel}', @FragmentationLevel1=${reorgFromPct}, @FragmentationLevel2=${rebuildFromPct};`;
+  }, [action, language, rebuildFromPct, reorgFromPct, sample]);
+
   return (
-    <div className="grid gap-6 xl:grid-cols-[minmax(0,1.2fr)_420px]">
-      <div className="glass-panel rounded-2xl border border-white/10 p-6">
+    <div className={cn('grid gap-4 lg:gap-6', compact ? 'grid-cols-1' : 'xl:grid-cols-[minmax(0,1.2fr)_420px]')}>
+      <div className="glass-panel rounded-2xl border border-white/10 p-4 sm:p-6">
         <div className="flex flex-wrap items-start justify-between gap-4">
-          <div className="min-w-[280px] flex-1">
-            <h3 className="text-xl font-bold text-amber-300 flex items-center gap-2">
-              <Wrench className="h-5 w-5" />
-              {language === 'es' ? 'IndexOptimize (Ola Hallengren) en 90 segundos' : 'IndexOptimize (Ola Hallengren) in 90 seconds'}
-            </h3>
-            <p className="mt-2 text-sm text-muted-foreground">
-              {language === 'es'
-                ? 'Simula como el job decide entre SKIP/REORGANIZE/REBUILD segun fragmentacion, y compara contra el clasico Maintenance Plan: REBUILD ALL.'
-                : 'Simulate how the job decides SKIP/REORGANIZE/REBUILD by fragmentation, and compare against the classic Maintenance Plan: REBUILD ALL.'}
-            </p>
-          </div>
-          <div className="flex items-center gap-2 rounded-2xl border border-white/10 bg-black/20 p-1">
+          {!compact ? (
+            <div className="min-w-0 flex-1">
+              <h3 className="text-xl font-bold text-amber-300 flex items-center gap-2">
+                <Wrench className="h-5 w-5" />
+                {language === 'es' ? 'IndexOptimize (Ola Hallengren) en 90 segundos' : 'IndexOptimize (Ola Hallengren) in 90 seconds'}
+              </h3>
+              <p className="mt-2 text-sm text-muted-foreground">
+                {language === 'es'
+                  ? 'Simula como el job decide entre SKIP/REORGANIZE/REBUILD segun fragmentacion, y compara contra el clasico Maintenance Plan: REBUILD ALL.'
+                  : 'Simulate how the job decides SKIP/REORGANIZE/REBUILD by fragmentation, and compare against the classic Maintenance Plan: REBUILD ALL.'}
+              </p>
+            </div>
+          ) : (
+            <div className="min-w-0 flex-1">
+              <div className="text-[11px] font-bold uppercase tracking-[0.22em] text-white/45">
+                {language === 'es' ? 'Play en vivo' : 'Live play'}
+              </div>
+              <p className="mt-2 text-sm text-white/75">
+                {language === 'es'
+                  ? 'Veras la query que entra y la decision del job en tiempo real.'
+                  : 'You will see incoming query text and job decision in real time.'}
+              </p>
+            </div>
+          )}
+          <div className="flex w-full flex-wrap items-center gap-2 rounded-2xl border border-white/10 bg-black/20 p-1 sm:w-auto">
             <button
               onClick={() => setPlaying((p) => !p)}
               className={cn(
@@ -209,7 +236,22 @@ export function OlaHallengrenSimulator() {
           </div>
         </div>
 
-        <div className="mt-6 grid gap-4 md:grid-cols-2">
+        {compact ? (
+          <div className="mt-4 rounded-2xl border border-cyan-500/20 bg-cyan-500/10 p-4">
+            <div className="text-[11px] font-bold uppercase tracking-[0.22em] text-cyan-200">
+              {language === 'es' ? 'Query que entra' : 'Incoming query'}
+            </div>
+            <div className="mt-2 rounded-xl border border-white/10 bg-black/35 p-3 font-mono text-xs text-cyan-100 whitespace-pre-wrap break-words">
+              {liveQueryText}
+            </div>
+            <div className="mt-3 text-xs text-white/70">
+              {language === 'es' ? 'Fase actual' : 'Current phase'}:{' '}
+              <span className="font-black text-white">{phase.toUpperCase()}</span>
+            </div>
+          </div>
+        ) : null}
+
+        {!compact ? <div className="mt-6 grid gap-4 md:grid-cols-2">
           <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
             <div className="text-[11px] font-bold uppercase tracking-[0.22em] text-white/40">
               {language === 'es' ? 'Umbrales (editables)' : 'Thresholds (editable)'}
@@ -310,7 +352,7 @@ export function OlaHallengrenSimulator() {
               </div>
             </div>
           </div>
-        </div>
+        </div> : null}
 
         <div className="mt-6 grid gap-4">
           <div className="rounded-2xl border border-white/10 bg-black/20 p-5">
@@ -389,7 +431,7 @@ export function OlaHallengrenSimulator() {
               </div>
             </LayoutGroup>
 
-            <div className="mt-5 grid gap-3 md:grid-cols-3">
+            <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
               {OLA_INDEX_SAMPLES.map((item) => {
                 const result = processed[item.id];
                 const resultStyle = result ? ACTION_STYLE[result] : null;
@@ -419,23 +461,26 @@ export function OlaHallengrenSimulator() {
             </div>
           </div>
 
-          <div className="glass-panel rounded-2xl border border-white/10 p-6">
-            <h4 className="text-lg font-bold text-white">
-              {language === 'es' ? 'T-SQL (listo para copiar)' : 'Ready-to-paste T-SQL'}
-            </h4>
-            <p className="mt-2 text-sm text-muted-foreground">
-              {language === 'es'
-                ? 'Ejemplo de ejecucion tipica del job. (No incluye el instalador; en produccion se usa la SQL Server Maintenance Solution).'
-                : 'Example of a typical job execution. (Not an installer; production uses the SQL Server Maintenance Solution).'}
-            </p>
-            <div className="mt-5 space-y-4">
-              <CopyCodeBlock code={JOB_TSQL_SNIPPETS.olaIndexOptimize} accent="amber" />
-              <CopyCodeBlock code={JOB_TSQL_SNIPPETS.olaIntegrity} accent="emerald" />
+          {!compact ? (
+            <div className="glass-panel rounded-2xl border border-white/10 p-6">
+              <h4 className="text-lg font-bold text-white">
+                {language === 'es' ? 'T-SQL (listo para copiar)' : 'Ready-to-paste T-SQL'}
+              </h4>
+              <p className="mt-2 text-sm text-muted-foreground">
+                {language === 'es'
+                  ? 'Ejemplo de ejecucion tipica del job. (No incluye el instalador; en produccion se usa la SQL Server Maintenance Solution).'
+                  : 'Example of a typical job execution. (Not an installer; production uses the SQL Server Maintenance Solution).'}
+              </p>
+              <div className="mt-5 space-y-4">
+                <CopyCodeBlock code={JOB_TSQL_SNIPPETS.olaIndexOptimize} accent="amber" />
+                <CopyCodeBlock code={JOB_TSQL_SNIPPETS.olaIntegrity} accent="emerald" />
+              </div>
             </div>
-          </div>
+          ) : null}
         </div>
       </div>
 
+      {!compact ? (
       <div className="glass-panel rounded-2xl border border-white/10 p-6">
         <div className="flex items-center justify-between gap-3">
           <h4 className="text-lg font-bold text-white">{language === 'es' ? 'Por que es mejor que Maintenance Plans' : 'Why this beats Maintenance Plans'}</h4>
@@ -476,6 +521,7 @@ export function OlaHallengrenSimulator() {
           ))}
         </div>
       </div>
+      ) : null}
     </div>
   );
 }

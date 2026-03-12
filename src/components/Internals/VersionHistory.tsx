@@ -183,10 +183,12 @@ export function VersionHistory() {
     node: (typeof servicingModel.nodes)[number],
     options?: {
       wide?: boolean;
+      compact?: boolean;
+      tone?: ServicingTone;
     }
   ) => {
     const explainer = SERVICING_EXPLAINERS.find((item) => item.id === node.explainerId) ?? SERVICING_EXPLAINERS[0];
-    const style = SERVICING_TONE_STYLES[explainer.tone];
+    const style = SERVICING_TONE_STYLES[options?.tone ?? explainer.tone];
     const isActive = node.id === activeServicingNode.id;
     const uniqueBadges = Array.from(new Set([...(node.badges ?? []), ...explainer.badges])).slice(0, 3);
 
@@ -196,42 +198,77 @@ export function VersionHistory() {
         whileHover={{ y: -1 }}
         onClick={() => setActiveServicingNodeId(node.id)}
         className={cn(
-          'rounded-3xl border p-4 text-left transition-all',
+          options?.compact ? 'min-w-[176px] rounded-2xl border p-3 text-left backdrop-blur-sm' : 'rounded-3xl border p-4 text-left',
+          'transition-all',
           options?.wide ? 'sm:col-span-2' : '',
           isActive ? cn(style.border, style.bg, style.glow) : 'border-white/10 bg-black/20 hover:border-white/20 hover:bg-white/[0.06]'
         )}
       >
-        <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0">
-            <div className={cn('text-sm font-black tracking-wide', isActive ? 'text-white' : 'text-white/80')}>{pick(language, node.title)}</div>
-            <div className="mt-1 text-[10px] font-bold uppercase tracking-[0.18em] text-white/45">{pick(language, node.subtitle)}</div>
-          </div>
-          {uniqueBadges.length > 0 ? (
-            <div className="flex flex-wrap justify-end gap-1.5">
-              {uniqueBadges.map((badge) => (
-                <span
-                  key={`${node.id}-badge-${badge}`}
-                  className={cn(
-                    'rounded-full border px-2 py-0.5 text-[10px] font-black uppercase tracking-[0.18em] whitespace-nowrap',
-                    style.chip
-                  )}
-                >
-                  {badge}
-                </span>
-              ))}
+        {options?.compact ? (
+          <>
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <div className={cn('truncate text-sm font-black tracking-wide', isActive ? 'text-white' : 'text-white/80')}>
+                  {pick(language, node.title)}
+                </div>
+                <div className="mt-1 truncate text-[10px] font-bold uppercase tracking-[0.18em] text-white/45">{pick(language, node.subtitle)}</div>
+              </div>
+              <span
+                className={cn(
+                  'mt-1 h-2.5 w-2.5 shrink-0 rounded-full border',
+                  isActive ? 'border-white/45 bg-white shadow-[0_0_10px_rgba(255,255,255,0.36)]' : 'border-white/20 bg-white/10'
+                )}
+              />
             </div>
-          ) : null}
-        </div>
+            {uniqueBadges.length > 0 ? (
+              <div className="mt-2 flex flex-wrap gap-1.5">
+                {uniqueBadges.slice(0, 2).map((badge) => (
+                  <span
+                    key={`${node.id}-badge-${badge}`}
+                    className={cn(
+                      'rounded-full border px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.16em] whitespace-nowrap',
+                      style.chip
+                    )}
+                  >
+                    {badge}
+                  </span>
+                ))}
+              </div>
+            ) : null}
+          </>
+        ) : (
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <div className={cn('text-sm font-black tracking-wide', isActive ? 'text-white' : 'text-white/80')}>{pick(language, node.title)}</div>
+              <div className="mt-1 text-[10px] font-bold uppercase tracking-[0.18em] text-white/45">{pick(language, node.subtitle)}</div>
+            </div>
+            {uniqueBadges.length > 0 ? (
+              <div className="flex flex-wrap justify-end gap-1.5">
+                {uniqueBadges.map((badge) => (
+                  <span
+                    key={`${node.id}-badge-${badge}`}
+                    className={cn(
+                      'rounded-full border px-2 py-0.5 text-[10px] font-black uppercase tracking-[0.18em] whitespace-nowrap',
+                      style.chip
+                    )}
+                  >
+                    {badge}
+                  </span>
+                ))}
+              </div>
+            ) : null}
+          </div>
+        )}
       </motion.button>
     );
   };
 
   return (
-    <div className="flex h-full flex-col gap-6 text-slate-200">
-      <div className="glass-panel relative overflow-hidden border border-white/10 p-6">
+    <div className="flex min-h-full flex-col gap-4 text-slate-200 sm:gap-6">
+      <div className="glass-panel relative overflow-hidden border border-white/10 p-4 sm:p-6">
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(163,230,53,0.18),transparent_28%),radial-gradient(circle_at_bottom_right,rgba(250,204,21,0.16),transparent_30%)]" />
         <div className="relative z-10 flex flex-wrap items-start justify-between gap-4">
-          <div className="min-w-[280px] flex-1">
+          <div className="min-w-0 flex-1">
             <h2 className="mb-2 flex items-center gap-3 bg-gradient-to-r from-lime-300 via-yellow-300 to-emerald-300 bg-clip-text text-3xl font-bold text-transparent">
               <History className="h-8 w-8 text-lime-400" />
               {t('tabVersionHistory')}
@@ -242,7 +279,7 @@ export function VersionHistory() {
                 : 'A release timeline: pick a version and explore what changed in engine, query processing, HA, security, platform and operations. Designed for upgrade planning and architectural decisions.'}
             </p>
           </div>
-          <div className="grid gap-2 text-right">
+          <div className="grid gap-2 text-left sm:text-right">
             <div className="rounded-full border border-lime-500/20 bg-lime-500/10 px-3 py-1 text-xs font-bold text-lime-300">
               RTM / SP / CU / GDR
             </div>
@@ -308,7 +345,7 @@ export function VersionHistory() {
               transition={{ duration: 0.25 }}
             >
               <div className="flex flex-wrap items-start justify-between gap-4">
-                <div className="min-w-[280px] flex-1">
+                <div className="min-w-0 flex-1">
                   <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-white/40">
                     {language === 'es' ? 'Version activa' : 'Active release'}
                   </p>
@@ -441,7 +478,7 @@ export function VersionHistory() {
                           className={cn('mt-4 rounded-3xl border bg-black/25 p-5', AREA_STYLES[activeArea.id].border)}
                         >
                           <div className="flex flex-wrap items-start justify-between gap-4">
-                            <div className="min-w-[240px] flex-1">
+                            <div className="min-w-0 flex-1">
                               <div className="flex items-center gap-3">
                                 {(() => {
                                   const meta = RELEASE_AREA_META[activeArea.id];
@@ -565,7 +602,7 @@ export function VersionHistory() {
 
             <div className="mt-5 rounded-3xl border border-white/10 bg-black/20 p-5">
               <div className="flex flex-wrap items-start justify-between gap-4">
-                <div className="min-w-[240px] flex-1">
+                <div className="min-w-0 flex-1">
                   <h4 className="text-lg font-bold text-white">{pick(language, activeTrack.label)}</h4>
                   <p className="mt-3 text-sm leading-7 text-white/80">{pick(language, activeTrack.summary)}</p>
                   <p className="mt-3 text-sm leading-7 text-white/65">{pick(language, activeTrack.detail)}</p>
@@ -604,57 +641,63 @@ export function VersionHistory() {
                   const gdrLane = servicingModel.lanes.find((lane) => lane.id === 'gdr');
                   const cuLane = servicingModel.lanes.find((lane) => lane.id === 'cu');
 
-                  if (servicingTrack === 'sp-era') {
+                  const renderLaneFlow = (
+                    lane: (typeof servicingModel.lanes)[number] | undefined,
+                    nodes: (typeof servicingModel.nodes)[number][],
+                    fallbackTone: ServicingTone
+                  ) => {
+                    const style = SERVICING_TONE_STYLES[lane?.tone ?? fallbackTone];
+
                     return (
-                      <div className="mt-4 space-y-3">
-                        {baselineLane ? (
-                          <div className="rounded-2xl border border-white/10 bg-black/25 px-4 py-3">
-                            <div className="text-xs font-black tracking-wide text-white">{pick(language, baselineLane.label)}</div>
-                            <div className="mt-1 text-xs text-white/60">{pick(language, baselineLane.description)}</div>
+                      <div className={cn('rounded-2xl border bg-black/25 p-4', style.border, style.bg)}>
+                        {lane ? (
+                          <>
+                            <div className="flex items-center justify-between gap-3">
+                              <div className={cn('text-xs font-black uppercase tracking-[0.22em]', style.text)}>{pick(language, lane.label)}</div>
+                              <span className={cn('h-2 w-2 rounded-full border', style.border, style.bg)} />
+                            </div>
+                            <div className="mt-1 text-xs text-white/65">{pick(language, lane.description)}</div>
+                          </>
+                        ) : null}
+
+                        {nodes.length > 0 ? (
+                          <div className="mt-3 overflow-x-auto pb-1">
+                            <div className="flex min-w-max items-center gap-2 pr-2">
+                              {nodes.map((node, index) => (
+                                <div key={node.id} className="flex items-center gap-2">
+                                  {renderServicingNode(node, { compact: true, tone: lane?.tone ?? fallbackTone })}
+                                  {index < nodes.length - 1 ? <span className="h-px w-6 bg-white/15" /> : null}
+                                </div>
+                              ))}
+                            </div>
                           </div>
                         ) : null}
-                        <div className="grid gap-3">{baselineNodes.map((node) => renderServicingNode(node))}</div>
                       </div>
                     );
+                  };
+
+                  if (servicingTrack === 'sp-era') {
+                    return <div className="mt-4">{renderLaneFlow(baselineLane, baselineNodes, 'emerald')}</div>;
                   }
 
-                  const gdrStyle = SERVICING_TONE_STYLES[gdrLane?.tone ?? 'cyan'];
-                  const cuStyle = SERVICING_TONE_STYLES[cuLane?.tone ?? 'amber'];
-
                   return (
-                    <div className="mt-4 space-y-3">
-                      <div className="grid gap-3 sm:grid-cols-2">
-                        {baselineNodes.map((node) => renderServicingNode(node, { wide: true }))}
+                    <div className="mt-4 space-y-4">
+                      {renderLaneFlow(baselineLane, baselineNodes, 'lime')}
+
+                      <div className="px-2">
+                        <div className="mx-auto h-4 w-px bg-white/20" />
+                        <div className="mx-auto flex max-w-[460px] items-center gap-3 text-xs text-white/45">
+                          <span className="h-px flex-1 bg-white/10" />
+                          <span className="font-bold uppercase tracking-[0.2em]">
+                            {language === 'es' ? 'Elige rama' : 'Choose branch'}
+                          </span>
+                          <span className="h-px flex-1 bg-white/10" />
+                        </div>
                       </div>
 
-                      <div className="flex items-center justify-center gap-3 text-xs text-white/45">
-                        <span className="h-px w-10 bg-white/10" />
-                        <span className="font-bold uppercase tracking-[0.18em]">
-                          {language === 'es' ? 'Elige rama' : 'Choose branch'}
-                        </span>
-                        <span className="h-px w-10 bg-white/10" />
-                      </div>
-
-                      <div className="grid gap-3 sm:grid-cols-2">
-                        <div className="space-y-3">
-                          {gdrLane ? (
-                            <div className={cn('rounded-2xl border bg-black/25 px-4 py-3', gdrStyle.border, gdrStyle.bg)}>
-                              <div className={cn('text-xs font-black tracking-wide', gdrStyle.text)}>{pick(language, gdrLane.label)}</div>
-                              <div className="mt-1 text-xs text-white/60">{pick(language, gdrLane.description)}</div>
-                            </div>
-                          ) : null}
-                          <div className="grid gap-3">{gdrNodes.map((node) => renderServicingNode(node))}</div>
-                        </div>
-
-                        <div className="space-y-3">
-                          {cuLane ? (
-                            <div className={cn('rounded-2xl border bg-black/25 px-4 py-3', cuStyle.border, cuStyle.bg)}>
-                              <div className={cn('text-xs font-black tracking-wide', cuStyle.text)}>{pick(language, cuLane.label)}</div>
-                              <div className="mt-1 text-xs text-white/60">{pick(language, cuLane.description)}</div>
-                            </div>
-                          ) : null}
-                          <div className="grid gap-3">{cuNodes.map((node) => renderServicingNode(node))}</div>
-                        </div>
+                      <div className="grid gap-3 xl:grid-cols-2">
+                        {renderLaneFlow(gdrLane, gdrNodes, 'cyan')}
+                        {renderLaneFlow(cuLane, cuNodes, 'amber')}
                       </div>
                     </div>
                   );

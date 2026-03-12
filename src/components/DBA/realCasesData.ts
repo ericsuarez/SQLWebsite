@@ -6,6 +6,7 @@ export interface LocalizedCaseText {
 export interface SpidCard {
   spid: number;
   labelKey?: string;
+  label?: LocalizedCaseText;
   status: 'running' | 'suspended' | 'evicted' | 'idle' | 'contention' | 'growth' | 'virt';
   waitType?: string;
   blockedBy?: number;
@@ -33,6 +34,7 @@ export interface BufferState {
 
 export interface CaseStep {
   logKey: string;
+  log?: LocalizedCaseText;
   spids: SpidCard[];
   phase?: ExecPhase;
   sqlos?: SqlosState;
@@ -47,11 +49,30 @@ export interface RealCase {
   nameKey: string;
   descKey: string;
   detailsKey: string;
+  title?: LocalizedCaseText;
+  description?: LocalizedCaseText;
+  details?: LocalizedCaseText;
+  resolution?: LocalizedCaseText;
   schema: LocalizedCaseText;
   query: LocalizedCaseText;
   detectionQuery: LocalizedCaseText;
   resolutionKey: string;
+  detectionMode?: 'dmv' | 'xe' | 'hybrid' | 'hypervisor';
+  detectionSummary?: LocalizedCaseText;
+  xeWhy?: LocalizedCaseText;
+  xeScript?: LocalizedCaseText;
+  badges?: string[];
   steps: CaseStep[];
+}
+
+export interface XEventLab {
+  id: string;
+  title: LocalizedCaseText;
+  summary: LocalizedCaseText;
+  why: LocalizedCaseText;
+  sessionScript: LocalizedCaseText;
+  readbackScript: LocalizedCaseText;
+  badges: string[];
 }
 
 export const REAL_CASES: RealCase[] = [
@@ -654,6 +675,333 @@ WHERE status = 'VISIBLE ONLINE';
     ],
   },
   {
+    id: 'balloon',
+    icon: '🎈',
+    color: 'blue',
+    nameKey: 'caseVirtualization',
+    descKey: 'caseVirtualizationDesc',
+    detailsKey: 'caseVirtualizationExplain',
+    title: {
+      en: 'Virtualization Balloon Memory',
+      es: 'Balloon Memory en virtualizaci\u00f3n',
+    },
+    description: {
+      en: 'The host starts reclaiming RAM and the balloon driver inflates inside the guest. SQL Server sees external pressure, PLE falls, physical reads rise and the real culprit is outside the engine.',
+      es: 'El host empieza a reclamar RAM y el driver de balloon infla memoria dentro de la VM. SQL Server ve presi\u00f3n externa, cae el PLE, suben las lecturas f\u00edsicas y el culpable real est\u00e1 fuera del motor.',
+    },
+    details: {
+      en: 'This is not classic bad T-SQL. Useful guest memory shrinks first, Windows pages harder, and only then SQL starts showing PAGEIOLATCH, plan churn and memory grant pressure. If you look only at DMVs, the story starts too late.',
+      es: 'Esto no es el t\u00edpico problema de T-SQL. Primero se encoge la memoria \u00fatil del guest, luego Windows pagina m\u00e1s agresivamente y solo despu\u00e9s SQL empieza a mostrar PAGEIOLATCH, churn de planes y presi\u00f3n de memory grants. Si miras solo las DMVs, la historia empieza demasiado tarde.',
+    },
+    resolution: {
+      en: 'Reserve memory for the SQL VM, disable ballooning for this workload, leave headroom for the OS and keep max server memory below the guest limit so Windows does not have to page under host reclaim.',
+      es: 'Reserva memoria para la VM de SQL, deshabilita el ballooning en esta carga, deja margen al SO y ajusta max server memory por debajo del l\u00edmite del guest para que Windows no tenga que paginar cuando el host reclame RAM.',
+    },
+    detectionMode: 'hypervisor',
+    detectionSummary: {
+      en: 'You need both guest evidence and hypervisor counters. SQL alone only shows the secondary effects.',
+      es: 'Necesitas evidencia del guest y contadores del hipervisor. SQL por s\u00ed solo ense\u00f1a los efectos secundarios.',
+    },
+    badges: ['BALLOON', 'PAGEFILE', 'EXTERNAL PRESSURE', 'HYPERVISOR'],
+    schema: {
+      en: `-- SQL Server VM
+-- Guest RAM: 64 GB
+-- SQL max server memory: 60 GB
+-- Host overcommit starts reclaiming memory
+-- Balloon driver grows inside the guest`,
+      es: `-- VM de SQL Server
+-- RAM del guest: 64 GB
+-- SQL max server memory: 60 GB
+-- El host entra en sobreasignaci\u00f3n y empieza a reclamar memoria
+-- El balloon driver crece dentro del guest`,
+    },
+    query: {
+      en: `SELECT SUM(Amount)
+FROM dbo.LargeFactTable
+WHERE BusinessDate >= DATEADD(day, -7, SYSUTCDATETIME());
+
+-- The query itself is ordinary
+-- but the guest is losing resident memory under the covers`,
+      es: `SELECT SUM(Amount)
+FROM dbo.LargeFactTable
+WHERE BusinessDate >= DATEADD(day, -7, SYSUTCDATETIME());
+
+-- La consulta es normal
+-- pero el guest est\u00e1 perdiendo memoria residente por debajo`,
+    },
+    detectionQuery: {
+      en: `-- Guest side: external pressure and paging symptoms
+SELECT *
+FROM sys.dm_os_ring_buffers
+WHERE ring_buffer_type = 'RING_BUFFER_RESOURCE_MONITOR';
+
+SELECT counter_name, cntr_value
+FROM sys.dm_os_performance_counters
+WHERE object_name LIKE '%Buffer Manager%'
+  AND counter_name IN ('Page life expectancy', 'Free list stalls/sec');
+
+-- Hypervisor side:
+-- VMware: MEMCTL / MCTLSZ
+-- Hyper-V: Dynamic Memory Balancer, Pressure, Guest Visible Physical Memory`,
+      es: `-- Lado guest: presi\u00f3n externa y s\u00edntomas de paginaci\u00f3n
+SELECT *
+FROM sys.dm_os_ring_buffers
+WHERE ring_buffer_type = 'RING_BUFFER_RESOURCE_MONITOR';
+
+SELECT counter_name, cntr_value
+FROM sys.dm_os_performance_counters
+WHERE object_name LIKE '%Buffer Manager%'
+  AND counter_name IN ('Page life expectancy', 'Free list stalls/sec');
+
+-- Lado hipervisor:
+-- VMware: MEMCTL / MCTLSZ
+-- Hyper-V: Dynamic Memory Balancer, Pressure, Guest Visible Physical Memory`,
+    },
+    resolutionKey: 'virtBestPractice',
+    steps: [
+      {
+        logKey: 'queryEvent',
+        log: {
+          en: 'The workload starts normally. Buffer pool residency is healthy and the query enters the engine without obvious waits.',
+          es: 'La carga empieza normal. La residencia del buffer pool es sana y la consulta entra al motor sin esperas evidentes.',
+        },
+        phase: 'execute',
+        spids: [
+          { spid: 150, status: 'running', label: { en: 'Reporting query starts', es: 'Arranca la consulta de reporting' } },
+        ],
+        sqlos: { schedulers: 8, workers: 4, runnable: 4, suspended: 0 },
+        buffer: { totalPages: 2400, usedPages: 1800, dirtyPages: 40, evictedPages: 0 },
+      },
+      {
+        logKey: 'queryEvent',
+        log: {
+          en: 'Host memory reclaim begins. The balloon driver steals guest pages, so SQL workers look runnable but the VM is losing usable RAM.',
+          es: 'Empieza la reclamaci\u00f3n de memoria del host. El balloon driver roba p\u00e1ginas al guest, as\u00ed que los workers parecen sanos pero la VM pierde RAM utilizable.',
+        },
+        phase: 'wait',
+        spids: [
+          { spid: 150, status: 'virt', waitType: 'HOST_MEMORY_RECLAIM', label: { en: 'Guest memory being reclaimed', es: 'Se est\u00e1 reclamando memoria del guest' } },
+          { spid: 151, status: 'virt', waitType: 'HOST_MEMORY_RECLAIM', label: { en: 'Second worker under ballooning', es: 'Segundo worker bajo ballooning' } },
+        ],
+        sqlos: { schedulers: 8, workers: 8, runnable: 7, suspended: 1, waitType: 'HOST_MEMORY_RECLAIM', waitMs: 1200 },
+        buffer: { totalPages: 2400, usedPages: 1780, dirtyPages: 42, evictedPages: 120 },
+        highlight: 'wait',
+      },
+      {
+        logKey: 'queryEvent',
+        log: {
+          en: 'Windows starts paging. SQL now sees PAGEIOLATCH and memory grant pressure because pages that used to be resident are no longer really available.',
+          es: 'Windows empieza a paginar. SQL ahora ve PAGEIOLATCH y presi\u00f3n de memory grants porque p\u00e1ginas que antes estaban residentes ya no est\u00e1n realmente disponibles.',
+        },
+        phase: 'wait',
+        spids: [
+          { spid: 150, status: 'suspended', waitType: 'PAGEIOLATCH_SH', label: { en: 'Reading pages back from disk', es: 'Releyendo p\u00e1ginas desde disco' } },
+          { spid: 151, status: 'evicted', waitType: 'RESOURCE_SEMAPHORE', label: { en: 'Grant pressure under paging', es: 'Presi\u00f3n de grants bajo paginaci\u00f3n' }, planStatus: 'evicted' },
+        ],
+        sqlos: { schedulers: 8, workers: 10, runnable: 2, suspended: 8, waitType: 'PAGEIOLATCH_SH', waitMs: 4800 },
+        buffer: { totalPages: 2400, usedPages: 1600, dirtyPages: 60, evictedPages: 520 },
+        highlight: 'io',
+      },
+      {
+        logKey: 'queryEvent',
+        log: {
+          en: 'The incident now looks like an internal SQL memory problem, but the original trigger was the hypervisor balloon, not the query text.',
+          es: 'El incidente ya parece un problema interno de memoria en SQL, pero el disparador original fue el balloon del hipervisor, no el texto de la consulta.',
+        },
+        phase: 'error',
+        spids: [
+          { spid: 150, status: 'evicted', waitType: 'RESOURCE_SEMAPHORE', label: { en: 'Plan churn and grant waits', es: 'Churn de planes y espera por grants' }, planStatus: 'evicted' },
+          { spid: 151, status: 'suspended', waitType: 'PAGEIOLATCH_SH', label: { en: 'Physical reads keep climbing', es: 'Las lecturas f\u00edsicas siguen subiendo' } },
+        ],
+        sqlos: { schedulers: 8, workers: 10, runnable: 1, suspended: 9, waitType: 'RESOURCE_SEMAPHORE', waitMs: 6200 },
+        buffer: { totalPages: 2400, usedPages: 1420, dirtyPages: 70, evictedPages: 700 },
+        highlight: 'plan',
+      },
+      {
+        logKey: 'queryEvent',
+        log: {
+          en: 'After reserving VM memory and giving Windows room to breathe, the same workload returns to a predictable path.',
+          es: 'Tras reservar memoria para la VM y dejar margen a Windows, la misma carga vuelve a un camino predecible.',
+        },
+        phase: 'done',
+        spids: [
+          { spid: 150, status: 'running', label: { en: 'Stable after memory reservation', es: 'Estable tras reservar memoria' } },
+          { spid: 151, status: 'running', label: { en: 'No more balloon reclaim', es: 'Sin m\u00e1s reclamaci\u00f3n por balloon' } },
+        ],
+        sqlos: { schedulers: 8, workers: 4, runnable: 4, suspended: 0 },
+        buffer: { totalPages: 2400, usedPages: 1820, dirtyPages: 30, evictedPages: 20 },
+      },
+    ],
+  },
+  {
+    id: 'attention',
+    icon: '🎯',
+    color: 'orange',
+    nameKey: 'queryEvent',
+    descKey: 'queryEvent',
+    detailsKey: 'queryEvent',
+    title: {
+      en: 'Client Timeout / Attention Event',
+      es: 'Timeout de cliente / evento Attention',
+    },
+    description: {
+      en: 'The query disappears before the DBA arrives. DMVs are empty because the client already cancelled the request. Extended Events keeps the only durable trail.',
+      es: 'La consulta desaparece antes de que llegue el DBA. Las DMVs est\u00e1n vac\u00edas porque el cliente ya cancel\u00f3 la petici\u00f3n. Extended Events deja el \u00fanico rastro duradero.',
+    },
+    details: {
+      en: 'Intermittent timeouts are classic ghosts. By the time someone opens sys.dm_exec_requests, the SPID is gone. You need sqlserver.attention plus completion events and client actions to prove who cancelled what and when.',
+      es: 'Los timeouts intermitentes son fantasmas cl\u00e1sicos. Cuando alguien abre sys.dm_exec_requests, el SPID ya no existe. Necesitas sqlserver.attention junto con eventos de finalizaci\u00f3n y acciones de cliente para demostrar qui\u00e9n cancel\u00f3 qu\u00e9 y cu\u00e1ndo.',
+    },
+    resolution: {
+      en: 'Capture the timeout with XE, correlate it to the caller, then decide whether the fix belongs in indexing, parameter handling, app timeout settings or transaction design.',
+      es: 'Captura el timeout con XE, correlaci\u00f3nalo con el llamador y despu\u00e9s decide si la correcci\u00f3n est\u00e1 en el \u00edndice, en el manejo de par\u00e1metros, en el timeout de la app o en el dise\u00f1o de la transacci\u00f3n.',
+    },
+    detectionMode: 'xe',
+    detectionSummary: {
+      en: 'DMVs only show you the live request. XE keeps the cancelled request after it is gone.',
+      es: 'Las DMVs solo ense\u00f1an la petici\u00f3n viva. XE conserva la petici\u00f3n cancelada cuando ya no existe.',
+    },
+    xeWhy: {
+      en: 'Use Extended Events when the symptom is over before you can open a DMV. Attention, deadlocks and intermittent app timeouts live here.',
+      es: 'Usa Extended Events cuando el s\u00edntoma ya ha terminado antes de abrir una DMV. Attention, deadlocks y timeouts intermitentes de aplicaci\u00f3n viven aqu\u00ed.',
+    },
+    xeScript: {
+      en: `CREATE EVENT SESSION [TrackAttentionTimeouts] ON SERVER
+ADD EVENT sqlserver.attention(
+    ACTION(sqlserver.client_app_name, sqlserver.database_name, sqlserver.session_id, sqlserver.sql_text)),
+ADD EVENT sqlserver.rpc_completed(
+    ACTION(sqlserver.client_app_name, sqlserver.database_name, sqlserver.session_id, sqlserver.sql_text)
+    WHERE (duration > 5000000)),
+ADD EVENT sqlserver.sql_batch_completed(
+    ACTION(sqlserver.client_app_name, sqlserver.database_name, sqlserver.session_id, sqlserver.sql_text)
+    WHERE (duration > 5000000))
+ADD TARGET package0.event_file(SET filename = N'E:\\XE\\TrackAttentionTimeouts.xel');
+GO
+ALTER EVENT SESSION [TrackAttentionTimeouts] ON SERVER STATE = START;`,
+      es: `CREATE EVENT SESSION [TrackAttentionTimeouts] ON SERVER
+ADD EVENT sqlserver.attention(
+    ACTION(sqlserver.client_app_name, sqlserver.database_name, sqlserver.session_id, sqlserver.sql_text)),
+ADD EVENT sqlserver.rpc_completed(
+    ACTION(sqlserver.client_app_name, sqlserver.database_name, sqlserver.session_id, sqlserver.sql_text)
+    WHERE (duration > 5000000)),
+ADD EVENT sqlserver.sql_batch_completed(
+    ACTION(sqlserver.client_app_name, sqlserver.database_name, sqlserver.session_id, sqlserver.sql_text)
+    WHERE (duration > 5000000))
+ADD TARGET package0.event_file(SET filename = N'E:\\XE\\TrackAttentionTimeouts.xel');
+GO
+ALTER EVENT SESSION [TrackAttentionTimeouts] ON SERVER STATE = START;`,
+    },
+    badges: ['XE ONLY', 'ATTENTION', 'TIMEOUT', 'CLIENT CANCEL'],
+    schema: {
+      en: `CREATE OR ALTER PROC dbo.GetCustomerLedger
+  @CustomerId INT
+AS
+BEGIN
+  SELECT TOP (5000) *
+  FROM dbo.CustomerLedger
+  WHERE CustomerId = @CustomerId
+  ORDER BY LedgerDate DESC;
+END;`,
+      es: `CREATE OR ALTER PROC dbo.GetCustomerLedger
+  @CustomerId INT
+AS
+BEGIN
+  SELECT TOP (5000) *
+  FROM dbo.CustomerLedger
+  WHERE CustomerId = @CustomerId
+  ORDER BY LedgerDate DESC;
+END;`,
+    },
+    query: {
+      en: `-- Application timeout = 30 seconds
+EXEC dbo.GetCustomerLedger @CustomerId = 42;
+
+-- If the app cancels first, the SPID disappears
+-- and the DMV evidence is already gone`,
+      es: `-- Timeout de la aplicaci\u00f3n = 30 segundos
+EXEC dbo.GetCustomerLedger @CustomerId = 42;
+
+-- Si la app cancela antes, el SPID desaparece
+-- y la evidencia de DMVs ya no existe`,
+    },
+    detectionQuery: {
+      en: `SELECT
+    object_name,
+    event_data = CONVERT(XML, event_data)
+FROM sys.fn_xe_file_target_read_file(
+    'E:\\XE\\TrackAttentionTimeouts*.xel',
+    NULL, NULL, NULL)
+ORDER BY event_data.value('(event/@timestamp)[1]', 'datetime2') DESC;`,
+      es: `SELECT
+    object_name,
+    event_data = CONVERT(XML, event_data)
+FROM sys.fn_xe_file_target_read_file(
+    'E:\\XE\\TrackAttentionTimeouts*.xel',
+    NULL, NULL, NULL)
+ORDER BY event_data.value('(event/@timestamp)[1]', 'datetime2') DESC;`,
+    },
+    resolutionKey: 'queryEvent',
+    steps: [
+      {
+        logKey: 'queryEvent',
+        log: {
+          en: 'The request starts and looks ordinary while the application waits for a response.',
+          es: 'La petici\u00f3n arranca y parece normal mientras la aplicaci\u00f3n espera respuesta.',
+        },
+        phase: 'execute',
+        spids: [{ spid: 160, status: 'running', label: { en: 'Ledger proc running', es: 'Proc de ledger en ejecuci\u00f3n' } }],
+        sqlos: { schedulers: 4, workers: 2, runnable: 2, suspended: 0 },
+        buffer: { totalPages: 1800, usedPages: 920, dirtyPages: 8, evictedPages: 0 },
+      },
+      {
+        logKey: 'queryEvent',
+        log: {
+          en: 'The client timeout fires first and sends an ATTENTION to SQL Server.',
+          es: 'El timeout del cliente salta primero y env\u00eda un ATTENTION a SQL Server.',
+        },
+        phase: 'wait',
+        spids: [{ spid: 160, status: 'suspended', waitType: 'ATTENTION', label: { en: 'Client cancelled request', es: 'El cliente cancel\u00f3 la petici\u00f3n' } }],
+        sqlos: { schedulers: 4, workers: 2, runnable: 1, suspended: 1, waitType: 'ATTENTION', waitMs: 30000 },
+        buffer: { totalPages: 1800, usedPages: 940, dirtyPages: 8, evictedPages: 0 },
+        highlight: 'query',
+      },
+      {
+        logKey: 'queryEvent',
+        log: {
+          en: 'The SPID vanishes from live DMVs. Operations only sees a complaint and no active blocker to inspect.',
+          es: 'El SPID desaparece de las DMVs en vivo. Operaciones solo ve la queja y ning\u00fan bloqueador activo que inspeccionar.',
+        },
+        phase: 'error',
+        spids: [{ spid: 160, status: 'idle', label: { en: 'Request already gone', es: 'La petici\u00f3n ya desapareci\u00f3' } }],
+        sqlos: { schedulers: 4, workers: 1, runnable: 1, suspended: 0 },
+        buffer: { totalPages: 1800, usedPages: 940, dirtyPages: 8, evictedPages: 0 },
+        highlight: 'query',
+      },
+      {
+        logKey: 'queryEvent',
+        log: {
+          en: 'Reading the XE file reveals the attention event, the client app name and the SQL text that was cancelled.',
+          es: 'Al leer el fichero XE aparecen el evento attention, el nombre de la aplicaci\u00f3n cliente y el SQL que fue cancelado.',
+        },
+        phase: 'done',
+        spids: [{ spid: 161, status: 'running', label: { en: 'DBA reading XE evidence', es: 'DBA leyendo evidencia XE' } }],
+        sqlos: { schedulers: 4, workers: 2, runnable: 2, suspended: 0 },
+        buffer: { totalPages: 1800, usedPages: 950, dirtyPages: 4, evictedPages: 0 },
+      },
+      {
+        logKey: 'queryEvent',
+        log: {
+          en: 'After correlating the caller, you can fix the real issue instead of guessing at a query that no longer exists.',
+          es: 'Tras correlacionar el llamador, ya puedes corregir el problema real en vez de adivinar sobre una consulta que ya no existe.',
+        },
+        phase: 'done',
+        spids: [{ spid: 161, status: 'running', label: { en: 'Timeout now reproducible and understood', es: 'El timeout ya es reproducible y entendible' } }],
+        sqlos: { schedulers: 4, workers: 2, runnable: 2, suspended: 0 },
+        buffer: { totalPages: 1800, usedPages: 920, dirtyPages: 2, evictedPages: 0 },
+      },
+    ],
+  },
+  {
     id: 'missingindex',
     icon: '📋',
     color: 'emerald',
@@ -908,3 +1256,134 @@ CREATE NONCLUSTERED INDEX IX_Sales_Region_Date
 -- Valida el impacto antes de crearlo`,
   },
 };
+
+export const XEVENT_LABS: XEventLab[] = [
+  {
+    id: 'attention-timeouts',
+    title: {
+      en: 'Client Timeouts',
+      es: 'Timeouts de cliente',
+    },
+    summary: {
+      en: 'Intermittent cancellations vanish from DMVs. Capture sqlserver.attention plus completed batches to prove which caller gave up first.',
+      es: 'Las cancelaciones intermitentes desaparecen de las DMVs. Captura sqlserver.attention junto con batches completados para demostrar qu\u00e9 llamador se rindi\u00f3 primero.',
+    },
+    why: {
+      en: 'Use this when the complaint says “it timed out” but no long-running request is still alive when you investigate.',
+      es: 'Usa esto cuando la queja dice “ha hecho timeout” pero ya no queda ninguna petici\u00f3n larga viva cuando investigas.',
+    },
+    sessionScript: {
+      en: `CREATE EVENT SESSION [XE_AttentionLab] ON SERVER
+ADD EVENT sqlserver.attention(
+    ACTION(sqlserver.client_app_name, sqlserver.database_name, sqlserver.session_id, sqlserver.sql_text)),
+ADD EVENT sqlserver.rpc_completed(
+    ACTION(sqlserver.client_app_name, sqlserver.database_name, sqlserver.session_id, sqlserver.sql_text)
+    WHERE (duration > 5000000))
+ADD TARGET package0.event_file(SET filename = N'E:\\XE\\XE_AttentionLab.xel');
+GO
+ALTER EVENT SESSION [XE_AttentionLab] ON SERVER STATE = START;`,
+      es: `CREATE EVENT SESSION [XE_AttentionLab] ON SERVER
+ADD EVENT sqlserver.attention(
+    ACTION(sqlserver.client_app_name, sqlserver.database_name, sqlserver.session_id, sqlserver.sql_text)),
+ADD EVENT sqlserver.rpc_completed(
+    ACTION(sqlserver.client_app_name, sqlserver.database_name, sqlserver.session_id, sqlserver.sql_text)
+    WHERE (duration > 5000000))
+ADD TARGET package0.event_file(SET filename = N'E:\\XE\\XE_AttentionLab.xel');
+GO
+ALTER EVENT SESSION [XE_AttentionLab] ON SERVER STATE = START;`,
+    },
+    readbackScript: {
+      en: `SELECT object_name,
+       CONVERT(XML, event_data) AS event_data
+FROM sys.fn_xe_file_target_read_file(
+    'E:\\XE\\XE_AttentionLab*.xel', NULL, NULL, NULL);`,
+      es: `SELECT object_name,
+       CONVERT(XML, event_data) AS event_data
+FROM sys.fn_xe_file_target_read_file(
+    'E:\\XE\\XE_AttentionLab*.xel', NULL, NULL, NULL);`,
+    },
+    badges: ['ATTENTION', 'XE ONLY', 'CLIENT APP'],
+  },
+  {
+    id: 'blocked-process',
+    title: {
+      en: 'Blocking That Ends Before You Arrive',
+      es: 'Bloqueos que terminan antes de que llegues',
+    },
+    summary: {
+      en: 'Long blocking chains often disappear before anyone can inspect sys.dm_exec_requests. blocked_process_report keeps the graph.',
+      es: 'Las cadenas largas de bloqueo suelen desaparecer antes de poder inspeccionar sys.dm_exec_requests. blocked_process_report conserva el grafo.',
+    },
+    why: {
+      en: 'Use this when users report freezes but the blocker is gone by the time you connect.',
+      es: 'Usa esto cuando los usuarios reportan congelaciones pero el bloqueador ya no existe cuando te conectas.',
+    },
+    sessionScript: {
+      en: `EXEC sp_configure 'show advanced options', 1;
+RECONFIGURE;
+EXEC sp_configure 'blocked process threshold (s)', 5;
+RECONFIGURE;
+GO
+CREATE EVENT SESSION [XE_BlockedProcessLab] ON SERVER
+ADD EVENT sqlserver.blocked_process_report
+ADD TARGET package0.event_file(SET filename = N'E:\\XE\\XE_BlockedProcessLab.xel');
+GO
+ALTER EVENT SESSION [XE_BlockedProcessLab] ON SERVER STATE = START;`,
+      es: `EXEC sp_configure 'show advanced options', 1;
+RECONFIGURE;
+EXEC sp_configure 'blocked process threshold (s)', 5;
+RECONFIGURE;
+GO
+CREATE EVENT SESSION [XE_BlockedProcessLab] ON SERVER
+ADD EVENT sqlserver.blocked_process_report
+ADD TARGET package0.event_file(SET filename = N'E:\\XE\\XE_BlockedProcessLab.xel');
+GO
+ALTER EVENT SESSION [XE_BlockedProcessLab] ON SERVER STATE = START;`,
+    },
+    readbackScript: {
+      en: `SELECT CONVERT(XML, event_data) AS blocked_process_report
+FROM sys.fn_xe_file_target_read_file(
+    'E:\\XE\\XE_BlockedProcessLab*.xel', NULL, NULL, NULL);`,
+      es: `SELECT CONVERT(XML, event_data) AS blocked_process_report
+FROM sys.fn_xe_file_target_read_file(
+    'E:\\XE\\XE_BlockedProcessLab*.xel', NULL, NULL, NULL);`,
+    },
+    badges: ['BLOCKED PROCESS', 'GRAPH', 'POST-MORTEM'],
+  },
+  {
+    id: 'deadlock-graph',
+    title: {
+      en: 'Deadlock Graphs',
+      es: 'Grafos de deadlock',
+    },
+    summary: {
+      en: 'A deadlock is gone the moment SQL resolves it. The XML graph is what tells you victim, resources and lock order.',
+      es: 'Un deadlock desaparece en el mismo instante en que SQL lo resuelve. El grafo XML es lo que te dice v\u00edctima, recursos y orden de locks.',
+    },
+    why: {
+      en: 'Use this when you need resource-level evidence, not just error 1205 in the app log.',
+      es: 'Usa esto cuando necesitas evidencia a nivel de recurso, no solo el error 1205 en el log de la app.',
+    },
+    sessionScript: {
+      en: `CREATE EVENT SESSION [XE_DeadlockLab] ON SERVER
+ADD EVENT sqlserver.xml_deadlock_report
+ADD TARGET package0.event_file(SET filename = N'E:\\XE\\XE_DeadlockLab.xel');
+GO
+ALTER EVENT SESSION [XE_DeadlockLab] ON SERVER STATE = START;`,
+      es: `CREATE EVENT SESSION [XE_DeadlockLab] ON SERVER
+ADD EVENT sqlserver.xml_deadlock_report
+ADD TARGET package0.event_file(SET filename = N'E:\\XE\\XE_DeadlockLab.xel');
+GO
+ALTER EVENT SESSION [XE_DeadlockLab] ON SERVER STATE = START;`,
+    },
+    readbackScript: {
+      en: `SELECT CONVERT(XML, event_data) AS deadlock_graph
+FROM sys.fn_xe_file_target_read_file(
+    'E:\\XE\\XE_DeadlockLab*.xel', NULL, NULL, NULL);`,
+      es: `SELECT CONVERT(XML, event_data) AS deadlock_graph
+FROM sys.fn_xe_file_target_read_file(
+    'E:\\XE\\XE_DeadlockLab*.xel', NULL, NULL, NULL);`,
+    },
+    badges: ['XML DEADLOCK REPORT', 'XE', 'LOCK ORDER'],
+  },
+];

@@ -305,7 +305,7 @@ const SYNC_LAB: Record<'lock' | 'latch' | 'spinlock', LabStep[]> = {
       ],
       resource: {
         title: { en: 'Hot page', es: 'Pagina caliente' },
-        subtitle: { en: 'tempdb 2:1:1 (example)', es: 'tempdb 2:1:1 (ejemplo)' },
+        subtitle: { en: 'hot page (generic example)', es: 'pagina caliente (ejemplo generico)' },
         ownerSpid: 60,
         mode: 'EX',
         queue: 2,

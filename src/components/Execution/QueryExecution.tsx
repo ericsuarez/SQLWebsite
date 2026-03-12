@@ -15,7 +15,7 @@ interface QueryState {
 }
 
 export function QueryExecution() {
-    const { t } = useLanguage();
+    const { t, language } = useLanguage();
     const [activeTab, setActiveTab] = useState<'execution' | 'optimizer' | 'dmvs'>('execution');
     const [queries, setQueries] = useState<QueryState[]>([]);
     const [activeWaitType, setActiveWaitType] = useState<WaitType>('none');
@@ -452,19 +452,25 @@ export function QueryExecution() {
                                     <p className="text-sm text-muted-foreground mb-5">{t('dmvQueryDesc')}</p>
                                     <div className="space-y-4">
                                         {([
-                                          { label:'Find active blockers & their SQL', border:'border-l-rose-500',
+                                          { label: language === 'es' ? 'Bloqueadores activos y SQL asociado' : 'Active blockers and current SQL', border:'border-l-rose-500',
                                             code:`SELECT r.session_id, r.blocking_session_id,\n       r.wait_type, r.wait_time/1000 AS wait_sec,\n       DB_NAME(r.database_id) AS db_name,\n       t.text AS sql_text\nFROM sys.dm_exec_requests r\nCROSS APPLY sys.dm_exec_sql_text(r.sql_handle) t\nWHERE r.blocking_session_id > 0\nORDER BY r.wait_time DESC;` },
-                                          { label:'Top 10 most expensive queries by CPU', border:'border-l-amber-500',
+                                          { label: language === 'es' ? 'Top CPU por query en cache' : 'Top CPU queries in cache', border:'border-l-amber-500',
                                             code:`SELECT TOP 10\n  qs.total_worker_time/qs.execution_count AS avg_cpu_us,\n  qs.execution_count,\n  qs.total_elapsed_time/qs.execution_count AS avg_elapsed_us,\n  SUBSTRING(qt.text, (qs.statement_start_offset/2)+1, 200) AS sql_text\nFROM sys.dm_exec_query_stats qs\nCROSS APPLY sys.dm_exec_sql_text(qs.sql_handle) qt\nORDER BY avg_cpu_us DESC;` },
-                                          { label:'Top wait types (filtering benign waits)', border:'border-l-purple-500',
+                                          { label: language === 'es' ? 'Top waits filtrando ruido' : 'Top wait types (filtered)', border:'border-l-purple-500',
                                             code:`SELECT TOP 15\n  wait_type,\n  wait_time_ms / 1000 AS wait_sec,\n  (wait_time_ms - signal_wait_time_ms)/1000 AS resource_sec,\n  signal_wait_time_ms / 1000 AS signal_sec,\n  waiting_tasks_count\nFROM sys.dm_os_wait_stats\nWHERE wait_type NOT IN (\n  'SLEEP_TASK','BROKER_TO_FLUSH','XE_DISPATCHER_WAIT',\n  'FT_IFTS_SCHEDULER_IDLE_WAIT','REQUEST_FOR_DEADLOCK_SEARCH',\n  'RESOURCE_QUEUE','SLEEP_MASTERDBREADY','SLEEP_DBSTARTUP')\nORDER BY wait_time_ms DESC;` },
-                                          { label:'Missing index suggestions (scored by impact)', border:'border-l-emerald-500',
-                                            code:`SELECT TOP 10\n  ROUND(gs.avg_total_user_cost * gs.avg_user_impact\n        * (gs.user_seeks + gs.user_scans), 0) AS score,\n  DB_NAME(database_id) AS db_name,\n  d.statement AS table_name,\n  d.equality_columns, d.included_columns\nFROM sys.dm_db_missing_index_details d\nJOIN sys.dm_db_missing_index_groups g ON d.index_handle = g.index_handle\nJOIN sys.dm_db_missing_index_group_stats gs ON g.index_group_handle = gs.group_handle\nORDER BY score DESC;` },
+                                          { label: language === 'es' ? 'Cadena de bloqueo + plantilla KILL' : 'Blocking chain + KILL template', border:'border-l-emerald-500',
+                                            code:`SELECT wt.session_id,\n       wt.blocking_session_id,\n       wt.wait_type,\n       wt.wait_duration_ms / 1000.0 AS wait_sec,\n       er.command,\n       txt.text AS sql_text\nFROM sys.dm_os_waiting_tasks wt\nJOIN sys.dm_exec_requests er\n  ON wt.session_id = er.session_id\nCROSS APPLY sys.dm_exec_sql_text(er.sql_handle) txt\nWHERE wt.blocking_session_id > 0;\n\n-- Solo si validaste el impacto:\nKILL <blocking_session_id>;` },
                                           { label:'Memory clerks — top consumers', border:'border-l-cyan-500',
-                                            code:`SELECT TOP 10\n  type AS clerk_name,\n  SUM(pages_kb) / 1024 AS used_mb,\n  SUM(virtual_memory_committed_kb) / 1024 AS vm_mb,\n  COUNT(*) AS node_count\nFROM sys.dm_os_memory_clerks\nGROUP BY type\nORDER BY used_mb DESC;` },
+                                            code:`SELECT r.session_id,\n       r.status,\n       r.wait_type,\n       r.wait_time,\n       mg.requested_memory_kb,\n       mg.granted_memory_kb,\n       mg.used_memory_kb,\n       SUBSTRING(t.text, (r.statement_start_offset / 2) + 1, 200) AS sql_text\nFROM sys.dm_exec_requests r\nLEFT JOIN sys.dm_exec_query_memory_grants mg\n  ON r.session_id = mg.session_id\nCROSS APPLY sys.dm_exec_sql_text(r.sql_handle) t\nWHERE r.session_id > 50\nORDER BY r.cpu_time DESC, r.logical_reads DESC;` },
                                         ] as {label:string; border:string; code:string}[]).map(({ label, border, code }) => (
                                             <div key={label} className={`bg-black/40 rounded-xl border-l-4 ${border} border border-white/5 overflow-hidden`}>
-                                                <div className="px-4 py-2 bg-white/5 text-xs font-bold text-white/70 border-b border-white/5">{label}</div>
+                                                <div className="px-4 py-2 bg-white/5 text-xs font-bold text-white/70 border-b border-white/5">
+                                                    {code.includes('requested_memory_kb')
+                                                        ? language === 'es'
+                                                            ? 'Requests con grants e I/O pendiente'
+                                                            : 'Requests with grants and pending I/O'
+                                                        : label}
+                                                </div>
                                                 <pre className="p-4 text-[11px] font-mono text-white/80 overflow-x-auto leading-relaxed whitespace-pre">{code}</pre>
                                             </div>
                                         ))}

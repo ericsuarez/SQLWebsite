@@ -21,6 +21,7 @@ const MODULE_COMPONENTS: Record<ModuleId, ModuleComponent> = {
   memory: lazyNamed(() => import('./components/Memory/MemoryOperations'), 'MemoryOperations'),
   execution: lazyNamed(() => import('./components/Execution/QueryExecution'), 'QueryExecution'),
   dba: lazyNamed(() => import('./components/DBA/DBAScenarios'), 'DBAScenarios'),
+  jobs: lazyNamed(() => import('./components/DBA/IndustryStandardJobs'), 'IndustryStandardJobs'),
   ha: lazyNamed(() => import('./components/HA/HighAvailability'), 'HighAvailability'),
   indexes: lazyNamed(() => import('./components/Storage/IndexVisualizer'), 'IndexVisualizer'),
   realcases: lazyNamed(() => import('./components/DBA/RealCasesPage'), 'RealCasesPage'),
@@ -36,7 +37,7 @@ const MODULE_COMPONENTS: Record<ModuleId, ModuleComponent> = {
 
 function ModuleFallback({ currentModule }: { currentModule: ModuleId }) {
   return (
-    <div className="w-full h-full flex items-center justify-center glass-panel rounded-2xl relative overflow-hidden">
+    <div className="relative flex min-h-[320px] w-full items-center justify-center overflow-hidden rounded-2xl glass-panel">
       <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent pointer-events-none" />
       <div className="text-center p-8 z-10">
         <div className="mx-auto mb-4 h-12 w-12 rounded-full border-2 border-white/15 border-t-primary animate-spin" />
@@ -65,7 +66,7 @@ function App() {
               animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
               exit={{ opacity: 0, y: -10, filter: 'blur(10px)' }}
               transition={{ duration: 0.3 }}
-              className="w-full h-full"
+              className="w-full min-h-full"
             >
               <Suspense fallback={<ModuleFallback currentModule={currentModule} />}>
                 <ActiveModule />

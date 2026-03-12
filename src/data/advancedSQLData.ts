@@ -164,11 +164,11 @@ export const TLOG_WAL_STAGES: TLogWalStage[] = [
     },
     summary: {
       en: 'The worker formats log records in memory before the transaction can commit.',
-      es: 'El worker construye registros de log en memoria antes de que la transaccion pueda hacer commit.',
+      es: 'El worker construye registros de log en memoria antes de que la transacción pueda hacer commit.',
     },
     detail: {
       en: 'Every INSERT, UPDATE or DELETE creates log records first. Dirty data pages can wait, but the log record must exist immediately.',
-      es: 'Cada INSERT, UPDATE o DELETE genera primero registros de log. Las paginas de datos pueden esperar, pero el log record debe existir al instante.',
+      es: 'Cada INSERT, UPDATE o DELETE genera primero registros de log. Las páginas de datos pueden esperar, pero el log record debe existir al instante.',
     },
     badge: 'LOGBUFFER',
     metric: '60 KB log blocks',
@@ -181,7 +181,7 @@ export const TLOG_WAL_STAGES: TLogWalStage[] = [
     },
     summary: {
       en: 'Commit forces the log cache to stable media so the LSN is durable.',
-      es: 'El commit fuerza el vaciado del cache de log a medio estable para que el LSN sea duradero.',
+      es: 'El commit fuerza el vaciado de la caché de log a medio estable para que el LSN sea duradero.',
     },
     detail: {
       en: 'The WAL rule is strict: SQL Server must harden the log block before acknowledging COMMIT to the client.',
@@ -198,11 +198,11 @@ export const TLOG_WAL_STAGES: TLogWalStage[] = [
     },
     summary: {
       en: 'The flushed block lands in the current active VLF and recovery starts from there after a crash.',
-      es: 'El bloque vaciado aterriza en el VLF activo y desde ahi arranca la recuperacion tras un crash.',
+      es: 'El bloque vaciado aterriza en el VLF activo y desde ahí arranca la recuperación tras un crash.',
     },
     detail: {
       en: 'A healthy log file keeps a manageable VLF count. Too many tiny VLFs stretch crash recovery, log scan and backup operations.',
-      es: 'Un log sano mantiene un numero manejable de VLFs. Demasiados VLFs pequenos alargan crash recovery, el escaneo del log y los backups.',
+      es: 'Un log sano mantiene un número manejable de VLFs. Demasiados VLFs pequeños alargan crash recovery, el escaneo del log y los backups.',
     },
     badge: 'ACTIVE VLF',
     metric: 'Recovery scans VLF by VLF',
@@ -235,11 +235,11 @@ export const TLOG_VLF_PROFILES: TLogVlfProfile[] = [
     bars: 16,
     recovery: {
       en: 'Crash recovery scans fast because the active portion lives in a short VLF chain.',
-      es: 'Crash recovery escanea rapido porque la parte activa vive en una cadena corta de VLFs.',
+      es: 'Crash recovery escanea rápido porque la parte activa vive en una cadena corta de VLFs.',
     },
     impact: {
       en: 'Shorter startup, faster restore and cleaner log reuse.',
-      es: 'Arranque mas corto, restore mas rapido y mejor reutilizacion del log.',
+      es: 'Arranque más corto, restore más rápido y mejor reutilización del log.',
     },
     badges: ['sys.dm_db_log_info', 'Target: < 200 VLFs', 'Recovery friendly'],
   },
@@ -251,17 +251,17 @@ export const TLOG_VLF_PROFILES: TLogVlfProfile[] = [
     },
     summary: {
       en: 'Repeated tiny autogrowth events create hundreds of small VLFs.',
-      es: 'Autogrowth pequeno repetido crea cientos de VLFs diminutos.',
+      es: 'Un autogrowth pequeño repetido crea cientos de VLFs diminutos.',
     },
     vlfCount: 640,
     bars: 96,
     recovery: {
       en: 'Crash recovery and redo/undo have to walk a long chain of tiny VLFs before the database opens.',
-      es: 'Crash recovery y redo/undo tienen que recorrer una cadena enorme de VLFs pequenos antes de abrir la base.',
+      es: 'Crash recovery y redo/undo tienen que recorrer una cadena enorme de VLFs pequeños antes de abrir la base.',
     },
     impact: {
       en: 'Long startup after failure, slower log backup scans and painful maintenance windows.',
-      es: 'Arranque lento tras fallo, backups de log mas lentos y ventanas de mantenimiento dolorosas.',
+      es: 'Arranque lento tras fallo, backups de log más lentos y ventanas de mantenimiento dolorosas.',
     },
     badges: ['Autogrowth storm', 'Long redo', 'Slow startup'],
   },

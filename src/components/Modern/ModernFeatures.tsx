@@ -245,11 +245,11 @@ export function ModernFeatures() {
   };
 
   return (
-    <div className="flex h-full flex-col gap-6 text-slate-200">
-      <div className="glass-panel relative overflow-hidden border border-white/10 p-6">
+    <div className="flex min-h-full flex-col gap-4 text-slate-200 sm:gap-6">
+      <div className="glass-panel relative overflow-hidden border border-white/10 p-4 sm:p-6">
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(250,204,21,0.16),transparent_28%),radial-gradient(circle_at_bottom_right,rgba(34,211,238,0.12),transparent_30%)]" />
         <div className="relative z-10 flex flex-wrap items-start justify-between gap-4">
-          <div className="min-w-[280px] flex-1">
+          <div className="min-w-0 flex-1">
             <h2 className="mb-2 flex items-center gap-3 bg-gradient-to-r from-yellow-300 via-orange-300 to-cyan-300 bg-clip-text text-3xl font-bold text-transparent">
               <Sparkles className="h-8 w-8 text-yellow-300" />
               {t('tabModern')}
@@ -261,7 +261,7 @@ export function ModernFeatures() {
             </p>
           </div>
 
-          <div className="grid gap-2 text-right">
+          <div className="grid gap-2 text-left sm:text-right">
             {(['2014', '2019', '2022', '2025'] as const).map((release) => (
               <div
                 key={release}
@@ -274,7 +274,7 @@ export function ModernFeatures() {
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto">
+      <div className="min-h-0 flex-1">
         <div className="grid gap-6 xl:grid-cols-[360px_minmax(0,1fr)]">
           <div className="glass-panel h-fit rounded-3xl border border-white/10 p-4">
             <div className="rounded-3xl border border-amber-500/20 bg-amber-500/10 p-4">
@@ -383,7 +383,7 @@ export function ModernFeatures() {
                 <div className="grid gap-6 xl:grid-cols-[minmax(0,1.1fr)_360px]">
                   <div>
                     <div className="flex flex-wrap items-start justify-between gap-4">
-                      <div className="min-w-[260px] flex-1">
+                      <div className="min-w-0 flex-1">
                         <div className="mb-4 flex items-center gap-3">
                           <div className={cn('flex h-14 w-14 items-center justify-center rounded-2xl border', selectedStyle.border, selectedStyle.bg)}>
                             <SelectedIcon className={cn('h-7 w-7', selectedStyle.text)} />

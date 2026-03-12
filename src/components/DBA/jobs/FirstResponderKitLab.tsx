@@ -29,7 +29,11 @@ function pick(language: 'en' | 'es', text: { en: string; es: string }) {
   return language === 'es' ? text.es : text.en;
 }
 
-export function FirstResponderKitLab() {
+interface FirstResponderKitLabProps {
+  compact?: boolean;
+}
+
+export function FirstResponderKitLab({ compact = false }: FirstResponderKitLabProps) {
   const { language } = useLanguage();
   const [tool, setTool] = useState<'blitz' | 'cache'>('blitz');
   const [severity, setSeverity] = useState<'all' | FindingSeverity>('all');
@@ -47,29 +51,42 @@ export function FirstResponderKitLab() {
   }, [selectedId, tool]);
 
   return (
-    <div className="grid gap-6 xl:grid-cols-[minmax(0,1.2fr)_420px]">
-      <div className="glass-panel rounded-2xl border border-white/10 p-6">
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div className="min-w-[280px] flex-1">
-            <h3 className="text-xl font-bold text-sky-300 flex items-center gap-2">
-              <TerminalSquare className="h-5 w-5" />
-              {language === 'es' ? 'First Responder Kit (sp_Blitz / sp_BlitzCache)' : 'First Responder Kit (sp_Blitz / sp_BlitzCache)'}
-            </h3>
-            <p className="mt-2 text-sm text-muted-foreground">
+    <div className={cn('grid gap-4 lg:gap-6', compact ? 'grid-cols-1' : 'xl:grid-cols-[minmax(0,1.2fr)_420px]')}>
+      <div className="glass-panel rounded-2xl border border-white/10 p-4 sm:p-6">
+        {!compact ? (
+          <div className="flex flex-wrap items-start justify-between gap-4">
+            <div className="min-w-0 flex-1">
+              <h3 className="text-xl font-bold text-sky-300 flex items-center gap-2">
+                <TerminalSquare className="h-5 w-5" />
+                {language === 'es' ? 'First Responder Kit (sp_Blitz / sp_BlitzCache)' : 'First Responder Kit (sp_Blitz / sp_BlitzCache)'}
+              </h3>
+              <p className="mt-2 text-sm text-muted-foreground">
+                {language === 'es'
+                  ? 'Simulacion estilo health-check: hallazgos con severidad, detalles clicables y T-SQL listo para copiar.'
+                  : 'A health-check style simulation: severity-coded findings, clickable details and ready-to-paste T-SQL.'}
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <span className="rounded-full border border-white/10 bg-black/25 px-3 py-1 text-xs font-bold text-white/70">sp_Blitz</span>
+              <span className="rounded-full border border-white/10 bg-black/25 px-3 py-1 text-xs font-bold text-white/70">sp_BlitzCache</span>
+              <span className="rounded-full border border-white/10 bg-black/25 px-3 py-1 text-xs font-bold text-white/70">Query Store</span>
+            </div>
+          </div>
+        ) : (
+          <div className="rounded-2xl border border-cyan-500/20 bg-cyan-500/10 p-3">
+            <div className="text-[11px] font-bold uppercase tracking-[0.22em] text-cyan-200">
+              {language === 'es' ? 'Play: consulta y hallazgos' : 'Play: query and findings'}
+            </div>
+            <p className="mt-2 text-xs text-white/75">
               {language === 'es'
-                ? 'Simulacion estilo health-check: hallazgos con severidad, detalles clicables y T-SQL listo para copiar.'
-                : 'A health-check style simulation: severity-coded findings, clickable details and ready-to-paste T-SQL.'}
+                ? 'Selecciona un hallazgo y sigue causa -> impacto -> fix con SQL de soporte.'
+                : 'Select a finding and follow cause -> impact -> fix with supporting SQL.'}
             </p>
           </div>
-          <div className="flex flex-wrap gap-2">
-            <span className="rounded-full border border-white/10 bg-black/25 px-3 py-1 text-xs font-bold text-white/70">sp_Blitz</span>
-            <span className="rounded-full border border-white/10 bg-black/25 px-3 py-1 text-xs font-bold text-white/70">sp_BlitzCache</span>
-            <span className="rounded-full border border-white/10 bg-black/25 px-3 py-1 text-xs font-bold text-white/70">Query Store</span>
-          </div>
-        </div>
+        )}
 
-        <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
-          <div className="flex gap-2 rounded-2xl border border-white/10 bg-black/20 p-1">
+        <div className="mt-6 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+          <div className="flex w-full flex-wrap gap-2 rounded-2xl border border-white/10 bg-black/20 p-1 lg:w-auto">
             {(
               [
                 { id: 'blitz', label: 'sp_Blitz', icon: AlertTriangle },
@@ -98,7 +115,7 @@ export function FirstResponderKitLab() {
             })}
           </div>
 
-          <div className="flex items-center gap-2 rounded-2xl border border-white/10 bg-black/20 p-2">
+          <div className="flex w-full flex-wrap items-center gap-2 rounded-2xl border border-white/10 bg-black/20 p-2 lg:w-auto">
             <Filter className="h-4 w-4 text-white/40" />
             {(['all', 'critical', 'warning', 'info', 'good'] as const).map((id) => (
               <button
@@ -118,7 +135,7 @@ export function FirstResponderKitLab() {
         </div>
 
         <div className="mt-6 rounded-3xl border border-white/10 bg-black/25 overflow-hidden">
-          <div className="grid grid-cols-[140px_minmax(0,1fr)_120px] px-4 py-3 text-[11px] font-bold uppercase tracking-[0.22em] text-white/40 border-b border-white/10">
+          <div className="hidden border-b border-white/10 px-4 py-3 text-[11px] font-bold uppercase tracking-[0.22em] text-white/40 md:grid md:grid-cols-[140px_minmax(0,1fr)_120px]">
             <div>{language === 'es' ? 'Severidad' : 'Severity'}</div>
             <div>{language === 'es' ? 'Hallazgo' : 'Finding'}</div>
             <div className="text-right">{language === 'es' ? 'Badge' : 'Badge'}</div>
@@ -146,14 +163,17 @@ export function FirstResponderKitLab() {
                     isActive ? 'bg-white/10' : cn('bg-transparent', style.row)
                   )}
                 >
-                  <div className="grid grid-cols-[140px_minmax(0,1fr)_120px] gap-4 items-start">
-                    <div>
+                  <div className="grid items-start gap-3 md:grid-cols-[140px_minmax(0,1fr)_120px] md:gap-4">
+                    <div className="flex flex-wrap items-center gap-2">
                       <span className={cn('inline-flex rounded-full border px-3 py-1 text-[10px] font-bold uppercase tracking-[0.18em]', style.chip)}>
                         {item.severity}
                       </span>
+                      <span className="inline-flex rounded-full border border-white/10 bg-black/25 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-white/65 md:hidden">
+                        {tool === 'blitz' ? (item as (typeof BLITZ_FINDINGS)[number]).badge : (item as (typeof BLITZCACHE_ROWS)[number]).database}
+                      </span>
                     </div>
                     <div className="min-w-0">
-                      <div className="truncate text-sm font-bold text-white">{title}</div>
+                      <div className="text-sm font-bold text-white md:truncate">{title}</div>
                       <div className="mt-1 text-xs leading-6 text-white/60">{subtitle}</div>
                       {tool === 'cache' && (
                         <div className="mt-2 flex flex-wrap gap-2">
@@ -165,7 +185,7 @@ export function FirstResponderKitLab() {
                         </div>
                       )}
                     </div>
-                    <div className="text-right">
+                    <div className="hidden text-right md:block">
                       <span className="inline-flex rounded-full border border-white/10 bg-black/25 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-white/65">
                         {tool === 'blitz' ? (item as (typeof BLITZ_FINDINGS)[number]).badge : (item as (typeof BLITZCACHE_ROWS)[number]).database}
                       </span>
@@ -178,7 +198,7 @@ export function FirstResponderKitLab() {
         </div>
       </div>
 
-      <div className="glass-panel rounded-2xl border border-white/10 p-6">
+      <div className="glass-panel rounded-2xl border border-white/10 p-4 sm:p-6">
         <AnimatePresence mode="wait">
           <motion.div
             key={`${tool}-${selected?.id ?? 'none'}`}
@@ -229,7 +249,7 @@ export function FirstResponderKitLab() {
                       <div className="text-sm font-bold text-white">{(selected as (typeof BLITZCACHE_ROWS)[number]).queryLabel}</div>
                       <p className="mt-3 text-sm leading-7 text-white/75">{pick(language, (selected as (typeof BLITZCACHE_ROWS)[number]).summary)}</p>
 
-                      <div className="mt-4 grid gap-3 grid-cols-2">
+                      <div className="mt-4 grid gap-3 sm:grid-cols-2">
                         {[
                           { k: 'CPU', v: `${(selected as (typeof BLITZCACHE_ROWS)[number]).cpuMs.toLocaleString()} ms` },
                           { k: 'Duration', v: `${(selected as (typeof BLITZCACHE_ROWS)[number]).durationMs.toLocaleString()} ms` },

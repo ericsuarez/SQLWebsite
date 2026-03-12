@@ -35,8 +35,8 @@ export function ReplicationInternals() {
   const activeMode = REPLICATION_MODES.find((mode) => mode.id === activeModeId) ?? REPLICATION_MODES[1];
 
   return (
-    <div className="flex h-full flex-col gap-6 text-slate-200">
-      <div className="glass-panel relative overflow-hidden border border-white/10 p-6">
+    <div className="flex min-h-full flex-col gap-4 text-slate-200 sm:gap-6">
+      <div className="glass-panel relative overflow-hidden border border-white/10 p-4 sm:p-6">
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(56,189,248,0.18),transparent_28%),radial-gradient(circle_at_bottom_right,rgba(14,165,233,0.16),transparent_34%)]" />
         <div className="relative z-10 flex flex-wrap items-start justify-between gap-4">
           <div className="max-w-5xl">
