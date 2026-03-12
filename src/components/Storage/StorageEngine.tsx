@@ -12,6 +12,16 @@ interface ExtentData {
     allocated: boolean;
 }
 
+type PageTone = 'emerald' | 'blue' | 'amber' | 'rose' | 'violet' | 'gray';
+
+interface ExtentPageCell {
+    id: number;
+    allocated: boolean;
+    owner: string;
+    tone: PageTone;
+    usedPct: number; // 0..100
+}
+
 export function StorageEngine() {
     const { t, language } = useLanguage();
     const [activeTab, setActiveTab] = useState<'files' | 'backups'>('files');
@@ -34,6 +44,140 @@ export function StorageEngine() {
     );
 
     const pagesArray = Array.from({ length: 8 }, (_, i) => i);
+    const PAGE_STYLE: Record<
+        PageTone,
+        {
+            border: string;
+            hoverBorder: string;
+            bar: string;
+            fill: string;
+            badge: string;
+            hoverIcon: string;
+            tag: string;
+            row: string;
+            rowCode: string;
+        }
+    > = {
+        emerald: {
+            border: 'border-emerald-500/30',
+            hoverBorder: 'hover:border-emerald-400/60',
+            bar: 'bg-emerald-500/20',
+            fill: 'bg-emerald-400',
+            badge: 'border-emerald-500/20 bg-emerald-500/10 text-emerald-300',
+            hoverIcon: 'group-hover:text-emerald-400/60',
+            tag: 'text-emerald-400',
+            row: 'bg-emerald-500/10 border-emerald-500/30 hover:border-emerald-400',
+            rowCode: 'text-emerald-400',
+        },
+        blue: {
+            border: 'border-blue-500/30',
+            hoverBorder: 'hover:border-blue-400/60',
+            bar: 'bg-blue-500/20',
+            fill: 'bg-blue-400',
+            badge: 'border-blue-500/20 bg-blue-500/10 text-blue-300',
+            hoverIcon: 'group-hover:text-blue-300/70',
+            tag: 'text-blue-300',
+            row: 'bg-blue-500/10 border-blue-500/30 hover:border-blue-400',
+            rowCode: 'text-blue-300',
+        },
+        amber: {
+            border: 'border-amber-500/30',
+            hoverBorder: 'hover:border-amber-400/60',
+            bar: 'bg-amber-500/20',
+            fill: 'bg-amber-400',
+            badge: 'border-amber-500/20 bg-amber-500/10 text-amber-300',
+            hoverIcon: 'group-hover:text-amber-300/70',
+            tag: 'text-amber-300',
+            row: 'bg-amber-500/10 border-amber-500/30 hover:border-amber-400',
+            rowCode: 'text-amber-300',
+        },
+        rose: {
+            border: 'border-rose-500/30',
+            hoverBorder: 'hover:border-rose-400/60',
+            bar: 'bg-rose-500/20',
+            fill: 'bg-rose-400',
+            badge: 'border-rose-500/20 bg-rose-500/10 text-rose-300',
+            hoverIcon: 'group-hover:text-rose-300/70',
+            tag: 'text-rose-300',
+            row: 'bg-rose-500/10 border-rose-500/30 hover:border-rose-400',
+            rowCode: 'text-rose-300',
+        },
+        violet: {
+            border: 'border-violet-500/30',
+            hoverBorder: 'hover:border-violet-400/60',
+            bar: 'bg-violet-500/20',
+            fill: 'bg-violet-400',
+            badge: 'border-violet-500/20 bg-violet-500/10 text-violet-300',
+            hoverIcon: 'group-hover:text-violet-300/70',
+            tag: 'text-violet-300',
+            row: 'bg-violet-500/10 border-violet-500/30 hover:border-violet-400',
+            rowCode: 'text-violet-300',
+        },
+        gray: {
+            border: 'border-white/15',
+            hoverBorder: 'hover:border-white/25',
+            bar: 'bg-white/10',
+            fill: 'bg-white/30',
+            badge: 'border-white/10 bg-black/30 text-white/60',
+            hoverIcon: 'group-hover:text-white/30',
+            tag: 'text-white/60',
+            row: 'bg-white/5 border-white/10 hover:border-white/20',
+            rowCode: 'text-white/60',
+        },
+    };
+
+    const buildExtentPages = (ext: ExtentData): ExtentPageCell[] => {
+        if (!ext.allocated) {
+            return pagesArray.map((id) => ({
+                id,
+                allocated: false,
+                owner: language === 'es' ? 'LIBRE' : 'FREE',
+                tone: 'gray',
+                usedPct: 0,
+            }));
+        }
+
+        if (ext.type === 'Uniform') {
+            return pagesArray.map((id) => ({
+                id,
+                allocated: true,
+                owner: language === 'es' ? 'OBJ U' : 'OBJ U',
+                tone: 'emerald',
+                usedPct: 55 + ((ext.id * 11 + id * 7) % 40),
+            }));
+        }
+
+        const owners: { owner: string; tone: PageTone }[] = [
+            { owner: language === 'es' ? 'OBJ A' : 'OBJ A', tone: 'blue' },
+            { owner: language === 'es' ? 'OBJ B' : 'OBJ B', tone: 'amber' },
+            { owner: language === 'es' ? 'OBJ C' : 'OBJ C', tone: 'rose' },
+            { owner: language === 'es' ? 'OBJ D' : 'OBJ D', tone: 'violet' },
+        ];
+
+        const allocatedCount = Math.min(7, 3 + (ext.id % 3)); // always leave at least 1 free page
+
+        return pagesArray.map((id) => {
+            const allocated = id < allocatedCount;
+            if (!allocated) {
+                return {
+                    id,
+                    allocated: false,
+                    owner: language === 'es' ? 'LIBRE' : 'FREE',
+                    tone: 'gray',
+                    usedPct: 0,
+                };
+            }
+
+            const selectedOwner = owners[(ext.id + id) % owners.length];
+            return {
+                id,
+                allocated: true,
+                owner: selectedOwner.owner,
+                tone: selectedOwner.tone,
+                usedPct: 55 + ((ext.id * 13 + id * 17) % 40),
+            };
+        });
+    };
     const ui = language === 'es'
         ? {
             filesAndPages: 'Archivos y paginas',
@@ -376,27 +520,42 @@ export function StorageEngine() {
                                     </div>
 
                                     <div className="grid grid-cols-4 gap-6">
-                                        {pagesArray.map((i) => (
+                                        {buildExtentPages(ext).map((page) => (
                                             <motion.div
-                                                key={i}
+                                                key={page.id}
                                                 whileHover={{ scale: 1.05, y: -5 }}
                                                 whileTap={{ scale: 0.95 }}
                                                 onClick={() => {
-                                                    setSelectedPage(i);
+                                                    setSelectedPage(page.id);
                                                     setViewState('page');
                                                 }}
-                                                className="aspect-[3/4] bg-white/5 border border-white/20 rounded-xl flex flex-col hover:border-emerald-400/50 hover:shadow-glow transition-all cursor-pointer overflow-hidden group"
+                                                className={cn(
+                                                    "aspect-[3/4] bg-white/5 border rounded-xl flex flex-col hover:shadow-glow transition-all cursor-pointer overflow-hidden group",
+                                                    PAGE_STYLE[page.tone].border,
+                                                    PAGE_STYLE[page.tone].hoverBorder,
+                                                )}
                                             >
-                                                <div className="h-8 bg-black/40 border-b border-white/10 flex items-center justify-center text-xs font-bold text-muted-foreground group-hover:text-white">
-                                                    {ui.pageHeader} {i}
+                                                <div className="h-8 bg-black/40 border-b border-white/10 flex items-center justify-between px-2 text-xs font-bold">
+                                                    <span className="text-muted-foreground group-hover:text-white">
+                                                        {ui.pageHeader} {page.id}
+                                                    </span>
+                                                    <span className={cn("px-2 py-0.5 rounded-md border text-[10px] font-mono font-bold", PAGE_STYLE[page.tone].badge)}>
+                                                        {page.owner}
+                                                    </span>
                                                 </div>
                                                 <div className="flex-1 p-2 flex flex-col gap-1">
-                                                    <div className="h-2 bg-emerald-500/20 rounded" />
-                                                    <div className="h-2 bg-emerald-500/20 rounded w-3/4" />
-                                                    <div className="h-2 bg-emerald-500/20 rounded w-5/6" />
+                                                    <div className={cn("h-2 rounded", PAGE_STYLE[page.tone].bar)} />
+                                                    <div className={cn("h-2 rounded w-3/4", PAGE_STYLE[page.tone].bar)} />
+                                                    <div className={cn("h-2 rounded w-5/6", PAGE_STYLE[page.tone].bar)} />
+                                                    <div className="mt-2 h-1.5 rounded-full bg-white/10 overflow-hidden">
+                                                        <div
+                                                            className={cn("h-full rounded-full", PAGE_STYLE[page.tone].fill)}
+                                                            style={{ width: `${page.usedPct}%` }}
+                                                        />
+                                                    </div>
                                                     <div className="flex-1" />
                                                     <div className="flex justify-center">
-                                                        <File className="w-8 h-8 text-white/20 group-hover:text-emerald-400/50 transition-colors" />
+                                                        <File className={cn("w-8 h-8 text-white/20 transition-colors", PAGE_STYLE[page.tone].hoverIcon)} />
                                                     </div>
                                                     <div className="flex-1" />
                                                 </div>
@@ -421,54 +580,95 @@ export function StorageEngine() {
                             className="flex-1 flex items-center justify-center"
                         >
                             <div className="flex items-center gap-8 w-full">
-                                {/* Previous Page Pointer */}
-                                <div onClick={() => setSelectedPage(Math.max(0, selectedPage! - 1))} className="flex flex-col items-center gap-2 opacity-50 cursor-pointer hover:opacity-100 transition-opacity">
-                                    <div className="px-4 py-8 bg-white/5 border border-white/10 rounded-xl border-dashed">
-                                        <ArrowLeft className="w-8 h-8 text-muted-foreground" />
-                                    </div>
-                                    <span className="text-xs font-mono">{ui.prevPage}</span>
-                                </div>
+                                {selectedExtent !== null && selectedPage !== null && (() => {
+                                    const extent = extents[selectedExtent];
+                                    const pageCell = buildExtentPages(extent)[selectedPage] ?? buildExtentPages(extent)[0];
+                                    const pageTone = pageCell.tone;
+                                    const style = PAGE_STYLE[pageTone];
+                                    const isFreePage = !pageCell.allocated;
 
-                                {/* Main Page Anatomy */}
-                                <div className="flex-1 glass-panel p-6 rounded-2xl border-white/20 flex flex-col gap-4 shadow-glass bg-gradient-to-b from-white/10 to-transparent">
-                                    <div className="flex justify-between items-center bg-black/40 p-3 rounded-lg border border-white/10">
-                                        <span className="font-bold text-lg">{ui.pageHeaderTitle}</span>
-                                        <span className="text-xs font-mono text-emerald-400">PageID: 1:123{selectedPage}</span>
-                                    </div>
-
-                                    <div className="flex-1 bg-black/20 rounded-lg border border-white/5 p-4 flex flex-col gap-3 min-h-[300px]">
-                                        <div className="text-xs text-muted-foreground font-semibold uppercase tracking-wider mb-2">{ui.dataRowsTitle}</div>
-                                        {[1, 2, 3].map((row) => (
-                                            <div key={row} className="bg-emerald-500/10 border border-emerald-500/30 p-3 rounded flex items-center justify-between group hover:border-emerald-400 transition-colors">
-                                                <div className="flex gap-4 items-center">
-                                                    <span className="text-xs font-mono bg-black/40 px-2 py-1 rounded text-emerald-400">0x0{row}</span>
-                                                    <span className="text-sm">John Doe | 555-010{row} | Active</span>
+                                    return (
+                                        <>
+                                            {/* Previous Page Pointer */}
+                                            <div
+                                                onClick={() => setSelectedPage(Math.max(0, selectedPage! - 1))}
+                                                className="flex flex-col items-center gap-2 opacity-50 cursor-pointer hover:opacity-100 transition-opacity"
+                                            >
+                                                <div className="px-4 py-8 bg-white/5 border border-white/10 rounded-xl border-dashed">
+                                                    <ArrowLeft className="w-8 h-8 text-muted-foreground" />
                                                 </div>
-                                                <span className="text-xs text-muted-foreground">Len: 142</span>
+                                                <span className="text-xs font-mono">{ui.prevPage}</span>
                                             </div>
-                                        ))}
-                                        <div className="flex-1 border-2 border-dashed border-white/10 rounded flex items-center justify-center text-muted-foreground text-sm">
-                                            {ui.freeSpace}
-                                        </div>
-                                    </div>
 
-                                    <div className="bg-black/40 p-3 rounded-lg border border-white/10 flex flex-row-reverse gap-2 items-center">
-                                        <span className="font-bold text-sm ml-4">{ui.slotArray}</span>
-                                        {[1, 2, 3].map((slot) => (
-                                            <div key={slot} className="w-12 h-6 bg-white/10 rounded flex items-center justify-center text-xs font-mono border border-white/20">
-                                                0x{96 + (slot * 142)}
+                                            {/* Main Page Anatomy */}
+                                            <div className="flex-1 glass-panel p-6 rounded-2xl border-white/20 flex flex-col gap-4 shadow-glass bg-gradient-to-b from-white/10 to-transparent">
+                                                <div className="flex justify-between items-center bg-black/40 p-3 rounded-lg border border-white/10">
+                                                    <span className="font-bold text-lg">{ui.pageHeaderTitle}</span>
+                                                    <span className={cn("text-xs font-mono", style.tag)}>
+                                                        PageID: 1:{selectedExtent}{selectedPage} ({pageCell.owner})
+                                                    </span>
+                                                </div>
+
+                                                <div className="flex-1 bg-black/20 rounded-lg border border-white/5 p-4 flex flex-col gap-3 min-h-[300px]">
+                                                    <div className="text-xs text-muted-foreground font-semibold uppercase tracking-wider mb-2">{ui.dataRowsTitle}</div>
+                                                    {isFreePage ? (
+                                                        <div className="flex-1 border-2 border-dashed border-white/10 rounded flex items-center justify-center text-muted-foreground text-sm">
+                                                            {language === 'es'
+                                                                ? 'Pagina libre: aun no pertenece a ningun objeto (mixed extent con paginas disponibles).'
+                                                                : 'Free page: not owned by any object yet (mixed extent with free pages).'}
+                                                        </div>
+                                                    ) : (
+                                                        <>
+                                                            {[1, 2, 3].map((row) => (
+                                                                <div
+                                                                    key={row}
+                                                                    className={cn(
+                                                                        "p-3 rounded flex items-center justify-between group transition-colors border",
+                                                                        style.row,
+                                                                    )}
+                                                                >
+                                                                    <div className="flex gap-4 items-center">
+                                                                        <span className={cn("text-xs font-mono bg-black/40 px-2 py-1 rounded", style.rowCode)}>
+                                                                            0x0{row}
+                                                                        </span>
+                                                                        <span className="text-sm">John Doe | 555-010{row} | Active</span>
+                                                                    </div>
+                                                                    <span className="text-xs text-muted-foreground">Len: 142</span>
+                                                                </div>
+                                                            ))}
+                                                            <div className="flex-1 border-2 border-dashed border-white/10 rounded flex items-center justify-center text-muted-foreground text-sm">
+                                                                {ui.freeSpace}
+                                                            </div>
+                                                        </>
+                                                    )}
+                                                </div>
+
+                                                <div className="bg-black/40 p-3 rounded-lg border border-white/10 flex flex-row-reverse gap-2 items-center">
+                                                    <span className="font-bold text-sm ml-4">{ui.slotArray}</span>
+                                                    {[1, 2, 3].map((slot) => (
+                                                        <div
+                                                            key={slot}
+                                                            className="w-12 h-6 bg-white/10 rounded flex items-center justify-center text-xs font-mono border border-white/20"
+                                                        >
+                                                            0x{96 + (slot * 142)}
+                                                        </div>
+                                                    ))}
+                                                </div>
                                             </div>
-                                        ))}
-                                    </div>
-                                </div>
 
-                                {/* Next Page Pointer */}
-                                <div onClick={() => setSelectedPage(Math.min(7, selectedPage! + 1))} className="flex flex-col items-center gap-2 opacity-50 cursor-pointer hover:opacity-100 transition-opacity">
-                                    <div className="px-4 py-8 bg-white/5 border border-white/10 rounded-xl border-dashed">
-                                        <ArrowRight className="w-8 h-8 text-muted-foreground" />
-                                    </div>
-                                    <span className="text-xs font-mono">{ui.nextPage}</span>
-                                </div>
+                                            {/* Next Page Pointer */}
+                                            <div
+                                                onClick={() => setSelectedPage(Math.min(7, selectedPage! + 1))}
+                                                className="flex flex-col items-center gap-2 opacity-50 cursor-pointer hover:opacity-100 transition-opacity"
+                                            >
+                                                <div className="px-4 py-8 bg-white/5 border border-white/10 rounded-xl border-dashed">
+                                                    <ArrowRight className="w-8 h-8 text-muted-foreground" />
+                                                </div>
+                                                <span className="text-xs font-mono">{ui.nextPage}</span>
+                                            </div>
+                                        </>
+                                    );
+                                })()}
                             </div>
                         </motion.div>
                     )}

@@ -52,13 +52,13 @@ export function VersionHistory() {
               Query Store era
             </div>
             <div className="rounded-full border border-yellow-500/20 bg-yellow-500/10 px-3 py-1 text-xs font-bold text-yellow-300">
-              2000 → 2025
+              2000 -&gt; 2025
             </div>
           </div>
         </div>
       </div>
 
-      <div className="grid gap-6 xl:grid-cols-[340px_minmax(0,1fr)]">
+      <div className="grid gap-6 xl:grid-cols-[240px_minmax(0,1fr)]">
         <div className="glass-panel rounded-3xl border border-white/10 p-6">
           <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.24em] text-white/40">
             <CalendarClock className="h-4 w-4" />
@@ -71,10 +71,10 @@ export function VersionHistory() {
               return (
                 <motion.button
                   key={release.id}
-                  whileHover={{ x: 3 }}
+                  whileHover={{ x: 2 }}
                   onClick={() => setActiveReleaseId(release.id)}
                   className={cn(
-                    'w-full rounded-3xl border p-4 text-left transition-all',
+                    'w-full rounded-3xl border p-3 text-left transition-all',
                     isActive
                       ? 'border-lime-500/25 bg-lime-500/10 shadow-[0_0_22px_rgba(163,230,53,0.10)]'
                       : 'border-white/10 bg-black/20 hover:border-white/20 hover:bg-white/[0.06]'
@@ -83,15 +83,9 @@ export function VersionHistory() {
                   <div className="flex items-start justify-between gap-3">
                     <div>
                       <div className="text-sm font-bold text-white">{release.version}</div>
-                      <div className="mt-1 text-[11px] font-bold uppercase tracking-[0.18em] text-lime-300">
-                        {release.year}
-                      </div>
+                      <div className="mt-1 text-[11px] font-bold uppercase tracking-[0.18em] text-lime-300">{release.year}</div>
                     </div>
-                    <span className="rounded-full border border-white/10 bg-black/25 px-2 py-1 text-[10px] font-bold text-white/70">
-                      {pick(language, release.era)}
-                    </span>
                   </div>
-                  <p className="mt-3 text-sm leading-relaxed text-white/65">{pick(language, release.summary)}</p>
                 </motion.button>
               );
             })}
@@ -104,7 +98,12 @@ export function VersionHistory() {
               <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-white/40">
                 {language === 'es' ? 'Version activa' : 'Active release'}
               </p>
-              <h3 className="mt-2 text-3xl font-bold text-white">{activeRelease.version}</h3>
+              <div className="mt-2 flex flex-wrap items-center gap-2">
+                <h3 className="text-3xl font-bold text-white">{activeRelease.version}</h3>
+                <span className="rounded-full border border-white/10 bg-black/25 px-3 py-1 text-[11px] font-bold text-white/70">
+                  {pick(language, activeRelease.era)}
+                </span>
+              </div>
               <p className="mt-3 text-sm leading-7 text-white/80">{pick(language, activeRelease.summary)}</p>
             </div>
             <div className="rounded-3xl border border-white/10 bg-black/25 px-5 py-4 text-right">
@@ -123,20 +122,19 @@ export function VersionHistory() {
               </div>
               <p className="mt-4 text-sm leading-7 text-white/80">{pick(language, activeRelease.history)}</p>
 
-              <div className="mt-5 grid gap-3 md:grid-cols-3">
+              <div className="mt-5 grid gap-3 md:grid-cols-2">
                 {activeRelease.highlights.map((item, index) => (
                   <motion.div
                     key={`${activeRelease.id}-${index}`}
                     initial={{ opacity: 0, y: 8 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: index * 0.05 }}
-                    className="rounded-2xl border border-emerald-500/20 bg-emerald-500/10 p-4"
+                    className="rounded-2xl border border-emerald-500/20 bg-emerald-500/10 p-4 flex gap-3"
                   >
-                    <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.18em] text-emerald-300">
-                      <Sparkles className="h-3.5 w-3.5" />
-                      {language === 'es' ? 'Incluye' : 'Includes'}
+                    <div className="mt-0.5 h-8 w-8 shrink-0 rounded-2xl border border-white/10 bg-black/25 flex items-center justify-center">
+                      <Sparkles className="h-4 w-4 text-emerald-300" />
                     </div>
-                    <p className="mt-3 text-sm leading-7 text-white/80">{pick(language, item)}</p>
+                    <p className="text-sm leading-7 text-white/80">{pick(language, item)}</p>
                   </motion.div>
                 ))}
               </div>

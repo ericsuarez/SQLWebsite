@@ -4,6 +4,7 @@ import {
     Play, Pause, RotateCcw, ChevronLeft, ChevronRight,
     Database, Code2, Search, Wrench, Activity, Layers,
     AlertTriangle, CheckCircle2, Clock, ArrowRight,
+    Maximize2, Minimize2,
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { useLanguage } from '../../contexts/LanguageContext';
@@ -181,6 +182,7 @@ function CaseDetail({ rc, onBack }: { rc: RealCase; onBack: () => void }) {
     const [stepIdx, setStepIdx] = useState(0);
     const [playing, setPlaying] = useState(false);
     const [activePanel, setActivePanel] = useState<'flow' | 'schema' | 'fix'>('flow');
+    const [isFullscreen, setIsFullscreen] = useState(false);
     const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
     const step = rc.steps[stepIdx];
@@ -201,6 +203,23 @@ function CaseDetail({ rc, onBack }: { rc: RealCase; onBack: () => void }) {
         }
         return () => { if (timerRef.current) clearInterval(timerRef.current); };
     }, [playing, total]);
+
+    useEffect(() => {
+        if (!isFullscreen) return;
+
+        const prevOverflow = document.body.style.overflow;
+        document.body.style.overflow = 'hidden';
+
+        const onKeyDown = (ev: KeyboardEvent) => {
+            if (ev.key === 'Escape') setIsFullscreen(false);
+        };
+        window.addEventListener('keydown', onKeyDown);
+
+        return () => {
+            document.body.style.overflow = prevOverflow;
+            window.removeEventListener('keydown', onKeyDown);
+        };
+    }, [isFullscreen]);
 
     const resolution = CASE_RESOLUTION_SCRIPTS[rc.id];
     const clrText = COLOR_TEXT[rc.color];
@@ -301,8 +320,8 @@ function CaseDetail({ rc, onBack }: { rc: RealCase; onBack: () => void }) {
                     ? 'border-amber-500/30 bg-amber-500/10 text-amber-300'
                     : 'border-white/10 bg-black/20 text-white/50';
 
-    return (
-        <div className="flex flex-col gap-4 h-full">
+    const content = (
+        <div className={cn("flex flex-col h-full", isFullscreen ? "gap-3" : "gap-4")}>
             {/* Header bar */}
             <div className="flex items-center justify-between flex-wrap gap-3">
                 <div className="flex items-center gap-3">
@@ -313,15 +332,27 @@ function CaseDetail({ rc, onBack }: { rc: RealCase; onBack: () => void }) {
                     <span className="text-2xl">{rc.icon}</span>
                     <h2 className={cn('text-xl font-bold', clrText)}>{t(rc.nameKey as any)}</h2>
                 </div>
-                {/* Panel switcher */}
-                <div className="flex gap-1 p-1 bg-white/5 rounded-xl border border-white/10">
-                    {panels.map(([id, lbl]) => (
-                        <button key={id} onClick={() => setActivePanel(id)}
-                            className={cn('px-3 py-1.5 rounded-lg text-xs font-bold transition-all',
-                                activePanel === id ? `${clrBg} ${clrText}` : 'text-muted-foreground hover:text-white')}>
-                            {lbl}
-                        </button>
-                    ))}
+                <div className="flex items-center gap-2">
+                    {/* Panel switcher */}
+                    <div className="flex gap-1 p-1 bg-white/5 rounded-xl border border-white/10">
+                        {panels.map(([id, lbl]) => (
+                            <button key={id} onClick={() => setActivePanel(id)}
+                                className={cn('px-3 py-1.5 rounded-lg text-xs font-bold transition-all',
+                                    activePanel === id ? `${clrBg} ${clrText}` : 'text-muted-foreground hover:text-white')}>
+                                {lbl}
+                            </button>
+                        ))}
+                    </div>
+                    <button
+                        onClick={() => setIsFullscreen(v => !v)}
+                        className={cn(
+                            'rounded-xl border border-white/10 bg-white/5 p-2 text-muted-foreground transition-colors hover:bg-white/10 hover:text-white',
+                            isFullscreen && 'bg-white/10 text-white',
+                        )}
+                        title={language === 'es' ? (isFullscreen ? 'Salir de pantalla completa (Esc)' : 'Pantalla completa') : (isFullscreen ? 'Exit fullscreen (Esc)' : 'Fullscreen')}
+                    >
+                        {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+                    </button>
                 </div>
             </div>
 
@@ -594,6 +625,17 @@ function CaseDetail({ rc, onBack }: { rc: RealCase; onBack: () => void }) {
                     </motion.div>
                 )}
             </AnimatePresence>
+        </div>
+    );
+    if (!isFullscreen) return content;
+
+    return (
+        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xl p-4 md:p-6 overflow-hidden">
+            <div className="mx-auto h-full max-w-[1700px]">
+                <div className="h-full rounded-3xl border border-white/10 bg-background/40 backdrop-blur-xl p-4 md:p-6 shadow-glass">
+                    {content}
+                </div>
+            </div>
         </div>
     );
 }

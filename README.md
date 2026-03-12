@@ -4,7 +4,7 @@
 
 An advanced, interactive educational platform designed to demystify the internal complexities of Microsoft SQL Server. Built with modern web technologies, this simulator provides a deep-dive into how the engine handles data, memory, and execution at a granular level.
 
-🌍 **Live Demo:** [Available on Vercel](https://sql-website-lemon.vercel.app/)
+🌍 **Live Demo:** [sqllab.dev](https://sqllab.dev/)
 
 ---
 
