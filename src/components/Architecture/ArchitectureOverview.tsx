@@ -71,7 +71,7 @@ export function ArchitectureOverview() {
     };
 
     return (
-        <div className="flex flex-col h-full gap-6 relative">
+        <div className="relative flex min-h-full flex-col gap-4 sm:gap-6">
             <div className="flex flex-col gap-4">
                 <div className="flex justify-between items-start gap-4 flex-wrap">
                     <div>
@@ -84,7 +84,7 @@ export function ArchitectureOverview() {
                     </div>
                 </div>
 
-                <div className="flex p-1 bg-white/5 rounded-xl w-fit glass-panel border border-white/10">
+                <div className="glass-panel flex w-full flex-wrap rounded-xl border border-white/10 bg-white/5 p-1 sm:w-fit">
                     <button
                         onClick={() => setActiveTab('engine')}
                         className={cn(
@@ -118,7 +118,7 @@ export function ArchitectureOverview() {
                 </div>
             </div>
 
-            <div className="flex-1 overflow-hidden relative">
+            <div className="relative min-h-0 flex-1">
                 <AnimatePresence mode="wait">
                     {activeTab === 'engine' && (
                         <motion.div
@@ -126,7 +126,7 @@ export function ArchitectureOverview() {
                             initial={{ opacity: 0, y: 10 }}
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, y: -10 }}
-                            className="h-full flex flex-col"
+                            className="min-h-full flex flex-col"
                         >
                             <div className="flex justify-end mb-4">
                                 <button
@@ -139,7 +139,7 @@ export function ArchitectureOverview() {
                             </div>
                             <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1.1fr)_minmax(360px,0.9fr)] gap-6 flex-1">
                                 {/* Interactive Diagram */}
-                                <div className="glass-panel p-8 rounded-2xl flex flex-col justify-center gap-4 relative overflow-hidden min-h-[540px]">
+                                <div className="glass-panel relative flex min-h-[420px] flex-col justify-center gap-4 overflow-hidden rounded-2xl p-6 sm:min-h-[540px] sm:p-8">
                                     <div className="absolute inset-0 bg-gradient-to-b from-white/5 to-transparent pointer-events-none" />
 
                                     {layers.map((layer, index) => {
@@ -181,7 +181,7 @@ export function ArchitectureOverview() {
                                 </div>
 
                                 {/* Details Panel */}
-                                <div className="glass-panel p-8 rounded-2xl flex flex-col relative min-h-[540px]">
+                                <div className="glass-panel relative flex min-h-[420px] flex-col rounded-2xl p-6 sm:min-h-[540px] sm:p-8">
                                     <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-blue-500/10 via-transparent to-transparent pointer-events-none" />
 
                                     {activeLayer ? (

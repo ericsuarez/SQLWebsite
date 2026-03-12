@@ -296,7 +296,7 @@ export function StorageEngine() {
     };
 
     return (
-        <div className="flex flex-col h-full gap-6">
+        <div className="flex min-h-full flex-col gap-4 sm:gap-6">
             <div className="flex flex-col gap-4 relative">
                 <div className="flex justify-between items-start">
                     <div>
@@ -332,7 +332,7 @@ export function StorageEngine() {
                     </div>
                 </div>
 
-                <div className="flex p-1 bg-white/5 rounded-xl w-fit glass-panel border border-white/10">
+                <div className="glass-panel flex w-full flex-wrap rounded-xl border border-white/10 bg-white/5 p-1 sm:w-fit">
                     <button
                         onClick={() => setActiveTab('files')}
                         className={cn(
@@ -356,7 +356,7 @@ export function StorageEngine() {
                 </div>
             </div>
 
-            <div className="flex-1 glass-panel rounded-2xl relative overflow-hidden flex flex-col p-6">
+            <div className="glass-panel relative min-h-0 flex-1 overflow-y-auto rounded-2xl p-4 sm:p-6">
                 <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 to-transparent pointer-events-none" />
 
                 <AnimatePresence mode="wait">
@@ -366,7 +366,7 @@ export function StorageEngine() {
                             initial={{ opacity: 0, scale: 0.95 }}
                             animate={{ opacity: 1, scale: 1 }}
                             exit={{ opacity: 0, scale: 0.95 }}
-                            className="flex-1 flex flex-col gap-8 h-full overflow-y-auto pr-1"
+                            className="flex min-h-full flex-col gap-8 overflow-y-auto pr-1"
                         >
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
 
@@ -519,7 +519,7 @@ export function StorageEngine() {
                                         </div>
                                     </div>
 
-                                    <div className="grid grid-cols-4 gap-6">
+                                    <div className="grid grid-cols-2 gap-4 sm:grid-cols-4 sm:gap-6">
                                         {buildExtentPages(ext).map((page) => (
                                             <motion.div
                                                 key={page.id}
@@ -577,9 +577,9 @@ export function StorageEngine() {
                             initial={{ opacity: 0, scale: 0.95 }}
                             animate={{ opacity: 1, scale: 1 }}
                             exit={{ opacity: 0, scale: 0.95 }}
-                            className="flex-1 flex items-center justify-center"
+                            className="flex min-h-full items-center justify-center"
                         >
-                            <div className="flex items-center gap-8 w-full">
+                            <div className="flex w-full flex-col items-center gap-6 xl:flex-row xl:gap-8">
                                 {selectedExtent !== null && selectedPage !== null && (() => {
                                     const extent = extents[selectedExtent];
                                     const pageCell = buildExtentPages(extent)[selectedPage] ?? buildExtentPages(extent)[0];
@@ -679,7 +679,7 @@ export function StorageEngine() {
                             initial={{ opacity: 0, y: 10 }}
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, y: -10 }}
-                            className="h-full w-full grid grid-cols-1 lg:grid-cols-2 gap-8 overflow-y-auto pb-4"
+                            className="grid min-h-full w-full grid-cols-1 gap-8 overflow-y-auto pb-4 lg:grid-cols-2"
                         >
                             {/* Recovery Model Selection */}
                             <div className="flex flex-col gap-6">

@@ -22,7 +22,7 @@ export function RealCasesPage() {
     const activeLab = XEVENT_LABS.find((lab) => lab.id === activeLabId) ?? XEVENT_LABS[0];
 
     return (
-        <div className="flex flex-col h-full gap-5">
+        <div className="flex min-h-full flex-col gap-5">
             <div>
                 <h2 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-rose-400 flex items-center gap-3">
                     <AlertTriangle className="w-7 h-7 text-cyan-400" />

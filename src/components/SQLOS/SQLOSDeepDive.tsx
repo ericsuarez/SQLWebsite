@@ -506,7 +506,7 @@ export function SQLOSDeepDive() {
   }, [activeTab, threadPlaying]);
 
   return (
-    <div className="flex h-full flex-col gap-6 text-slate-200">
+    <div className="flex min-h-full flex-col gap-4 text-slate-200 sm:gap-6">
       <div className="glass-panel relative overflow-hidden border border-white/10 p-6">
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-violet-500/10 to-transparent" />
         <div className="relative z-10 flex flex-wrap items-start justify-between gap-4">
@@ -548,7 +548,7 @@ export function SQLOSDeepDive() {
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto">
+      <div className="min-h-0 flex-1 overflow-y-auto">
         {activeTab === 'threads' && (
           <div className="grid gap-6 xl:grid-cols-[minmax(0,1.08fr)_380px]">
             <div className="glass-panel rounded-3xl border border-white/10 p-6 sm:p-8">

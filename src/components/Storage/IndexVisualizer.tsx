@@ -478,7 +478,7 @@ JOIN sys.dm_db_missing_index_group_stats s
 ORDER BY demand_score DESC;`;
 
     return (
-        <div className="flex flex-col h-full gap-6">
+        <div className="flex min-h-full flex-col gap-4 sm:gap-6">
             {/* Header */}
             <div className="flex justify-between items-start">
                 <div>
@@ -494,7 +494,7 @@ ORDER BY demand_score DESC;`;
             </div>
 
             {/* Tabs */}
-            <div className="flex p-1 bg-white/5 rounded-xl w-fit glass-panel border border-white/10">
+            <div className="glass-panel flex w-full flex-wrap rounded-xl border border-white/10 bg-white/5 p-1 sm:w-fit">
                 {([
                     { id: 'compare', label: t('indexTabCompare'), icon: GitCompare },
                     { id: 'clustered', label: t('indexTabClustered'), icon: ListOrdered },

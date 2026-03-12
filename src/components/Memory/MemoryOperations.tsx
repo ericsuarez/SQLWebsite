@@ -578,7 +578,7 @@ WHERE name IN ('min server memory (MB)', 'max server memory (MB)');`;
     };
 
     return (
-        <div className="flex flex-col h-full gap-6">
+        <div className="flex min-h-full flex-col gap-4 sm:gap-6">
             <div className="flex flex-col gap-4">
                 <div className="flex justify-between items-start">
                     <div>
@@ -591,7 +591,7 @@ WHERE name IN ('min server memory (MB)', 'max server memory (MB)');`;
                     </div>
                 </div>
 
-                <div className="flex flex-wrap p-1 bg-white/5 rounded-xl w-fit glass-panel border border-white/10">
+                <div className="glass-panel flex w-full flex-wrap rounded-xl border border-white/10 bg-white/5 p-1 sm:w-fit">
                     <button
                         onClick={() => setActiveTab('bufferpool')}
                         className={cn(
@@ -625,7 +625,7 @@ WHERE name IN ('min server memory (MB)', 'max server memory (MB)');`;
                 </div>
             </div>
 
-            <div className="flex-1 relative overflow-hidden">
+            <div className="relative min-h-0 flex-1">
                 <AnimatePresence mode="wait">
                     {activeTab === 'bufferpool' && (
                         <motion.div
@@ -633,7 +633,7 @@ WHERE name IN ('min server memory (MB)', 'max server memory (MB)');`;
                             initial={{ opacity: 0, scale: 0.95 }}
                             animate={{ opacity: 1, scale: 1 }}
                             exit={{ opacity: 0, scale: 0.95 }}
-                            className="h-full flex flex-col gap-6 overflow-y-auto pb-4"
+                            className="min-h-full flex flex-col gap-6 overflow-y-auto pb-4"
                         >
                             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 flex-1">
                                 {/* Memory Map Diagram */}
@@ -778,7 +778,7 @@ WHERE name IN ('min server memory (MB)', 'max server memory (MB)');`;
                             initial={{ opacity: 0, y: 10 }}
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, y: -10 }}
-                            className="h-full w-full grid grid-cols-1 xl:grid-cols-[minmax(0,1.1fr)_420px] gap-6 overflow-y-auto pb-4"
+                            className="grid min-h-full w-full grid-cols-1 gap-6 overflow-y-auto pb-4 xl:grid-cols-[minmax(0,1.1fr)_420px]"
                         >
                             <div className="flex flex-col gap-6">
                                 <div className="glass-panel p-6 rounded-3xl flex flex-col gap-4 border border-purple-500/20">
@@ -931,7 +931,7 @@ WHERE name IN ('min server memory (MB)', 'max server memory (MB)');`;
                             initial={{ opacity: 0, y: 10 }}
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, y: -10 }}
-                            className="h-full w-full grid grid-cols-1 xl:grid-cols-[minmax(0,1.1fr)_420px] gap-6 overflow-y-auto pb-4"
+                            className="grid min-h-full w-full grid-cols-1 gap-6 overflow-y-auto pb-4 xl:grid-cols-[minmax(0,1.1fr)_420px]"
                         >
                             <div className="glass-panel p-6 rounded-3xl flex flex-col gap-4 border border-pink-500/20">
                                 <h3 className="text-xl font-bold flex items-center gap-2 text-pink-400">

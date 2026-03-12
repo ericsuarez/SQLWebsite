@@ -397,23 +397,23 @@ function CaseDetail({ rc, onBack }: { rc: RealCase; onBack: () => void }) {
     };
 
     const content = (
-        <div className={cn("flex flex-col h-full", isFullscreen ? "gap-3" : "gap-4")}>
+        <div className={cn("flex min-h-full flex-col", isFullscreen ? "gap-3" : "gap-4")}>
             {/* Header bar */}
-            <div className="flex items-center justify-between flex-wrap gap-3">
-                <div className="flex items-center gap-3">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex min-w-0 items-center gap-3">
                     <button onClick={() => void handleBack()}
                         className="flex items-center gap-2 text-sm text-muted-foreground hover:text-white transition-colors bg-white/5 hover:bg-white/10 rounded-lg px-3 py-1.5 border border-white/10">
                         <ChevronLeft className="w-4 h-4" /> {t('backToCases')}
                     </button>
                     <span className="text-2xl">{rc.icon}</span>
-                    <h2 className={cn('text-xl font-bold', clrText)}>{caseTitle}</h2>
+                    <h2 className={cn('min-w-0 text-xl font-bold', clrText)}>{caseTitle}</h2>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
                     <span className={cn('hidden rounded-full border px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.18em] md:inline-flex', clrBg, clrText)}>
                         {detectionModeLabel(language, rc.detectionMode)}
                     </span>
                     {/* Panel switcher */}
-                    <div className="flex gap-1 p-1 bg-white/5 rounded-xl border border-white/10">
+                    <div className="flex w-full flex-wrap gap-1 rounded-xl border border-white/10 bg-white/5 p-1 sm:w-auto">
                         {panels.map(([id, lbl]) => (
                             <button key={id} onClick={() => setActivePanel(id)}
                                 className={cn('px-3 py-1.5 rounded-lg text-xs font-bold transition-all',
@@ -464,7 +464,7 @@ function CaseDetail({ rc, onBack }: { rc: RealCase; onBack: () => void }) {
                             ))}
                         </div>
 
-                        <div className="grid gap-4 md:grid-cols-4">
+                        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
                             <div className="rounded-2xl border border-white/10 bg-black/30 p-4">
                                 <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-white/40">{t('executionPipeline')}</div>
                                 <div className={cn('mt-2 text-lg font-black', clrText)}>
@@ -567,7 +567,7 @@ function CaseDetail({ rc, onBack }: { rc: RealCase; onBack: () => void }) {
 
                                 {step.buffer && (
                                     <SectionBox icon={Database} label={t('bufferPool')} accent="text-cyan-300 bg-cyan-500/10">
-                                        <div className="grid grid-cols-4 gap-2">
+                                        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
                                             {([
                                                 [language === 'es' ? 'Total' : 'Total', step.buffer.totalPages, 'text-white/70'],
                                                 [language === 'es' ? 'Usadas' : 'Used', step.buffer.usedPages, 'text-emerald-300'],
@@ -653,7 +653,7 @@ function CaseDetail({ rc, onBack }: { rc: RealCase; onBack: () => void }) {
                         </div>
 
                         {/* Controls — docked inside the panel, never overlap, shrink-0 prevents compressing */}
-                        <div className="flex items-center justify-between gap-3 pt-3 border-t border-white/10 bg-black/20 shrink-0 -mx-0 rounded-xl px-3 pb-3">
+                        <div className="flex flex-col gap-3 border-t border-white/10 bg-black/20 px-3 pb-3 pt-3 sm:flex-row sm:items-center sm:justify-between">
                             <button
                                 onClick={reset}
                                 className="p-2 rounded-lg bg-white/5 hover:bg-white/10 text-muted-foreground transition-colors"
@@ -661,7 +661,7 @@ function CaseDetail({ rc, onBack }: { rc: RealCase; onBack: () => void }) {
                             >
                                 <RotateCcw className="w-4 h-4" />
                             </button>
-                            <div className="flex items-center gap-2">
+                            <div className="flex flex-wrap items-center gap-2">
                                 <button onClick={() => { setPlaying(false); prev(); }} disabled={stepIdx === 0}
                                     className="flex items-center gap-1.5 px-4 py-2 bg-white/5 hover:bg-white/10 text-sm rounded-xl disabled:opacity-30 transition-all border border-white/10">
                                     <ChevronLeft className="w-4 h-4" /> {t('prevBtn')}
@@ -733,14 +733,14 @@ function CaseDetail({ rc, onBack }: { rc: RealCase; onBack: () => void }) {
         <div
             ref={containerRef}
             className={cn(
-                'h-full',
-                isFullscreen && 'bg-zinc-950 px-4 py-4 md:px-6 md:py-6'
+                'min-h-full',
+                isFullscreen && 'bg-zinc-950 px-3 py-3 md:px-6 md:py-6'
             )}
         >
-            <div className={cn('mx-auto h-full', isFullscreen && 'max-w-[1700px]')}>
+            <div className={cn('mx-auto min-h-full', isFullscreen && 'max-w-[1700px]')}>
                 <div
                     className={cn(
-                        'h-full',
+                        'min-h-full',
                         isFullscreen && 'rounded-3xl border border-white/10 bg-background/80 p-4 shadow-glass backdrop-blur-xl md:p-6'
                     )}
                 >
@@ -764,7 +764,7 @@ export function RealCaseScenario({ cases, onFocusChange }: {
     return (
         <AnimatePresence mode="wait">
             {selected
-                ? <motion.div key="detail" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex flex-col h-full">
+                ? <motion.div key="detail" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex min-h-full flex-col">
                     <CaseDetail rc={selected} onBack={back} />
                   </motion.div>
                 : <motion.div key="grid" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>

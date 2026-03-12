@@ -77,7 +77,7 @@ export function PerfMonVisualizer() {
     };
 
     return (
-        <div className="flex flex-col h-full overflow-y-auto text-slate-200">
+        <div className="flex min-h-full flex-col overflow-y-auto text-slate-200">
             {/* Header */}
             <div className="flex-none p-6 border-b border-white/10 glass-panel relative overflow-hidden">
                 <div className="absolute inset-0 bg-gradient-to-r from-fuchsia-500/10 to-transparent pointer-events-none" />

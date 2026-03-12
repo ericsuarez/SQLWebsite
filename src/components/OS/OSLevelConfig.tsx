@@ -252,7 +252,7 @@ export function OSLevelConfig() {
   const playbook = PLAYBOOK[activeItem.id];
 
   return (
-    <div className="flex h-full flex-col gap-6 text-slate-200">
+    <div className="flex min-h-full flex-col gap-4 text-slate-200 sm:gap-6">
       <div className="glass-panel relative overflow-hidden border border-white/10 p-6">
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-indigo-500/10 to-transparent" />
         <div className="relative z-10 flex flex-wrap items-start justify-between gap-4">

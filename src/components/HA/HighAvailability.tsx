@@ -104,7 +104,7 @@ export function HighAvailability() {
     const activeDrStep = activeDrScenario.steps[activeDrStepIndex] ?? activeDrScenario.steps[0];
 
     return (
-        <div className="flex flex-col h-full gap-6">
+        <div className="flex min-h-full flex-col gap-4 sm:gap-6">
             <div className="flex flex-col gap-2">
                 <h2 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-blue-500">
                     {t('haTitle')}
@@ -114,12 +114,12 @@ export function HighAvailability() {
                 </p>
             </div>
 
-            <div className="flex-1 glass-panel p-8 rounded-2xl flex flex-col gap-8 relative overflow-hidden">
+            <div className="glass-panel relative min-h-0 flex-1 overflow-y-auto rounded-2xl p-4 sm:p-8">
                 <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/5 to-transparent pointer-events-none" />
 
                 {/* Controls */}
-                <div className="flex justify-between items-center z-10 border-b border-white/10 pb-6">
-                    <div className="flex gap-4">
+                <div className="z-10 flex flex-col gap-4 border-b border-white/10 pb-6 lg:flex-row lg:items-center lg:justify-between">
+                    <div className="flex flex-wrap gap-3">
                         <button
                             onClick={() => setMode('synchronous')}
                             className={cn("px-4 py-2 rounded-lg font-bold transition-all border", mode === 'synchronous' ? "bg-cyan-500/20 text-cyan-400 border-cyan-500/50" : "bg-black/40 border-white/10 text-muted-foreground")}
@@ -135,7 +135,7 @@ export function HighAvailability() {
                     </div>
                     <button
                         onClick={simulateCommit}
-                        className="px-6 py-2 bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 border border-emerald-500/50 rounded-lg font-bold flex items-center gap-2 transition-colors disabled:opacity-50"
+                        className="flex w-full items-center justify-center gap-2 rounded-lg border border-emerald-500/50 bg-emerald-500/20 px-6 py-2 font-bold text-emerald-400 transition-colors disabled:opacity-50 hover:bg-emerald-500/30 lg:w-auto"
                         disabled={transactions.length > 0}
                     >
                         <Send className="w-4 h-4" /> {t('execTx')}
@@ -143,13 +143,13 @@ export function HighAvailability() {
                 </div>
 
                 {/* Dashboard Stats */}
-                <div className="z-10 bg-black/40 border border-white/10 rounded-xl p-4 flex justify-around items-center">
+                <div className="z-10 grid gap-4 rounded-xl border border-white/10 bg-black/40 p-4 sm:grid-cols-3 sm:items-center">
                     <div className="flex flex-col items-center">
                         <span className="text-xs text-muted-foreground font-bold uppercase tracking-wider">{t('primaryLsnLabel')}</span>
                         <span className="font-mono text-cyan-400 text-xl font-bold">0x{primaryLSN.toString(16).toUpperCase()}</span>
                     </div>
-                    <div className="w-px h-8 bg-white/10" />
-                    <div className="flex flex-col items-center min-w-[200px]">
+                    <div className="hidden h-8 w-px bg-white/10 sm:block" />
+                    <div className="flex min-w-0 flex-col items-center">
                         {lsnLagging ? (
                             <div className="flex items-center gap-2 text-rose-400 bg-rose-500/10 px-3 py-1.5 rounded-lg border border-rose-500/30">
                                 <AlertTriangle className="w-4 h-4 animate-pulse" />
@@ -162,7 +162,7 @@ export function HighAvailability() {
                             </div>
                         )}
                     </div>
-                    <div className="w-px h-8 bg-white/10" />
+                    <div className="hidden h-8 w-px bg-white/10 sm:block" />
                     <div className="flex flex-col items-center">
                         <span className="text-xs text-muted-foreground font-bold uppercase tracking-wider">{t('replicaLsnLabel')}</span>
                         <span className="font-mono text-blue-400 text-xl font-bold">0x{secondaryLSN.toString(16).toUpperCase()}</span>
@@ -172,7 +172,7 @@ export function HighAvailability() {
                 {/* Replica Diagram */}
                 <div className="flex-1 flex flex-col justify-center gap-12 z-10">
 
-                    <div className="grid grid-cols-3 gap-8 items-center">
+                    <div className="grid items-center gap-6 lg:grid-cols-3 lg:gap-8">
 
                         {/* Application Client */}
                         <div className="glass-panel p-6 border-white/20 text-center relative flex flex-col items-center gap-4">
@@ -233,13 +233,13 @@ export function HighAvailability() {
 
                     </div>
 
-                    <div className="text-center bg-black/40 p-4 rounded-xl border border-white/10">
-                        <div className="flex justify-between items-center mb-2">
-                            <div className="flex-1" />
+                    <div className="rounded-xl border border-white/10 bg-black/40 p-4 text-center">
+                        <div className="mb-2 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                            <div className="hidden flex-1 sm:block" />
                             <h4 className="font-bold text-lg flex items-center justify-center gap-2">
                                 <ShieldCheck className="w-5 h-5" /> {t('explanation')}
                             </h4>
-                            <div className="flex-1 flex justify-end">
+                            <div className="flex justify-center sm:flex-1 sm:justify-end">
                                 <button
                                     onClick={() => setIsTsqlOpen(true)}
                                     className="px-2 py-1 bg-white/5 hover:bg-white/10 border border-white/10 rounded flex items-center gap-1.5 text-xs text-muted-foreground transition-colors"
