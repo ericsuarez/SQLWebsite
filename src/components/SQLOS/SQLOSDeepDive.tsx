@@ -42,13 +42,13 @@ const SCHEDULER_PROFILES: { id: SchedulerProfileId; label: LocalText; desc: Loca
   },
   {
     id: 'burst',
-    label: { en: 'Burst', es: 'Ráfagas' },
-    desc: { en: 'Short spikes: queues grow and shrink quickly.', es: 'Picos cortos: la cola crece y baja rápido.' },
+    label: { en: 'Burst', es: 'Rafagas' },
+    desc: { en: 'Short spikes: queues grow and shrink quickly.', es: 'Picos cortos: la cola crece y baja rapido.' },
   },
   {
     id: 'starved',
     label: { en: 'CPU Starved', es: 'CPU saturada' },
-    desc: { en: 'RUNNABLE stays high: classic CPU pressure.', es: 'RUNNABLE se mantiene alto: presión real de CPU.' },
+    desc: { en: 'RUNNABLE stays high: classic CPU pressure.', es: 'RUNNABLE se mantiene alto: presion real de CPU.' },
   },
 ];
 
@@ -218,7 +218,7 @@ const SYNC_LAB: Record<'lock' | 'latch' | 'spinlock', LabStep[]> = {
       headline: { en: 'Acquire the lock', es: 'Adquirir el lock' },
       detail: {
         en: 'SPID 52 starts a transaction and holds an X lock. Other sessions will queue behind it.',
-        es: 'El SPID 52 inicia una transacción y mantiene un lock X. El resto hará cola detrás.',
+        es: 'El SPID 52 inicia una transaccion y mantiene un lock X. El resto hara cola detras.',
       },
       sessions: [
         {
@@ -240,7 +240,7 @@ const SYNC_LAB: Record<'lock' | 'latch' | 'spinlock', LabStep[]> = {
     },
     {
       id: 'lock-blocked',
-      headline: { en: 'Blocked session appears', es: 'Aparece la sesión bloqueada' },
+      headline: { en: 'Blocked session appears', es: 'Aparece la sesion bloqueada' },
       detail: {
         en: 'SPID 53 hits the same row and becomes SUSPENDED on LCK_M_X (blocked by 52).',
         es: 'El SPID 53 intenta la misma fila y queda SUSPENDED en LCK_M_X (bloqueado por 52).',
@@ -250,7 +250,7 @@ const SYNC_LAB: Record<'lock' | 'latch' | 'spinlock', LabStep[]> = {
           spid: 52,
           status: 'running',
           holds: 'X',
-          note: { en: 'Still inside the transaction', es: 'Sigue dentro de la transacción' },
+          note: { en: 'Still inside the transaction', es: 'Sigue dentro de la transaccion' },
         },
         {
           spid: 53,
@@ -277,7 +277,7 @@ const SYNC_LAB: Record<'lock' | 'latch' | 'spinlock', LabStep[]> = {
         es: 'Tras COMMIT (o KILL en emergencias), el SPID 53 vuelve a RUNNABLE y puede terminar.',
       },
       sessions: [
-        { spid: 52, status: 'done', note: { en: 'Transaction ended', es: 'Transacción finalizada' } },
+        { spid: 52, status: 'done', note: { en: 'Transaction ended', es: 'Transaccion finalizada' } },
         { spid: 53, status: 'runnable', note: { en: 'Back to the runnable queue', es: 'Vuelve a la cola RUNNABLE' } },
       ],
       resource: {
@@ -293,7 +293,7 @@ const SYNC_LAB: Record<'lock' | 'latch' | 'spinlock', LabStep[]> = {
   latch: [
     {
       id: 'latch-hot',
-      headline: { en: 'A hot page becomes a bottleneck', es: 'Una página caliente se convierte en cuello' },
+      headline: { en: 'A hot page becomes a bottleneck', es: 'Una pagina caliente se convierte en cuello' },
       detail: {
         en: 'Multiple workers attempt to update the same in-memory structure. They queue on PAGELATCH_EX.',
         es: 'Varios workers intentan actualizar la misma estructura en memoria. Hacen cola en PAGELATCH_EX.',
@@ -304,7 +304,7 @@ const SYNC_LAB: Record<'lock' | 'latch' | 'spinlock', LabStep[]> = {
         { spid: 62, status: 'suspended', waitType: 'PAGELATCH_EX', note: { en: 'Waiting for latch', es: 'Esperando el latch' } },
       ],
       resource: {
-        title: { en: 'Hot page', es: 'Página caliente' },
+        title: { en: 'Hot page', es: 'Pagina caliente' },
         subtitle: { en: 'tempdb 2:1:1 (example)', es: 'tempdb 2:1:1 (ejemplo)' },
         ownerSpid: 60,
         mode: 'EX',
@@ -314,10 +314,10 @@ const SYNC_LAB: Record<'lock' | 'latch' | 'spinlock', LabStep[]> = {
     },
     {
       id: 'latch-fix',
-      headline: { en: 'Reduce contention', es: 'Reducir la contención' },
+      headline: { en: 'Reduce contention', es: 'Reducir la contencion' },
       detail: {
         en: 'Spread allocation and hotspots (more TempDB data files, tune schema, avoid last-page inserts).',
-        es: 'Reparte hotspots (más datafiles en TempDB, ajustar esquema, evitar last-page inserts).',
+        es: 'Reparte hotspots (mas datafiles en TempDB, ajustar esquema, evitar last-page inserts).',
       },
       sessions: [
         { spid: 60, status: 'running', note: { en: 'Work completes', es: 'El trabajo progresa' } },
@@ -325,8 +325,8 @@ const SYNC_LAB: Record<'lock' | 'latch' | 'spinlock', LabStep[]> = {
         { spid: 62, status: 'running', note: { en: 'No longer queued', es: 'Ya no hace cola' } },
       ],
       resource: {
-        title: { en: 'Hot page', es: 'Página caliente' },
-        subtitle: { en: 'contention diffused', es: 'contención difuminada' },
+        title: { en: 'Hot page', es: 'Pagina caliente' },
+        subtitle: { en: 'contention diffused', es: 'contencion difuminada' },
         ownerSpid: 60,
         mode: 'EX',
         queue: 0,
@@ -337,13 +337,13 @@ const SYNC_LAB: Record<'lock' | 'latch' | 'spinlock', LabStep[]> = {
   spinlock: [
     {
       id: 'spin-hot',
-      headline: { en: 'Spinlock saturation', es: 'Saturación de spinlock' },
+      headline: { en: 'Spinlock saturation', es: 'Saturacion de spinlock' },
       detail: {
         en: 'Workers spin in CPU while trying to enter a tiny critical section. Collisions and spins climb fast.',
-        es: 'Los workers hacen spin en CPU para entrar en una sección crítica pequeña. Suben colisiones y spins.',
+        es: 'Los workers hacen spin en CPU para entrar en una seccion critica pequena. Suben colisiones y spins.',
       },
       sessions: [
-        { spid: 71, status: 'running', note: { en: 'Inside critical section', es: 'Dentro de la sección crítica' } },
+        { spid: 71, status: 'running', note: { en: 'Inside critical section', es: 'Dentro de la seccion critica' } },
         { spid: 72, status: 'spinning', waitType: 'SPIN', note: { en: 'Spinning (burning CPU)', es: 'Haciendo spin (quema CPU)' } },
         { spid: 73, status: 'spinning', waitType: 'SPIN', note: { en: 'Spinning (burning CPU)', es: 'Haciendo spin (quema CPU)' } },
         { spid: 74, status: 'spinning', waitType: 'SPIN', note: { en: 'Spinning (burning CPU)', es: 'Haciendo spin (quema CPU)' } },
@@ -362,10 +362,10 @@ const SYNC_LAB: Record<'lock' | 'latch' | 'spinlock', LabStep[]> = {
       headline: { en: 'Partition or reduce concurrency', es: 'Particionar o reducir concurrencia' },
       detail: {
         en: 'After removing the hotspot, collisions drop and CPU is used for real work again.',
-        es: 'Tras eliminar el hotspot, bajan colisiones y la CPU vuelve al trabajo útil.',
+        es: 'Tras eliminar el hotspot, bajan colisiones y la CPU vuelve al trabajo util.',
       },
       sessions: [
-        { spid: 71, status: 'running', note: { en: 'Critical section is short', es: 'Sección crítica corta' } },
+        { spid: 71, status: 'running', note: { en: 'Critical section is short', es: 'Seccion critica corta' } },
         { spid: 72, status: 'running', note: { en: 'No spin', es: 'Sin spin' } },
         { spid: 73, status: 'idle', note: { en: 'Idle', es: 'Idle' } },
         { spid: 74, status: 'idle', note: { en: 'Idle', es: 'Idle' } },
@@ -448,7 +448,7 @@ export function SQLOSDeepDive() {
       : selectedScheduler.runnable >= 6
         ? {
             en: 'RUNNABLE is consistently high. This is classic CPU pressure (or CPU Ready/affinity issues).',
-            es: 'RUNNABLE se mantiene alto. Señal clásica de presión de CPU (o CPU Ready/afinidad).',
+            es: 'RUNNABLE se mantiene alto. Senal clasica de presion de CPU (o CPU Ready/afinidad).',
           }
         : {
             en: 'Queues look healthy. If the query is slow, correlate with waits and plan shape (CXPACKET, memory grants, spills).',
@@ -665,12 +665,12 @@ export function SQLOSDeepDive() {
                     title={language === 'es' ? 'Animar cola de schedulers' : 'Animate scheduler queues'}
                   >
                     {schedulerPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
-                    {language === 'es' ? 'Animación' : 'Animate'}
+                    {language === 'es' ? 'Animacion' : 'Animate'}
                   </button>
                   <button
                     onClick={() => setSchedulerTick(0)}
                     className="inline-flex items-center gap-2 rounded-2xl border border-white/10 bg-black/20 px-4 py-2 text-sm font-bold text-white/70 transition-all hover:bg-white/5 hover:text-white"
-                    title={language === 'es' ? 'Reiniciar simulación' : 'Reset simulation'}
+                    title={language === 'es' ? 'Reiniciar simulacion' : 'Reset simulation'}
                   >
                     <Repeat className="h-4 w-4" />
                     {language === 'es' ? 'Reset' : 'Reset'}
@@ -820,7 +820,7 @@ export function SQLOSDeepDive() {
                   <div className="mt-4 rounded-2xl border border-white/10 bg-black/25 p-4 text-sm text-white/75">
                     <span className="font-bold text-indigo-200">{language === 'es' ? 'Idea:' : 'Idea:'}</span>{' '}
                     {language === 'es'
-                      ? 'Cuando un worker se queda sin CPU, lo verás como cola RUNNABLE y waits de CPU.'
+                      ? 'Cuando un worker se queda sin CPU, lo veras como cola RUNNABLE y waits de CPU.'
                       : 'When workers cannot get CPU, it shows up as RUNNABLE queue growth and CPU-related waits.'}
                   </div>
                 </div>
@@ -829,7 +829,7 @@ export function SQLOSDeepDive() {
 
             <div className="glass-panel rounded-3xl border border-white/10 p-5">
               <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-white/40">
-                {language === 'es' ? 'Diagnóstico rápido' : 'Quick diagnosis'}
+                {language === 'es' ? 'Diagnostico rapido' : 'Quick diagnosis'}
               </p>
 
               <div className="mt-4 rounded-3xl border border-white/10 bg-black/25 p-5">
@@ -1028,7 +1028,7 @@ WHERE status = 'VISIBLE ONLINE';`}
 
                   <div className="rounded-3xl border border-rose-500/20 bg-rose-500/10 p-5">
                     <div className="mb-2 text-sm font-bold text-rose-200">
-                      {language === 'es' ? 'Interpretación rápida' : 'Quick interpretation'}
+                      {language === 'es' ? 'Interpretacion rapida' : 'Quick interpretation'}
                     </div>
                     <p className="text-sm leading-relaxed text-white/80">{t(activeSync.exampleKey as any)}</p>
                   </div>
@@ -1083,7 +1083,7 @@ WHERE status = 'VISIBLE ONLINE';`}
                   {(syncStep.metrics.collisions !== undefined || syncStep.metrics.spins !== undefined) && (
                     <div className="mt-5 rounded-2xl border border-white/10 bg-black/25 p-4">
                       <div className="text-[11px] font-bold uppercase tracking-[0.22em] text-white/40">
-                        {language === 'es' ? 'Métricas' : 'Metrics'}
+                        {language === 'es' ? 'Metricas' : 'Metrics'}
                       </div>
                       <div className="mt-3 grid grid-cols-2 gap-3">
                         <div className="rounded-xl border border-white/10 bg-black/30 p-3">
@@ -1165,7 +1165,7 @@ WHERE status = 'VISIBLE ONLINE';`}
                         : 'text-white/50 hover:bg-white/5 hover:text-white'
                     )}
                   >
-                    {language === 'es' ? 'Después' : 'After'}
+                    {language === 'es' ? 'Despues' : 'After'}
                   </button>
                 </div>
               </div>
@@ -1174,7 +1174,7 @@ WHERE status = 'VISIBLE ONLINE';`}
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div>
                     <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-white/40">
-                      {language === 'es' ? 'Distribución de waits (top)' : 'Wait breakdown (top)'}
+                      {language === 'es' ? 'Distribucion de waits (top)' : 'Wait breakdown (top)'}
                     </p>
                     <div className="mt-2 text-sm text-white/70">
                       {language === 'es'
@@ -1227,7 +1227,7 @@ WHERE status = 'VISIBLE ONLINE';`}
                     <p className="mt-3 text-sm leading-relaxed text-white/70">{t(selectedWait?.descKey as any)}</p>
                     <div className="mt-4 rounded-2xl border border-emerald-500/20 bg-emerald-500/10 p-3 text-sm text-emerald-100">
                       <span className="font-bold text-emerald-300">
-                        {language === 'es' ? 'Qué revisar:' : 'What to review:'}
+                        {language === 'es' ? 'Que revisar:' : 'What to review:'}
                       </span>{' '}
                       {t(selectedWait?.fixKey as any)}
                     </div>
