@@ -100,7 +100,6 @@ export function TLogInternals() {
           </div>
 
           <div className="relative mt-8">
-            <div className="pointer-events-none absolute left-[12%] right-[12%] top-8 h-px bg-gradient-to-r from-cyan-500/30 via-orange-500/30 to-emerald-500/30" />
             <motion.div
               className="pointer-events-none absolute top-[1.15rem] z-10 h-3 w-3 -translate-x-1/2 rounded-full bg-orange-300 shadow-[0_0_18px_rgba(253,186,116,0.75)]"
               animate={{ left: DOT_POSITIONS[activeStage] }}

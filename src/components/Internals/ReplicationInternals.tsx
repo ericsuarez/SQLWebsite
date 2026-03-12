@@ -86,7 +86,6 @@ export function ReplicationInternals() {
           </div>
 
           <div className="relative mt-8">
-            <div className="pointer-events-none absolute left-[8%] right-[8%] top-8 h-px bg-gradient-to-r from-sky-500/30 via-blue-500/30 to-cyan-500/30" />
             <motion.div
               className="pointer-events-none absolute top-[1.15rem] z-10 h-3 w-3 -translate-x-1/2 rounded-full bg-sky-300 shadow-[0_0_18px_rgba(125,211,252,0.75)]"
               animate={{ left: STAGE_DOT_POSITIONS[activeStage] }}
