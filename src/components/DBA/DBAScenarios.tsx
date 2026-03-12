@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Database, Zap, FileWarning, HardDrive, Code2 } from 'lucide-react';
+import { Database, Zap, FileWarning, HardDrive, Code2, Wrench } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { TSqlModal } from '../Shared/TSqlModal';
+import { IndustryStandardJobs } from './IndustryStandardJobs';
 export function DBAScenarios() {
     const { t } = useLanguage();
-    const [activeTab, setActiveTab] = useState<'pageSplit' | 'creation'>('pageSplit');
+    const [activeTab, setActiveTab] = useState<'pageSplit' | 'creation' | 'jobs'>('pageSplit');
 
     // Page Split
     const [fillFactor, setFillFactor] = useState(100);
@@ -36,12 +37,27 @@ export function DBAScenarios() {
             </div>
 
             <div className="flex gap-2 flex-wrap border-b border-white/10 pb-3">
-                {(['pageSplit', 'creation'] as const).map(tab => (
-                    <button key={tab} onClick={() => setActiveTab(tab)}
-                        className={cn('px-4 py-2 rounded-lg font-bold transition-all text-sm', activeTab === tab ? 'bg-rose-500/20 text-rose-400 border border-rose-500/50' : 'bg-white/5 text-muted-foreground hover:bg-white/10')}>
-                        {t(tab === 'pageSplit' ? 'tabPageSplit' : 'tabCreation')}
-                    </button>
-                ))}
+                {[
+                    { id: 'pageSplit' as const, titleKey: 'tabPageSplit' as const, icon: FileWarning, active: 'bg-rose-500/20 text-rose-400 border border-rose-500/50' },
+                    { id: 'creation' as const, titleKey: 'tabCreation' as const, icon: Database, active: 'bg-purple-500/20 text-purple-300 border border-purple-500/50' },
+                    { id: 'jobs' as const, titleKey: 'tabIndustryJobs' as const, icon: Wrench, active: 'bg-amber-500/20 text-amber-300 border border-amber-500/50' },
+                ].map((tab) => {
+                    const Icon = tab.icon;
+                    const isActive = activeTab === tab.id;
+                    return (
+                        <button
+                            key={tab.id}
+                            onClick={() => setActiveTab(tab.id)}
+                            className={cn(
+                                'px-4 py-2 rounded-lg font-bold transition-all text-sm flex items-center gap-2',
+                                isActive ? tab.active : 'bg-white/5 text-muted-foreground hover:bg-white/10 border border-transparent'
+                            )}
+                        >
+                            <Icon className={cn('w-4 h-4', isActive ? '' : 'text-muted-foreground')} />
+                            {t(tab.titleKey)}
+                        </button>
+                    );
+                })}
             </div>
 
             <div className="flex-1 overflow-y-auto">
@@ -116,6 +132,13 @@ export function DBAScenarios() {
                             &nbsp;&nbsp;&nbsp;<span className="text-purple-400">FILENAME</span> = <span className="text-emerald-300">'L:\Logs\SalesDB_log.ldf'</span>,<br />
                             &nbsp;&nbsp;&nbsp;<span className="text-purple-400">SIZE</span> = <span className="text-white">2GB</span>, <span className="text-purple-400">FILEGROWTH</span> = <span className="text-white">500MB</span>);
                         </div>
+                    </div>
+                )}
+
+                {/* INDUSTRY JOBS */}
+                {activeTab === 'jobs' && (
+                    <div className="flex flex-col gap-6">
+                        <IndustryStandardJobs />
                     </div>
                 )}
 

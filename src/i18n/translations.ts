@@ -494,10 +494,11 @@ export const translations = {
 
         // DBA Scenarios
         dbaTitle: 'Advanced DBA Topics',
-        dbaDescription: 'Simulate operational scenarios like Page Splits, Instant File Initialization, and Database Creation.',
+        dbaDescription: 'Simulate DBA labs like Page Splits, Database Creation, and industry-standard SQL Agent jobs (Ola Hallengren, sp_Blitz).',
         tabPageSplit: 'Page Splits & Fillfactor',
         tabIfi: 'OS Permissions (IFI)',
         tabCreation: 'Database Creation',
+        tabIndustryJobs: 'Industry Jobs (Agent)',
         tabRealCases: 'Real DBA Scenarios',
         realCasesTitle: 'Real Scenarios',
         realCasesDesc: 'Simulate real-world SQL Server emergencies. Review the symptoms, observe the system state, identify the root cause, and apply the best practice fix.',
@@ -1209,10 +1210,11 @@ export const translations = {
 
         // DBA Scenarios
         dbaTitle: 'Temas Avanzados de DBA',
-        dbaDescription: 'Simula escenarios como División de Páginas, Inicialización Instantánea de Archivos y Creación de BD.',
+        dbaDescription: 'Simula labs de DBA como División de Páginas, Creación de BD y jobs estándar de la comunidad (Ola Hallengren, sp_Blitz).',
         tabPageSplit: 'División de Páginas / Fillfactor',
         tabIfi: 'Permisos del SO (IFI)',
         tabCreation: 'Creación de Base de Datos',
+        tabIndustryJobs: 'Jobs estándar (Agent)',
         pageSplitTitle: 'Simulador de División de Páginas',
         pageSplitDesc: 'Insertar en una página llena causa división 50/50. Las páginas muy divididas crean fragmentación y espacio vacío.',
         fillfactorLabel: 'Fillfactor',
