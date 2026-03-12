@@ -148,7 +148,7 @@ export function PerfMonVisualizer() {
                                             <div className="h-2 bg-black/40 rounded-full overflow-hidden mb-4">
                                                 <motion.div 
                                                     className={cn("h-full", healthClass.split(' ')[1].replace('/10', ''))} 
-                                                    animate={{ width: \`\${pct}%\` }}
+                                                    animate={{ width: `${pct}%` }}
                                                     transition={{ type: "spring", stiffness: 50, damping: 15 }}
                                                 />
                                             </div>
