@@ -51,7 +51,7 @@ export function RootLayout({ children }: { children: (currentModule: ModuleId) =
                     onOpenSidebar={() => setIsMobileSidebarOpen(true)}
                 />
 
-                <main className="relative flex-1 overflow-x-clip overflow-y-auto overscroll-y-contain px-3 py-3 sm:px-4 md:px-6 md:py-5">
+                <main className="relative flex-1 overflow-x-clip overflow-y-auto overscroll-y-auto px-3 py-3 sm:px-4 md:px-6 md:py-5">
                     <div className="w-full min-h-full pb-6">
                         {children(currentModule)}
                     </div>
