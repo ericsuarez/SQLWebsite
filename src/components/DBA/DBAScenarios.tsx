@@ -6,8 +6,8 @@ import { useLanguage } from '../../contexts/LanguageContext';
 import { TSqlModal } from '../Shared/TSqlModal';
 import { IndustryStandardJobs } from './IndustryStandardJobs';
 export function DBAScenarios() {
-    const { t } = useLanguage();
-    const [activeTab, setActiveTab] = useState<'pageSplit' | 'creation' | 'jobs'>('pageSplit');
+    const { t, language } = useLanguage();
+    const [activeTab, setActiveTab] = useState<'pageSplit' | 'creation' | 'jobs'>('jobs');
 
     // Page Split
     const [fillFactor, setFillFactor] = useState(100);
@@ -36,11 +36,33 @@ export function DBAScenarios() {
                 <p className="text-muted-foreground">{t('dbaDescription')}</p>
             </div>
 
+            <div className="glass-panel relative overflow-hidden rounded-3xl border border-amber-500/20 p-5">
+                <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(245,158,11,0.14),transparent_28%),radial-gradient(circle_at_bottom_right,rgba(56,189,248,0.10),transparent_30%)]" />
+                <div className="relative z-10 flex flex-wrap items-center justify-between gap-4">
+                    <div className="min-w-[260px] flex-1">
+                        <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-amber-200/90">
+                            {language === 'es' ? 'Ruta de jobs' : 'Jobs location'}
+                        </p>
+                        <p className="mt-2 text-sm leading-relaxed text-white/80">
+                            {language === 'es'
+                                ? 'Los jobs estan aqui dentro, en esta misma pagina: abre la pestana "Jobs estandar (Agent)" para ver Ola Hallengren, Brent Ozar y el lab de buenas practicas.'
+                                : 'The jobs live here on this page: open the "Industry Jobs (Agent)" tab to see Ola Hallengren, Brent Ozar and the best-practices lab.'}
+                        </p>
+                    </div>
+                    <button
+                        onClick={() => setActiveTab('jobs')}
+                        className="rounded-2xl border border-amber-500/30 bg-amber-500/10 px-4 py-2 text-sm font-bold text-amber-200 transition-colors hover:bg-amber-500/20"
+                    >
+                        {language === 'es' ? 'Abrir jobs' : 'Open jobs'}
+                    </button>
+                </div>
+            </div>
+
             <div className="flex gap-2 flex-wrap border-b border-white/10 pb-3">
                 {[
+                    { id: 'jobs' as const, titleKey: 'tabIndustryJobs' as const, icon: Wrench, active: 'bg-amber-500/20 text-amber-300 border border-amber-500/50' },
                     { id: 'pageSplit' as const, titleKey: 'tabPageSplit' as const, icon: FileWarning, active: 'bg-rose-500/20 text-rose-400 border border-rose-500/50' },
                     { id: 'creation' as const, titleKey: 'tabCreation' as const, icon: Database, active: 'bg-purple-500/20 text-purple-300 border border-purple-500/50' },
-                    { id: 'jobs' as const, titleKey: 'tabIndustryJobs' as const, icon: Wrench, active: 'bg-amber-500/20 text-amber-300 border border-amber-500/50' },
                 ].map((tab) => {
                     const Icon = tab.icon;
                     const isActive = activeTab === tab.id;

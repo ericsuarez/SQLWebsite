@@ -1,201 +1,275 @@
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
-  ArrowRight,
+  Archive,
   Brain,
-  Cpu,
-  Layers,
+  GitBranch,
   RotateCcw,
   Sparkles,
   Zap,
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { useLanguage } from '../../contexts/LanguageContext';
-import { MODERN_FEATURES } from '../../data/advancedSQLData';
+import {
+  MODERN_FEATURE_DEFINITIONS,
+  MODERN_FEATURE_RELEASES,
+  type ModernFeatureDefinition,
+  type ModernFeatureRelease,
+  type ModernFeatureTone,
+} from '../../data/modernFeaturesData';
 import { CopyCodeBlock } from '../Shared/CopyCodeBlock';
 
-const ICONS: Record<string, any> = {
-  RotateCcw,
+const ICONS: Record<string, typeof Sparkles> = {
+  Archive,
   Brain,
-  Cpu,
+  GitBranch,
+  RotateCcw,
+  Sparkles,
   Zap,
-  Layers,
 };
 
-const FEATURE_STYLES = {
+const FEATURE_STYLES: Record<
+  ModernFeatureTone,
+  {
+    border: string;
+    bg: string;
+    text: string;
+    chip: string;
+    glow: string;
+    accent: 'emerald' | 'amber' | 'blue' | 'violet' | 'rose' | 'cyan';
+  }
+> = {
   emerald: {
     border: 'border-emerald-500/30',
-    text: 'text-emerald-400',
     bg: 'bg-emerald-500/10',
-    chip: 'bg-emerald-500/15 text-emerald-300',
-    line: 'from-emerald-500/60',
-    accent: 'emerald' as const,
+    text: 'text-emerald-300',
+    chip: 'border-emerald-500/20 bg-emerald-500/10 text-emerald-200',
+    glow: 'shadow-[0_0_30px_rgba(16,185,129,0.10)]',
+    accent: 'emerald',
   },
   blue: {
     border: 'border-blue-500/30',
-    text: 'text-blue-400',
     bg: 'bg-blue-500/10',
-    chip: 'bg-blue-500/15 text-blue-300',
-    line: 'from-blue-500/60',
-    accent: 'blue' as const,
-  },
-  violet: {
-    border: 'border-violet-500/30',
-    text: 'text-violet-400',
-    bg: 'bg-violet-500/10',
-    chip: 'bg-violet-500/15 text-violet-300',
-    line: 'from-violet-500/60',
-    accent: 'violet' as const,
+    text: 'text-blue-300',
+    chip: 'border-blue-500/20 bg-blue-500/10 text-blue-200',
+    glow: 'shadow-[0_0_30px_rgba(59,130,246,0.10)]',
+    accent: 'blue',
   },
   amber: {
     border: 'border-amber-500/30',
-    text: 'text-amber-400',
     bg: 'bg-amber-500/10',
-    chip: 'bg-amber-500/15 text-amber-300',
-    line: 'from-amber-500/60',
-    accent: 'amber' as const,
+    text: 'text-amber-300',
+    chip: 'border-amber-500/20 bg-amber-500/10 text-amber-200',
+    glow: 'shadow-[0_0_30px_rgba(251,191,36,0.10)]',
+    accent: 'amber',
   },
   cyan: {
     border: 'border-cyan-500/30',
-    text: 'text-cyan-400',
     bg: 'bg-cyan-500/10',
-    chip: 'bg-cyan-500/15 text-cyan-300',
-    line: 'from-cyan-500/60',
-    accent: 'cyan' as const,
+    text: 'text-cyan-300',
+    chip: 'border-cyan-500/20 bg-cyan-500/10 text-cyan-200',
+    glow: 'shadow-[0_0_30px_rgba(34,211,238,0.10)]',
+    accent: 'cyan',
   },
-} as const;
+  lime: {
+    border: 'border-lime-500/30',
+    bg: 'bg-lime-500/10',
+    text: 'text-lime-300',
+    chip: 'border-lime-500/20 bg-lime-500/10 text-lime-200',
+    glow: 'shadow-[0_0_30px_rgba(163,230,53,0.10)]',
+    accent: 'emerald',
+  },
+  rose: {
+    border: 'border-rose-500/30',
+    bg: 'bg-rose-500/10',
+    text: 'text-rose-300',
+    chip: 'border-rose-500/20 bg-rose-500/10 text-rose-200',
+    glow: 'shadow-[0_0_30px_rgba(244,63,94,0.10)]',
+    accent: 'rose',
+  },
+};
 
-const FEATURE_VISUALS = {
-  adr: {
-    signal: {
-      es: 'Rollback y recovery dejan de depender de deshacer horas de log.',
-      en: 'Rollback and recovery stop depending on replaying hours of log.',
-    },
-    before: [
-      { es: 'Rollback fisico recorriendo el log hacia atras', en: 'Physical rollback walking the log backwards' },
-      { es: 'Recovery bloqueando la base demasiado tiempo', en: 'Recovery keeps the database busy for too long' },
-      { es: 'Una transaccion enorme castiga a todo el motor', en: 'A single huge transaction punishes the whole engine' },
-    ],
-    after: [
-      { es: 'PVS persistente para versiones abortadas', en: 'Persistent version store tracks aborted row versions' },
-      { es: 'Logical revert casi inmediato', en: 'Logical revert completes almost immediately' },
-      { es: 'Crash recovery mucho mas predecible', en: 'Crash recovery becomes much more predictable' },
-    ],
-    script: `ALTER DATABASE SalesDB
-SET ACCELERATED_DATABASE_RECOVERY = ON;`,
-  },
-  iqp: {
-    signal: {
-      es: 'El optimizador aprende de ejecuciones anteriores y corrige memoria y joins.',
-      en: 'The optimizer learns from previous executions and corrects memory grants and joins.',
-    },
-    before: [
-      { es: 'Memory grants desajustados', en: 'Oversized or undersized memory grants' },
-      { es: 'Bad cardinality en TVFs y tablas variables', en: 'Poor cardinality in TVFs and table variables' },
-      { es: 'Planes rigidos aunque cambien las filas reales', en: 'Rigid plans even when real row counts change' },
-    ],
-    after: [
-      { es: 'Memory Grant Feedback corrige spills', en: 'Memory Grant Feedback corrects spills' },
-      { es: 'Adaptive Join cambia sobre la marcha', en: 'Adaptive Join switches mid execution' },
-      { es: 'Interleaved execution reduce errores de estimacion', en: 'Interleaved execution reduces estimation errors' },
-    ],
-    script: `SELECT qs.last_grant_kb,
-       qs.last_used_grant_kb,
-       qs.last_ideal_grant_kb,
-       st.text
-FROM sys.dm_exec_query_stats qs
-CROSS APPLY sys.dm_exec_sql_text(qs.sql_handle) st
-WHERE qs.last_grant_kb > 0
-ORDER BY qs.last_grant_kb DESC;`,
-  },
-  hybridBp: {
-    signal: {
-      es: 'PMEM permite saltarse parte del camino disco -> RAM -> CPU.',
-      en: 'PMEM lets SQL Server bypass part of the disk -> RAM -> CPU path.',
-    },
-    before: [
-      { es: 'Lectura desde almacenamiento tradicional', en: 'Read path starts on traditional storage' },
-      { es: 'Copia obligatoria al Buffer Pool', en: 'Mandatory copy into the Buffer Pool' },
-      { es: 'Mas latencia en warmup y page faults', en: 'More latency during warmup and page faults' },
-    ],
-    after: [
-      { es: 'Archivo mapeado en memoria persistente', en: 'File mapped on persistent memory' },
-      { es: 'Acceso casi directo a la pagina', en: 'Near direct access to the page' },
-      { es: 'Menos copias en la ruta de lectura', en: 'Fewer copies in the read path' },
-    ],
-    script: `SELECT DB_NAME(database_id) AS db_name,
-       file_id,
-       io_stall_read_ms,
-       num_of_reads
-FROM sys.dm_io_virtual_file_stats(NULL, NULL)
-ORDER BY io_stall_read_ms DESC;`,
-  },
-  hekaton: {
-    signal: {
-      es: 'Tablas criticas viven en memoria con MVCC y sin latch/lock tradicional.',
-      en: 'Critical tables live in memory with MVCC and without traditional latch/lock paths.',
-    },
-    before: [
-      { es: 'Bloqueos y latches en tablas muy calientes', en: 'Locks and latches on hot tables' },
-      { es: 'Procedimientos interpretados', en: 'Interpreted stored procedures' },
-      { es: 'Mas overhead por acceso concurrente', en: 'More overhead under heavy concurrency' },
-    ],
-    after: [
-      { es: 'Bw-Tree lock-free', en: 'Lock-free Bw-Tree structures' },
-      { es: 'Versionado MVCC', en: 'MVCC based row versioning' },
-      { es: 'Native compilation opcional', en: 'Optional native compilation' },
-    ],
-    script: `SELECT name,
-       durability_desc,
-       memory_optimized
-FROM sys.tables
-WHERE memory_optimized = 1;`,
-  },
-  sqlpal: {
-    signal: {
-      es: 'SQLPAL desacopla el motor de la API de Windows para correr igual en Linux.',
-      en: 'SQLPAL decouples the engine from Windows APIs so it can run the same way on Linux.',
-    },
-    before: [
-      { es: 'Dependencia fuerte de llamadas Win32', en: 'Heavy dependency on Win32 APIs' },
-      { es: 'Portar el motor completo seria inviable', en: 'Porting the whole engine would be unmanageable' },
-      { es: 'Mantener la misma base de codigo era dificil', en: 'Keeping the same codebase was difficult' },
-    ],
-    after: [
-      { es: 'Capa de abstraccion para syscalls', en: 'Abstraction layer for syscalls' },
-      { es: 'Mismo motor, distinto host', en: 'Same engine, different host' },
-      { es: 'Menor friccion entre Windows y Linux', en: 'Lower friction between Windows and Linux' },
-    ],
-    script: `SELECT host_platform,
-       host_distribution,
-       host_release,
-       sqlserver_start_time
-FROM sys.dm_os_host_info;`,
-  },
-} as const;
+function pick(language: 'en' | 'es', value: { en: string; es: string }) {
+  return language === 'es' ? value.es : value.en;
+}
+
+function metricDelta(metric: ModernFeatureDefinition['metrics'][number]) {
+  if (metric.preference === 'lower') {
+    return Math.max(0, metric.before - metric.after);
+  }
+  return Math.max(0, metric.after - metric.before);
+}
+
+function stageDotPosition(length: number, index: number) {
+  if (length <= 1) {
+    return '50%';
+  }
+
+  return `${((index + 0.5) / length) * 100}%`;
+}
+
+type ReleaseFilter = 'all' | ModernFeatureRelease;
 
 export function ModernFeatures() {
   const { t, language } = useLanguage();
-  const [selectedFeatureId, setSelectedFeatureId] = useState(MODERN_FEATURES[0]?.id ?? 'adr');
+  const [releaseFilter, setReleaseFilter] = useState<ReleaseFilter>('all');
+  const [selectedFeatureId, setSelectedFeatureId] = useState(MODERN_FEATURE_DEFINITIONS[0]?.id ?? 'adr');
+  const [stageIndex, setStageIndex] = useState(0);
+  const [isPlaying, setIsPlaying] = useState(true);
+
+  const filteredFeatures = useMemo(() => {
+    if (releaseFilter === 'all') {
+      return MODERN_FEATURE_DEFINITIONS;
+    }
+
+    return MODERN_FEATURE_DEFINITIONS.filter((feature) => feature.release === releaseFilter);
+  }, [releaseFilter]);
+
+  useEffect(() => {
+    if (filteredFeatures.some((feature) => feature.id === selectedFeatureId)) {
+      return;
+    }
+
+    setSelectedFeatureId(filteredFeatures[0]?.id ?? MODERN_FEATURE_DEFINITIONS[0]?.id ?? 'adr');
+  }, [filteredFeatures, selectedFeatureId]);
 
   const selectedFeature =
-    MODERN_FEATURES.find((feature) => feature.id === selectedFeatureId) ?? MODERN_FEATURES[0];
-  const selectedStyle = FEATURE_STYLES[selectedFeature.color as keyof typeof FEATURE_STYLES];
-  const selectedVisual = FEATURE_VISUALS[selectedFeature.id as keyof typeof FEATURE_VISUALS];
-  const SelectedIcon = ICONS[selectedFeature.icon] || Sparkles;
-  const langText = (value: { es: string; en: string }) => (language === 'es' ? value.es : value.en);
+    filteredFeatures.find((feature) => feature.id === selectedFeatureId) ??
+    MODERN_FEATURE_DEFINITIONS.find((feature) => feature.id === selectedFeatureId) ??
+    MODERN_FEATURE_DEFINITIONS[0];
+
+  const selectedStyle = FEATURE_STYLES[selectedFeature.tone];
+  const SelectedIcon = ICONS[selectedFeature.icon] ?? Sparkles;
+  const selectedStage = selectedFeature.stages[stageIndex] ?? selectedFeature.stages[0];
+
+  useEffect(() => {
+    setStageIndex(0);
+  }, [selectedFeature.id]);
+
+  useEffect(() => {
+    if (!isPlaying || selectedFeature.stages.length <= 1) {
+      return;
+    }
+
+    const timer = window.setInterval(() => {
+      setStageIndex((current) => (current + 1) % selectedFeature.stages.length);
+    }, 2200);
+
+    return () => window.clearInterval(timer);
+  }, [isPlaying, selectedFeature.id, selectedFeature.stages.length]);
+
+  const releaseCounts = useMemo(() => {
+    const counts = MODERN_FEATURE_DEFINITIONS.reduce<Record<ModernFeatureRelease, number>>(
+      (accumulator, feature) => {
+        accumulator[feature.release] += 1;
+        return accumulator;
+      },
+      {
+        '2014': 0,
+        '2019': 0,
+        '2022': 0,
+        '2025': 0,
+      }
+    );
+
+    return counts;
+  }, []);
+
+  const renderLane = (mode: 'before' | 'after') => {
+    const laneActive =
+      mode === 'before'
+        ? 'border-rose-500/25 bg-rose-500/10 text-rose-300'
+        : cn(selectedStyle.border, selectedStyle.bg, selectedStyle.text);
+    const dotClass =
+      mode === 'before'
+        ? 'bg-rose-300 shadow-[0_0_20px_rgba(251,113,133,0.75)]'
+        : cn(selectedStyle.bg, selectedStyle.border, 'shadow-[0_0_20px_rgba(255,255,255,0.20)]');
+
+    return (
+      <div className="rounded-3xl border border-white/10 bg-black/25 p-5">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-white/40">
+              {mode === 'before' ? (language === 'es' ? 'Sin la feature' : 'Without the feature') : language === 'es' ? 'Con la feature' : 'With the feature'}
+            </p>
+            <p className="mt-2 text-sm text-white/70">
+              {mode === 'before'
+                ? language === 'es'
+                  ? 'Camino clasico del motor'
+                  : 'Classic engine path'
+                : language === 'es'
+                  ? 'Ruta modernizada'
+                  : 'Modernized path'}
+            </p>
+          </div>
+          <div className={cn('rounded-full border px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em]', laneActive)}>
+            {mode === 'before' ? 'Baseline' : `SQL ${selectedFeature.release}`}
+          </div>
+        </div>
+
+        <div className="relative mt-5 pt-8">
+          <motion.div
+            className={cn('absolute top-0 z-10 h-3.5 w-3.5 -translate-x-1/2 rounded-full border', dotClass)}
+            animate={{ left: stageDotPosition(selectedFeature.stages.length, stageIndex) }}
+            transition={{ type: 'spring', stiffness: 140, damping: 18 }}
+          />
+
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            {selectedFeature.stages.map((stage, index) => {
+              const isActive = index === stageIndex;
+              return (
+                <button
+                  key={`${mode}-${stage.id}`}
+                  onClick={() => {
+                    setIsPlaying(false);
+                    setStageIndex(index);
+                  }}
+                  className={cn(
+                    'rounded-2xl border p-4 text-left transition-all',
+                    isActive ? laneActive : 'border-white/10 bg-black/20 text-white/65 hover:border-white/20 hover:bg-white/[0.06]'
+                  )}
+                >
+                  <div className="text-[11px] font-black uppercase tracking-[0.18em]">
+                    {index + 1}. {pick(language, stage.label)}
+                  </div>
+                  <p className="mt-3 text-xs leading-relaxed text-white/70">
+                    {mode === 'before' ? pick(language, stage.before) : pick(language, stage.after)}
+                  </p>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    );
+  };
 
   return (
     <div className="flex h-full flex-col gap-6 text-slate-200">
       <div className="glass-panel relative overflow-hidden border border-white/10 p-6">
-        <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-yellow-500/10 to-transparent" />
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(250,204,21,0.16),transparent_28%),radial-gradient(circle_at_bottom_right,rgba(34,211,238,0.12),transparent_30%)]" />
         <div className="relative z-10 flex flex-wrap items-start justify-between gap-4">
-          <div>
-            <h2 className="mb-2 flex items-center gap-3 bg-gradient-to-r from-yellow-400 to-orange-400 bg-clip-text text-3xl font-bold text-transparent">
-              <Sparkles className="h-8 w-8 text-yellow-400" />
+          <div className="min-w-[280px] flex-1">
+            <h2 className="mb-2 flex items-center gap-3 bg-gradient-to-r from-yellow-300 via-orange-300 to-cyan-300 bg-clip-text text-3xl font-bold text-transparent">
+              <Sparkles className="h-8 w-8 text-yellow-300" />
               {t('tabModern')}
             </h2>
-            <p className="max-w-4xl text-sm text-muted-foreground">{t('modMainDesc')}</p>
+            <p className="max-w-4xl text-sm leading-relaxed text-muted-foreground">
+              {language === 'es'
+                ? 'Laboratorio visual de features del motor: selecciona una capacidad, reproduce su flujo y compara el camino clasico frente al comportamiento moderno.'
+                : 'Visual feature lab: select a capability, play its flow and compare the classic engine path with the modern behavior.'}
+            </p>
+          </div>
+
+          <div className="grid gap-2 text-right">
+            {(['2014', '2019', '2022', '2025'] as const).map((release) => (
+              <div
+                key={release}
+                className="rounded-full border border-white/10 bg-black/25 px-3 py-1 text-xs font-bold text-white/75"
+              >
+                SQL {release}: {releaseCounts[release]}
+              </div>
+            ))}
           </div>
         </div>
       </div>
@@ -203,71 +277,90 @@ export function ModernFeatures() {
       <div className="flex-1 overflow-y-auto">
         <div className="grid gap-6 xl:grid-cols-[360px_minmax(0,1fr)]">
           <div className="glass-panel h-fit rounded-3xl border border-white/10 p-4">
-            <div className="mb-4">
-              <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-white/40">
-                {language === 'es' ? 'Selecciona una capacidad' : 'Select a capability'}
+            <div className="rounded-3xl border border-amber-500/20 bg-amber-500/10 p-4">
+              <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-amber-200/90">
+                {language === 'es' ? 'Vista rapida' : 'Quick access'}
               </p>
-              <p className="mt-1 text-sm text-muted-foreground">
+              <p className="mt-2 text-sm leading-relaxed text-white/80">
                 {language === 'es'
-                  ? 'Cada bloque abre una explicacion visual y un ejemplo operativo.'
-                  : 'Each block opens a visual explanation and an operational example.'}
+                  ? 'Aqui ya aparecen 2014, 2019, 2022 y 2025. Cambia el filtro o haz click en cualquier feature para ver la simulacion.'
+                  : 'This now includes 2014, 2019, 2022 and 2025. Change the filter or click any feature to open the simulation.'}
               </p>
             </div>
 
-            <div className="grid gap-3">
-              {MODERN_FEATURES.map((feature, index) => {
-                const Icon = ICONS[feature.icon] || Sparkles;
-                const style = FEATURE_STYLES[feature.color as keyof typeof FEATURE_STYLES];
-                const isActive = feature.id === selectedFeatureId;
+            <div className="mt-4">
+              <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-white/40">
+                {language === 'es' ? 'Filtrar por version' : 'Filter by release'}
+              </p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {MODERN_FEATURE_RELEASES.map((release) => (
+                  <button
+                    key={release.id}
+                    onClick={() => setReleaseFilter(release.id)}
+                    className={cn(
+                      'rounded-full border px-3 py-1.5 text-xs font-bold transition-all',
+                      release.id === releaseFilter
+                        ? 'border-white/20 bg-white/10 text-white'
+                        : 'border-white/10 bg-black/25 text-white/55 hover:bg-white/5 hover:text-white'
+                    )}
+                  >
+                    {pick(language, release.label)}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="mt-5 grid gap-3">
+              {filteredFeatures.map((feature, index) => {
+                const style = FEATURE_STYLES[feature.tone];
+                const Icon = ICONS[feature.icon] ?? Sparkles;
+                const isActive = feature.id === selectedFeature.id;
 
                 return (
                   <motion.button
                     key={feature.id}
-                    onClick={() => setSelectedFeatureId(feature.id)}
                     initial={{ opacity: 0, y: 12 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.05 }}
+                    transition={{ delay: index * 0.04 }}
+                    onClick={() => {
+                      setSelectedFeatureId(feature.id);
+                      setIsPlaying(true);
+                    }}
                     className={cn(
-                      'group rounded-2xl border p-4 text-left transition-all duration-300',
-                      isActive
-                        ? `${style.border} ${style.bg} shadow-[0_0_24px_rgba(255,255,255,0.06)]`
-                        : 'border-white/10 bg-black/20 hover:border-white/20 hover:bg-white/[0.06]'
+                      'rounded-3xl border p-4 text-left transition-all',
+                      isActive ? cn(style.border, style.bg, style.glow) : 'border-white/10 bg-black/20 hover:border-white/20 hover:bg-white/[0.06]'
                     )}
                   >
                     <div className="flex items-start gap-3">
-                      <div
-                        className={cn(
-                          'flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border',
-                          style.bg,
-                          style.border,
-                          style.text
-                        )}
-                      >
-                        <Icon className="h-5 w-5" />
+                      <div className={cn('flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border', style.border, style.bg)}>
+                        <Icon className={cn('h-5 w-5', style.text)} />
                       </div>
+
                       <div className="min-w-0 flex-1">
-                        <div className="flex items-center justify-between gap-2">
-                          <h3 className={cn('text-base font-bold', isActive ? style.text : 'text-white')}>
-                            {t(feature.titleKey)}
-                          </h3>
-                          <span
-                            className={cn(
-                              'rounded-full px-2 py-1 text-[10px] font-bold uppercase tracking-wider',
-                              style.chip
-                            )}
-                          >
-                            {feature.version}
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="min-w-0">
+                            <h3 className={cn('text-sm font-black leading-tight', isActive ? style.text : 'text-white')}>
+                              {pick(language, feature.title)}
+                            </h3>
+                            <p className="mt-2 text-sm leading-relaxed text-white/65">
+                              {pick(language, feature.summary)}
+                            </p>
+                          </div>
+
+                          <span className={cn('rounded-full border px-2 py-1 text-[10px] font-black uppercase tracking-[0.18em] whitespace-nowrap', style.chip)}>
+                            {feature.release}
                           </span>
                         </div>
-                        <p className="mt-2 text-sm leading-relaxed text-white/65">{t(feature.descKey)}</p>
-                        <div
-                          className={cn(
-                            'mt-3 inline-flex items-center gap-1 text-xs font-bold',
-                            isActive ? style.text : 'text-white/40'
-                          )}
-                        >
-                          {language === 'es' ? 'Ver arquitectura' : 'View architecture'}
-                          <ArrowRight className="h-3.5 w-3.5" />
+
+                        <div className="mt-3 flex flex-wrap gap-2">
+                          {feature.badges.slice(0, 2).map((badge) => (
+                            <span
+                              key={`${feature.id}-${badge}`}
+                              className="rounded-full border border-white/10 bg-black/25 px-2.5 py-1 text-[10px] font-bold text-white/65"
+                            >
+                              {badge}
+                            </span>
+                          ))}
                         </div>
                       </div>
                     </div>
@@ -280,169 +373,187 @@ export function ModernFeatures() {
           <AnimatePresence mode="wait">
             <motion.div
               key={selectedFeature.id}
-              initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
+              initial={{ opacity: 0, y: 16, filter: 'blur(10px)' }}
+              animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+              exit={{ opacity: 0, y: -10, filter: 'blur(10px)' }}
+              transition={{ duration: 0.22 }}
               className="grid gap-6"
             >
               <div className={cn('glass-panel rounded-3xl border p-6 sm:p-8', selectedStyle.border)}>
-                <div className="grid gap-6 xl:grid-cols-[minmax(0,1.15fr)_360px]">
+                <div className="grid gap-6 xl:grid-cols-[minmax(0,1.1fr)_360px]">
                   <div>
                     <div className="flex flex-wrap items-start justify-between gap-4">
-                      <div>
+                      <div className="min-w-[260px] flex-1">
                         <div className="mb-4 flex items-center gap-3">
-                          <div
-                            className={cn(
-                              'flex h-14 w-14 items-center justify-center rounded-2xl border',
-                              selectedStyle.bg,
-                              selectedStyle.border,
-                              selectedStyle.text
-                            )}
-                          >
-                            <SelectedIcon className="h-7 w-7" />
+                          <div className={cn('flex h-14 w-14 items-center justify-center rounded-2xl border', selectedStyle.border, selectedStyle.bg)}>
+                            <SelectedIcon className={cn('h-7 w-7', selectedStyle.text)} />
                           </div>
                           <div>
-                            <h3 className={cn('text-2xl font-bold', selectedStyle.text)}>
-                              {t(selectedFeature.titleKey)}
-                            </h3>
-                            <div className="mt-1 flex flex-wrap items-center gap-2">
-                              <span
-                                className={cn(
-                                  'rounded-full px-3 py-1 text-[11px] font-bold uppercase tracking-[0.18em]',
-                                  selectedStyle.chip
-                                )}
-                              >
-                                SQL Server {selectedFeature.version}
+                            <h3 className={cn('text-2xl font-bold', selectedStyle.text)}>{pick(language, selectedFeature.title)}</h3>
+                            <div className="mt-2 flex flex-wrap gap-2">
+                              <span className={cn('rounded-full border px-3 py-1 text-[11px] font-black uppercase tracking-[0.18em]', selectedStyle.chip)}>
+                                SQL Server {selectedFeature.release}
                               </span>
-                              <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.18em] text-white/50">
-                                {language === 'es' ? 'Visual y operativo' : 'Visual and operational'}
+                              <span className="rounded-full border border-white/10 bg-black/25 px-3 py-1 text-[11px] font-bold text-white/65">
+                                {language === 'es' ? 'Lab visual' : 'Visual lab'}
                               </span>
                             </div>
                           </div>
                         </div>
-                        <p className="text-base leading-relaxed text-white/80">
-                          {t(selectedFeature.detailKey)}
-                        </p>
+
+                        <p className="text-base leading-relaxed text-white/82">{pick(language, selectedFeature.detail)}</p>
+
+                        <div className="mt-5 rounded-3xl border border-white/10 bg-black/25 p-5">
+                          <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-white/40">
+                            {language === 'es' ? 'Escenario' : 'Scenario'}
+                          </p>
+                          <p className="mt-3 text-sm leading-relaxed text-white/80">{pick(language, selectedFeature.scenario)}</p>
+                        </div>
                       </div>
                     </div>
 
-                    <div className="mt-6 grid gap-4 sm:grid-cols-3">
-                      {selectedVisual.after.map((item, index) => (
-                        <div key={item.es} className="rounded-2xl border border-white/10 bg-black/30 p-4">
-                          <div className={cn('mb-2 text-xs font-bold uppercase tracking-[0.18em]', selectedStyle.text)}>
-                            {language === 'es' ? `Mejora ${index + 1}` : `Improvement ${index + 1}`}
-                          </div>
-                          <p className="text-sm text-white/80">{langText(item)}</p>
-                        </div>
+                    <div className="mt-6 flex flex-wrap items-center gap-2">
+                      {selectedFeature.stages.map((stage, index) => (
+                        <button
+                          key={`${selectedFeature.id}-${stage.id}`}
+                          onClick={() => {
+                            setIsPlaying(false);
+                            setStageIndex(index);
+                          }}
+                          className={cn(
+                            'rounded-full border px-3 py-1.5 text-xs font-bold uppercase tracking-[0.18em] transition-all',
+                            index === stageIndex
+                              ? cn(selectedStyle.border, selectedStyle.bg, selectedStyle.text)
+                              : 'border-white/10 bg-white/5 text-white/45 hover:text-white'
+                          )}
+                        >
+                          {index + 1}. {pick(language, stage.label)}
+                        </button>
                       ))}
+
+                      <button
+                        onClick={() => setIsPlaying((current) => !current)}
+                        className={cn(
+                          'rounded-full border px-3 py-1.5 text-xs font-bold uppercase tracking-[0.18em] transition-all',
+                          isPlaying
+                            ? cn(selectedStyle.border, selectedStyle.bg, selectedStyle.text)
+                            : 'border-white/10 bg-black/25 text-white/60 hover:bg-white/5 hover:text-white'
+                        )}
+                      >
+                        {isPlaying ? (language === 'es' ? 'Auto on' : 'Auto on') : language === 'es' ? 'Auto off' : 'Auto off'}
+                      </button>
                     </div>
 
-                    <div className="mt-6">
-                      <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
-                        <h4 className="text-sm font-bold uppercase tracking-[0.2em] text-white/50">
-                          {language === 'es' ? 'Ruta visual' : 'Visual path'}
-                        </h4>
-                        <span className={cn('text-sm font-semibold', selectedStyle.text)}>
-                          {langText(selectedVisual.signal)}
-                        </span>
+                    <div className="mt-6 grid gap-4">
+                      {renderLane('before')}
+                      {renderLane('after')}
+                    </div>
+
+                    <div className="mt-6 grid gap-4 lg:grid-cols-2">
+                      <div className="rounded-3xl border border-rose-500/20 bg-rose-500/10 p-5">
+                        <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-rose-200/90">
+                          {language === 'es' ? 'Paso actual sin feature' : 'Current step without the feature'}
+                        </p>
+                        <h4 className="mt-3 text-lg font-bold text-white">{pick(language, selectedStage.label)}</h4>
+                        <p className="mt-3 text-sm leading-relaxed text-rose-100/90">{pick(language, selectedStage.before)}</p>
                       </div>
 
-                      <div className="grid gap-4 lg:grid-cols-2">
-                        <div className="rounded-2xl border border-white/10 bg-black/30 p-5">
-                          <div className="mb-4 text-sm font-bold text-rose-300">
-                            {language === 'es' ? 'Antes' : 'Before'}
-                          </div>
-                          <div className="space-y-3">
-                            {selectedVisual.before.map((item, index) => (
-                              <div key={item.es} className="flex items-start gap-3">
-                                <div className="mt-1 h-2.5 w-2.5 rounded-full bg-rose-400" />
-                                <div className="flex-1">
-                                  <div className="text-sm text-white/80">{langText(item)}</div>
-                                  {index < selectedVisual.before.length - 1 && (
-                                    <div className="ml-1 mt-3 h-6 w-px bg-gradient-to-b from-rose-400/60 to-transparent" />
-                                  )}
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-
-                        <div className={cn('rounded-2xl border bg-black/30 p-5', selectedStyle.border)}>
-                          <div className={cn('mb-4 text-sm font-bold', selectedStyle.text)}>
-                            {language === 'es' ? 'Despues' : 'After'}
-                          </div>
-                          <div className="space-y-3">
-                            {selectedVisual.after.map((item, index) => (
-                              <div key={item.es} className="flex items-start gap-3">
-                                <div className={cn('mt-1 h-2.5 w-2.5 rounded-full', selectedStyle.bg, selectedStyle.border)} />
-                                <div className="flex-1">
-                                  <div className="text-sm text-white/80">{langText(item)}</div>
-                                  {index < selectedVisual.after.length - 1 && (
-                                    <div
-                                      className={cn(
-                                        'ml-1 mt-3 h-6 w-px bg-gradient-to-b to-transparent',
-                                        selectedStyle.line
-                                      )}
-                                    />
-                                  )}
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
+                      <div className={cn('rounded-3xl border p-5', selectedStyle.border, selectedStyle.bg)}>
+                        <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-white/45">
+                          {language === 'es' ? 'Paso actual con feature' : 'Current step with the feature'}
+                        </p>
+                        <h4 className="mt-3 text-lg font-bold text-white">{pick(language, selectedStage.label)}</h4>
+                        <p className="mt-3 text-sm leading-relaxed text-white/85">{pick(language, selectedStage.after)}</p>
                       </div>
                     </div>
                   </div>
 
                   <div className="flex flex-col gap-4">
-                    <div className={cn('rounded-3xl border p-5', selectedStyle.border, selectedStyle.bg)}>
+                    <div className="rounded-3xl border border-white/10 bg-black/25 p-5">
                       <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-white/40">
-                        {language === 'es' ? 'Impacto visual' : 'Visual impact'}
+                        {language === 'es' ? 'Impacto visible' : 'Visible impact'}
                       </p>
+
                       <div className="mt-4 space-y-4">
-                        {[72, 54, 31].map((value, index) => (
-                          <div key={`${selectedFeature.id}-${value}`} className="space-y-2">
-                            <div className="flex items-center justify-between text-xs text-white/60">
-                              <span>
-                                {language === 'es'
-                                  ? index === 0
-                                    ? 'Latencia operativa'
-                                    : index === 1
-                                      ? 'Trabajo del motor'
-                                      : 'Tiempo de recuperacion'
-                                  : index === 0
-                                    ? 'Operational latency'
-                                    : index === 1
-                                      ? 'Engine overhead'
-                                      : 'Recovery time'}
-                              </span>
+                        {selectedFeature.metrics.map((metric) => (
+                          <div key={`${selectedFeature.id}-${pick(language, metric.label)}`} className="rounded-2xl border border-white/10 bg-black/20 p-4">
+                            <div className="flex items-center justify-between gap-3">
+                              <span className="text-sm font-bold text-white/80">{pick(language, metric.label)}</span>
                               <span className={selectedStyle.text}>
-                                {language === 'es'
-                                  ? index === 2
-                                    ? `${Math.max(2, 100 - value)}% menos`
-                                    : `${Math.max(10, 100 - value)}% mejor`
-                                  : index === 2
-                                    ? `${Math.max(2, 100 - value)}% lower`
-                                    : `${Math.max(10, 100 - value)}% better`}
+                                {metric.preference === 'lower'
+                                  ? language === 'es'
+                                    ? `${metricDelta(metric)} puntos menos`
+                                    : `${metricDelta(metric)} points lower`
+                                  : language === 'es'
+                                    ? `${metricDelta(metric)} puntos mas`
+                                    : `${metricDelta(metric)} points higher`}
                               </span>
                             </div>
-                            <div className="h-2 rounded-full bg-black/30">
-                              <motion.div
-                                initial={{ width: 0 }}
-                                animate={{ width: `${value}%` }}
-                                className={cn('h-2 rounded-full', selectedStyle.bg)}
-                              />
+
+                            <div className="mt-3 space-y-2">
+                              <div>
+                                <div className="mb-1 flex items-center justify-between text-[11px] font-bold uppercase tracking-[0.18em] text-white/45">
+                                  <span>{language === 'es' ? 'Antes' : 'Before'}</span>
+                                  <span>{metric.before}{metric.unit}</span>
+                                </div>
+                                <div className="h-2 rounded-full bg-black/30">
+                                  <motion.div
+                                    initial={{ width: 0 }}
+                                    animate={{ width: `${metric.before}%` }}
+                                    className="h-2 rounded-full bg-rose-400/75"
+                                  />
+                                </div>
+                              </div>
+
+                              <div>
+                                <div className="mb-1 flex items-center justify-between text-[11px] font-bold uppercase tracking-[0.18em] text-white/45">
+                                  <span>{language === 'es' ? 'Despues' : 'After'}</span>
+                                  <span>{metric.after}{metric.unit}</span>
+                                </div>
+                                <div className="h-2 rounded-full bg-black/30">
+                                  <motion.div
+                                    initial={{ width: 0 }}
+                                    animate={{ width: `${metric.after}%` }}
+                                    className={cn('h-2 rounded-full', selectedStyle.bg)}
+                                  />
+                                </div>
+                              </div>
                             </div>
                           </div>
                         ))}
                       </div>
                     </div>
 
-                    <div className="rounded-3xl border border-white/10 bg-black/30 p-5">
-                      <p className="mb-3 text-[11px] font-bold uppercase tracking-[0.22em] text-white/40">
-                        {language === 'es' ? 'Consulta rapida' : 'Quick check'}
+                    <div className="rounded-3xl border border-white/10 bg-black/25 p-5">
+                      <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-white/40">
+                        {language === 'es' ? 'Que vigilar' : 'What to watch'}
                       </p>
-                      <CopyCodeBlock code={selectedVisual.script} accent={selectedStyle.accent} />
+                      <div className="mt-4 space-y-3">
+                        {selectedFeature.watchpoints.map((item, index) => (
+                          <div key={`${selectedFeature.id}-watch-${index}`} className="flex items-start gap-3">
+                            <div className={cn('mt-2 h-2.5 w-2.5 rounded-full', selectedStyle.bg)} />
+                            <p className="flex-1 text-sm leading-relaxed text-white/78">{pick(language, item)}</p>
+                          </div>
+                        ))}
+                      </div>
+
+                      <div className="mt-5 flex flex-wrap gap-2">
+                        {selectedFeature.badges.map((badge) => (
+                          <span
+                            key={`${selectedFeature.id}-badge-${badge}`}
+                            className="rounded-full border border-white/10 bg-black/25 px-3 py-1 text-[11px] font-bold text-white/70"
+                          >
+                            {badge}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="rounded-3xl border border-white/10 bg-black/25 p-5">
+                      <p className="mb-3 text-[11px] font-bold uppercase tracking-[0.22em] text-white/40">
+                        {language === 'es' ? 'T-SQL rapido' : 'Quick T-SQL'}
+                      </p>
+                      <CopyCodeBlock code={selectedFeature.script} accent={selectedStyle.accent} />
                     </div>
                   </div>
                 </div>
