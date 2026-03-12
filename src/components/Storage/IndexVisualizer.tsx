@@ -245,7 +245,7 @@ function NodeBox({ label, sub, active, passed, color, activeColor }: {
     return (
         <motion.div animate={active ? { scale: [1, 1.06, 1], boxShadow: ['0 0 0px transparent', `0 0 20px ${activeColor}`, '0 0 0px transparent'] } : { scale: 1 }}
             transition={{ duration: 0.6, repeat: active ? Infinity : 0 }}
-            className={cn('rounded-xl px-4 py-2.5 text-center border-2 transition-all duration-300 min-w-[120px]',
+            className={cn('min-w-[96px] rounded-xl border-2 px-4 py-2.5 text-center transition-all duration-300 sm:min-w-[120px]',
                 active ? `bg-opacity-30 ${color} border-opacity-80` : passed ? 'bg-white/10 border-white/20' : 'bg-black/30 border-white/10')}>
             <div className={cn('text-xs font-bold', active ? 'text-white' : passed ? 'text-white/50' : 'text-white/40')}>{label}</div>
             {sub && <div className={cn('text-[9px] font-mono mt-0.5', active ? 'text-white/70' : 'text-white/25')}>{sub}</div>}
@@ -345,7 +345,7 @@ function StepPlayer({ scenarios, accent, tree }: {
                 <div className={cn('w-px h-6 transition-all', stepIdx >= 1 ? 'bg-white/40' : 'bg-white/10')} />
 
                 {/* Branch */}
-                <div className="flex gap-8 items-center">
+                <div className="flex flex-wrap items-center justify-center gap-4 sm:gap-8">
                     {(tree === 'clustered'
                         ? [
                             { label: language === 'es' ? 'RAMA IZQ' : 'BRANCH L', sub: 'P-2 (1-18)' },
@@ -408,7 +408,7 @@ function StepPlayer({ scenarios, accent, tree }: {
                         <div className="flex-1 min-w-0">
                             <div className={cn('font-bold text-sm', step.found ? 'text-emerald-300' : tableActive ? 'text-amber-300' : 'text-white')}>{step.title[language]}</div>
                             <div className="text-xs text-muted-foreground mt-1 leading-relaxed">{step.desc[language]}</div>
-                            <div className="mt-3 bg-black/40 rounded-xl p-3 font-mono text-[10px] text-white/60 whitespace-pre leading-relaxed">{step.sql[language]}</div>
+                            <div className="mt-3 overflow-x-auto rounded-xl bg-black/40 p-3 font-mono text-[10px] leading-relaxed text-white/60 whitespace-pre-wrap break-words md:whitespace-pre">{step.sql[language]}</div>
                             <div className="flex items-center gap-2 mt-2">
                                 <span className="text-[10px] text-muted-foreground">
                                     {language === 'es' ? 'Lecturas lógicas (hasta ahora):' : 'Logical reads so far:'}
@@ -744,7 +744,7 @@ ORDER BY demand_score DESC;`;
                                         </div>
                                     ))}
                                 </div>
-                                <pre className="font-mono text-xs bg-black/40 p-4 rounded-xl text-white/70 leading-relaxed overflow-x-auto">{
+                                <pre className="overflow-x-auto whitespace-pre-wrap break-words rounded-xl bg-black/40 p-4 font-mono text-xs leading-relaxed text-white/70 md:whitespace-pre">{
 `-- Check fragmentation
 SELECT object_name(object_id) AS tbl,
   index_id, avg_fragmentation_in_percent, page_count

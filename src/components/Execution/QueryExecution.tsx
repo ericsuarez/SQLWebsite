@@ -471,7 +471,7 @@ export function QueryExecution() {
                                                             : 'Requests with grants and pending I/O'
                                                         : label}
                                                 </div>
-                                                <pre className="p-4 text-[11px] font-mono text-white/80 overflow-x-auto leading-relaxed whitespace-pre">{code}</pre>
+                                                <pre className="overflow-x-auto whitespace-pre-wrap break-words p-4 text-[11px] font-mono leading-relaxed text-white/80 md:whitespace-pre">{code}</pre>
                                             </div>
                                         ))}
                                     </div>

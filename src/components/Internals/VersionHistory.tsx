@@ -198,7 +198,7 @@ export function VersionHistory() {
         whileHover={{ y: -1 }}
         onClick={() => setActiveServicingNodeId(node.id)}
         className={cn(
-          options?.compact ? 'min-w-[176px] rounded-2xl border p-3 text-left backdrop-blur-sm' : 'rounded-3xl border p-4 text-left',
+          options?.compact ? 'min-w-[140px] rounded-2xl border p-3 text-left backdrop-blur-sm sm:min-w-[176px]' : 'rounded-3xl border p-4 text-left',
           'transition-all',
           options?.wide ? 'sm:col-span-2' : '',
           isActive ? cn(style.border, style.bg, style.glow) : 'border-white/10 bg-black/20 hover:border-white/20 hover:bg-white/[0.06]'
@@ -574,7 +574,7 @@ export function VersionHistory() {
 
           <div className="glass-panel rounded-3xl border border-white/10 p-6">
             <div className="flex flex-wrap items-start justify-between gap-4">
-              <div className="min-w-[220px]">
+              <div className="min-w-0 sm:min-w-[220px]">
                 <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-white/40">
                   {language === 'es' ? 'Modelo de actualizaciones' : 'Update model'}
                 </p>
@@ -717,7 +717,7 @@ export function VersionHistory() {
                     className="rounded-3xl border border-white/10 bg-black/25 p-5"
                   >
                     <div className="flex flex-wrap items-start justify-between gap-4">
-                      <div className="min-w-[220px] flex-1">
+                      <div className="min-w-0 flex-1 sm:min-w-[220px]">
                         <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-white/40">
                           {language === 'es' ? 'Seleccionado' : 'Selected'}
                         </p>

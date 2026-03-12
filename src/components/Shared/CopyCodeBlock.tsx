@@ -79,7 +79,7 @@ export function CopyCodeBlock({
           {copied ? t('copied') : t('copy')}
         </button>
       </div>
-      <pre className={cn('relative overflow-x-auto px-4 py-4 text-[11px] leading-relaxed', style.text)}>
+      <pre className={cn('relative overflow-x-auto whitespace-pre-wrap break-words px-4 py-4 text-[11px] leading-relaxed md:whitespace-pre', style.text)}>
         <code>{code}</code>
       </pre>
     </div>

@@ -98,7 +98,7 @@ export function TSqlModal({ isOpen, onClose, title, description, diagnosticScrip
                             </div>
                             <div className="relative group">
                                 <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/10 to-transparent rounded-xl pointer-events-none" />
-                                <pre className="p-4 rounded-xl bg-black/60 border border-white/10 text-sm font-mono overflow-x-auto text-emerald-300">
+                                <pre className="overflow-x-auto whitespace-pre-wrap break-words rounded-xl border border-white/10 bg-black/60 p-4 text-sm font-mono text-emerald-300 md:whitespace-pre">
                                     <code>{diagText}</code>
                                 </pre>
                             </div>
@@ -119,7 +119,7 @@ export function TSqlModal({ isOpen, onClose, title, description, diagnosticScrip
                                 </div>
                                 <div className="relative group">
                                     <div className="absolute inset-0 bg-gradient-to-r from-amber-500/10 to-transparent rounded-xl pointer-events-none" />
-                                    <pre className="p-4 rounded-xl bg-black/60 border border-white/10 text-sm font-mono overflow-x-auto text-amber-300">
+                                    <pre className="overflow-x-auto whitespace-pre-wrap break-words rounded-xl border border-white/10 bg-black/60 p-4 text-sm font-mono text-amber-300 md:whitespace-pre">
                                         <code>{remText}</code>
                                     </pre>
                                 </div>

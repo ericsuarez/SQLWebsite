@@ -68,3 +68,13 @@
 ::-webkit-scrollbar-thumb:hover {
   background: hsl(var(--muted-foreground)); 
 }
+
+.overflow-x-auto {
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+  touch-action: pan-x;
+}
+
+.overflow-y-auto {
+  -webkit-overflow-scrolling: touch;
+}
