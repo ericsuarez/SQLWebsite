@@ -7,6 +7,7 @@ interface CopyCodeBlockProps {
   code: string;
   accent?: 'emerald' | 'amber' | 'blue' | 'violet' | 'rose' | 'cyan';
   className?: string;
+  contentClassName?: string;
 }
 
 const ACCENT_STYLES = {
@@ -46,6 +47,7 @@ export function CopyCodeBlock({
   code,
   accent = 'emerald',
   className,
+  contentClassName,
 }: CopyCodeBlockProps) {
   const { t } = useLanguage();
   const [copied, setCopied] = useState(false);
@@ -79,7 +81,7 @@ export function CopyCodeBlock({
           {copied ? t('copied') : t('copy')}
         </button>
       </div>
-      <pre className={cn('relative overflow-x-auto whitespace-pre-wrap break-words px-4 py-4 text-[11px] leading-relaxed md:whitespace-pre', style.text)}>
+      <pre className={cn('relative overflow-auto whitespace-pre-wrap break-words px-4 py-4 text-[11px] leading-relaxed md:whitespace-pre', style.text, contentClassName)}>
         <code>{code}</code>
       </pre>
     </div>

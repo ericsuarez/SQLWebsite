@@ -2,6 +2,7 @@ import {
   BookOpen,
   Cpu,
   Database,
+  FileSearch,
   FileWarning,
   GitBranch,
   HardDrive,
@@ -86,6 +87,13 @@ export const MODULE_GROUPS: ModuleGroupDefinition[] = [
         icon: Wrench,
         color: 'text-orange-400',
         aliases: ['jobs', 'sql agent', 'ola hallengren', 'brent ozar', 'blitz', 'mantenimiento'],
+      },
+      {
+        id: 'incident-queries',
+        titleKey: 'tabIncidentQueries',
+        icon: FileSearch,
+        color: 'text-emerald-300',
+        aliases: ['quick queries', 'triage', 'blockers', 'waits', 'cpu', 'grants', 'incidencias', 'queries rapidas'],
       },
       {
         id: 'realcases',

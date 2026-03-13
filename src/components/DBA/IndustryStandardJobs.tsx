@@ -37,9 +37,37 @@ export function IndustryStandardJobs() {
             </h3>
             <p className="mt-3 max-w-4xl text-sm leading-7 text-white/80">
               {language === 'es'
-                ? 'Aqui vas a practicar tres capas: mantenimiento inteligente con Ola, diagnostico de salud con Brent y buenas practicas operativas de jobs. En modo Play veras el flujo de ejecucion y que va pasando paso a paso.'
-                : 'Here you will practice three layers: smart maintenance with Ola, health diagnostics with Brent, and operational SQL Agent best practices. In Play mode you will see execution flow and what happens step by step.'}
+                ? 'Primero eliges el lab. Luego entras en una vista grande, sin tanto texto, para seguir la query, la evidencia y lo que haria un DBA senior en cada paso.'
+                : 'First you choose the lab. Then you enter a large view, with less text, to follow the query, the evidence, and what a senior DBA would do at each step.'}
             </p>
+
+            <div className="mt-4 grid gap-3 md:grid-cols-3">
+              {[
+                {
+                  title: language === 'es' ? 'Que vas a ver' : 'What you will see',
+                  body: language === 'es'
+                    ? 'La entrada real al motor, la decision o hallazgo y su impacto operativo.'
+                    : 'The real engine input, the decision or finding, and its operational impact.',
+                },
+                {
+                  title: language === 'es' ? 'Que hara el DBA' : 'What the DBA will do',
+                  body: language === 'es'
+                    ? 'Triage, validacion, evidencia y siguiente accion segura. No solo el “fix”.'
+                    : 'Triage, validation, evidence, and the next safe action. Not only the “fix”.',
+                },
+                {
+                  title: language === 'es' ? 'Como se usa' : 'How to use it',
+                  body: language === 'es'
+                    ? 'Briefing corto primero y despues play grande para trabajar sin scroll de pagina.'
+                    : 'Short briefing first, then a large play mode so you can work without page scrolling.',
+                },
+              ].map((card) => (
+                <div key={card.title} className="rounded-2xl border border-white/10 bg-black/20 p-4">
+                  <div className="text-[11px] font-black uppercase tracking-[0.18em] text-white/45">{card.title}</div>
+                  <p className="mt-2 text-sm leading-7 text-white/75">{card.body}</p>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
 
@@ -94,7 +122,7 @@ export function IndustryStandardJobs() {
   }
 
   return (
-    <div className="flex min-h-full flex-col gap-4">
+    <div className="flex min-h-full flex-col gap-4 lg:h-[calc(100dvh-10.5rem)]">
       <div className="flex flex-col gap-3 border-b border-white/10 pb-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="grid gap-2 sm:flex sm:flex-wrap">
           {TABS.map((tab) => {
@@ -125,7 +153,7 @@ export function IndustryStandardJobs() {
         </button>
       </div>
 
-      <div className="min-h-0 flex-1">
+      <div className="min-h-0 flex-1 overflow-hidden">
         <AnimatePresence mode="wait">
           <motion.div
             key={activeTab}
@@ -133,7 +161,7 @@ export function IndustryStandardJobs() {
             animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
             exit={{ opacity: 0, y: -10, filter: 'blur(8px)' }}
             transition={{ duration: 0.25 }}
-            className="min-h-full"
+            className="min-h-full h-full"
           >
             {activeTab === 'ola' ? (
               <OlaHallengrenSimulator compact />

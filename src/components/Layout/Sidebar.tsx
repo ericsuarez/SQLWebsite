@@ -4,7 +4,25 @@ import { cn } from '../../lib/utils';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { ALL_MODULES, MODULE_GROUPS, normalizeSearchValue, type ModuleGroupId } from './moduleCatalog';
 
-export type ModuleId = 'architecture' | 'storage' | 'memory' | 'execution' | 'jobs' | 'ha' | 'indexes' | 'realcases' | 'xevents' | 'osconfig' | 'perfmon' | 'sqlos' | 'modern' | 'tlog-internals' | 'tempdb-io' | 'replication' | 'version-history';
+export type ModuleId =
+    | 'architecture'
+    | 'storage'
+    | 'memory'
+    | 'execution'
+    | 'jobs'
+    | 'incident-queries'
+    | 'ha'
+    | 'indexes'
+    | 'realcases'
+    | 'xevents'
+    | 'osconfig'
+    | 'perfmon'
+    | 'sqlos'
+    | 'modern'
+    | 'tlog-internals'
+    | 'tempdb-io'
+    | 'replication'
+    | 'version-history';
 
 interface SidebarProps {
     currentModule: ModuleId;
@@ -95,30 +113,23 @@ export function Sidebar({
                 'w-[88vw] max-w-[320px] lg:max-w-none'
             )}
         >
-            <div className={cn('border-b border-white/10 flex items-center gap-3', showCompact ? 'p-4 justify-center' : 'p-5')}>
-                <div className="p-2 bg-primary/20 rounded-lg shadow-glowBlue shrink-0">
-                    <Database className="w-6 h-6 text-primary" />
-                </div>
-                {!showCompact && (
-                    <div className="min-w-0">
-                        <h1 className="truncate font-bold text-lg tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-primary">{t('appTitle')}</h1>
-                        <p className="truncate text-xs text-muted-foreground font-medium">{t('appSubtitle')}</p>
+            <div className={cn("p-6 border-b border-white/10 flex items-center justify-between gap-3 overflow-hidden transition-all duration-300", showCompact && "px-4 justify-center")}>
+                <div className="flex items-center gap-3 min-w-0">
+                    <div className="p-2 bg-primary/20 rounded-lg shadow-glowBlue shrink-0">
+                        <Database className="w-6 h-6 text-primary" />
                     </div>
-                )}
-                <button
-                    onClick={onToggleCollapse}
-                    className={cn(
-                        'ml-auto hidden rounded-lg border border-white/10 bg-white/5 p-2 text-muted-foreground transition-colors hover:bg-white/10 hover:text-white lg:inline-flex',
-                        showCompact && 'ml-0'
+                    {!showCompact && (
+                        <div className="min-w-0">
+                            <h1 className="truncate font-bold text-lg tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-primary">{t('appTitle')}</h1>
+                            <p className="truncate text-xs text-muted-foreground font-medium">{t('appSubtitle')}</p>
+                        </div>
                     )}
-                    title={isCollapsed ? 'Expandir sidebar' : 'Comprimir sidebar'}
-                >
-                    {isCollapsed ? <PanelLeftOpen className="h-4 w-4" /> : <PanelLeftClose className="h-4 w-4" />}
-                </button>
+                </div>
+                
                 <button
                     type="button"
                     onClick={onCloseMobile}
-                    className="ml-auto inline-flex rounded-lg border border-white/10 bg-white/5 p-2 text-muted-foreground transition-colors hover:bg-white/10 hover:text-white lg:hidden"
+                    className="flex lg:hidden rounded-lg border border-white/10 bg-white/5 p-2 text-muted-foreground transition-colors hover:bg-white/10 hover:text-white"
                     aria-label={language === 'es' ? 'Cerrar navegacion' : 'Close navigation'}
                 >
                     <X className="h-4 w-4" />
@@ -128,47 +139,62 @@ export function Sidebar({
             <nav className={cn('flex-1 overflow-y-auto space-y-2', showCompact ? 'p-3' : 'p-4')}>
                 {!showCompact && <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-4 ml-2">{t('modules')}</div>}
 
-                {showCompact ? (
-                    <div className="space-y-2">
-                        {ALL_MODULES.map((module) => renderModuleButton(module))}
-                    </div>
-                ) : (
-                    <div className="space-y-3">
-                        {filteredGroups.map((group) => {
-                            const isExpanded = hasSearch || expandedGroups[group.id];
-                            return (
-                                <div key={group.id} className="rounded-2xl border border-white/10 bg-black/20">
-                                    <button
-                                        onClick={() => setExpandedGroups((previous) => ({ ...previous, [group.id]: !previous[group.id] }))}
-                                        className="w-full flex items-center justify-between px-3 py-2.5 text-left"
-                                    >
-                                        <span className="text-[11px] font-black uppercase tracking-[0.18em] text-white/55">
-                                            {language === 'es' ? group.label.es : group.label.en}
-                                        </span>
-                                        <ChevronDown
-                                            className={cn(
-                                                'h-4 w-4 text-white/55 transition-transform',
-                                                isExpanded ? 'rotate-180' : 'rotate-0'
-                                            )}
-                                        />
-                                    </button>
-                                    {isExpanded ? (
-                                        <div className="space-y-1 border-t border-white/10 px-2 py-2">
-                                            {group.modules.map((module) => renderModuleButton(module))}
-                                        </div>
-                                    ) : null}
-                                </div>
-                            );
-                        })}
+                <div className="space-y-2">
+                    {showCompact ? (
+                        <div className="space-y-2">
+                            {ALL_MODULES.map((module) => renderModuleButton(module))}
+                        </div>
+                    ) : (
+                        <div className="space-y-3">
+                            {filteredGroups.map((group) => {
+                                const isExpanded = hasSearch || expandedGroups[group.id];
+                                return (
+                                    <div key={group.id} className="rounded-2xl border border-white/10 bg-black/20">
+                                        <button
+                                            onClick={() => setExpandedGroups((previous) => ({ ...previous, [group.id]: !previous[group.id] }))}
+                                            className="w-full flex items-center justify-between px-3 py-2.5 text-left"
+                                        >
+                                            <span className="text-[11px] font-black uppercase tracking-[0.18em] text-white/55">
+                                                {language === 'es' ? group.label.es : group.label.en}
+                                            </span>
+                                            <ChevronDown
+                                                className={cn(
+                                                    'h-4 w-4 text-white/55 transition-transform',
+                                                    isExpanded ? 'rotate-180' : 'rotate-0'
+                                                )}
+                                            />
+                                        </button>
+                                        {isExpanded ? (
+                                            <div className="space-y-1 border-t border-white/10 px-2 py-2">
+                                                {group.modules.map((module) => renderModuleButton(module))}
+                                            </div>
+                                        ) : null}
+                                    </div>
+                                );
+                            })}
 
-                        {hasSearch && filteredGroups.length === 0 ? (
-                            <div className="rounded-xl border border-white/10 bg-black/20 px-3 py-3 text-xs text-white/55">
-                                {language === 'es' ? 'Sin resultados en paginas del sidebar' : 'No results in sidebar pages'}
-                            </div>
-                        ) : null}
-                    </div>
-                )}
+                            {hasSearch && filteredGroups.length === 0 ? (
+                                <div className="rounded-xl border border-white/10 bg-black/20 px-3 py-3 text-xs text-white/55">
+                                    {language === 'es' ? 'Sin resultados en paginas del sidebar' : 'No results in sidebar pages'}
+                                </div>
+                            ) : null}
+                        </div>
+                    )}
+                </div>
             </nav>
+
+            <div className="border-t border-white/10 p-4">
+                <button
+                    onClick={onToggleCollapse}
+                    className={cn(
+                        "w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 text-sm font-medium border border-white/5 bg-white/5 text-muted-foreground hover:bg-white/10 hover:text-white group",
+                        showCompact && "justify-center px-0"
+                    )}
+                >
+                    {isCollapsed ? <PanelLeftOpen className="h-5 w-5" /> : <PanelLeftClose className="h-5 w-5" />}
+                    {!showCompact && <span>{isCollapsed ? (language === 'es' ? 'Expandir' : 'Expand') : (language === 'es' ? 'Colapsar' : 'Collapse')}</span>}
+                </button>
+            </div>
 
         </aside>
     );

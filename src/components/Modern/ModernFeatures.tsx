@@ -186,8 +186,31 @@ export function ModernFeatures() {
         : cn(selectedStyle.bg, selectedStyle.border, 'shadow-[0_0_20px_rgba(255,255,255,0.20)]');
 
     return (
-      <div className="rounded-3xl border border-white/10 bg-black/25 p-5">
-        <div className="flex items-center justify-between gap-3">
+      <div className="relative rounded-3xl border border-white/10 bg-black/25 p-5 overflow-hidden group/lane">
+        {/* Animated Background Particles */}
+        {isPlaying && (
+            <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-20 pointer-events-none overflow-hidden opacity-30">
+                {[...Array(5)].map((_, i) => (
+                    <motion.div
+                        key={i}
+                        className={cn(
+                            "absolute h-1 w-8 rounded-full blur-[1px]",
+                            mode === 'before' ? "bg-rose-500/50" : cn(selectedStyle.bg, "opacity-70")
+                        )}
+                        initial={{ left: "-10%", top: `${20 + i * 15}%` }}
+                        animate={{ left: "110%" }}
+                        transition={{
+                            duration: mode === 'before' ? 3 + i * 0.5 : 1 + i * 0.3,
+                            repeat: Infinity,
+                            delay: i * 0.4,
+                            ease: "linear"
+                        }}
+                    />
+                ))}
+            </div>
+        )}
+
+        <div className="relative z-20 flex items-center justify-between gap-3">
           <div>
             <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-white/40">
               {mode === 'before' ? (language === 'es' ? 'Sin la feature' : 'Without the feature') : language === 'es' ? 'Con la feature' : 'With the feature'}
@@ -207,7 +230,7 @@ export function ModernFeatures() {
           </div>
         </div>
 
-        <div className="relative mt-5 pt-8">
+        <div className="relative mt-5 pt-8 z-20">
           <motion.div
             className={cn('absolute top-0 z-10 h-3.5 w-3.5 -translate-x-1/2 rounded-full border', dotClass)}
             animate={{ left: stageDotPosition(selectedFeature.stages.length, stageIndex) }}

@@ -33,6 +33,7 @@ export const translations = {
         tabTempdbIo: 'TempDB & Advanced I/O',
         tabReplication: 'Replication Topologies',
         tabVersionHistory: 'Versions & History',
+        tabIncidentQueries: 'Incident Quick Queries',
         tabXEvents: 'Extended Events',
 
         // OS Level Config
@@ -742,17 +743,17 @@ export const translations = {
 
         // Modules
         modules: 'MÓDULOS',
-        architectureOverview: 'Arquitectura General',
-        storageEngine: 'Motor de Almacenamiento',
-        memoryOperations: 'Operaciones en Memoria',
-        queryExecution: 'Ejecución de Consultas',
-        dbaScenarios: 'Automatizacion DBA',
-        highAvailability: 'Alta Disponibilidad',
-        indexVisualizer: 'Visualizador de Índices',
-        tabOsConfig: 'Configuración de OS',
-        tabPerfMon: 'Monitor de Rendimiento',
-        tabSqlOs: 'SQLOS Profundo',
-        tabModern: 'Características Modernas',
+        architectureOverview: 'Arquitectura',
+        storageEngine: 'Almacenamiento',
+        memoryOperations: 'Memoria',
+        queryExecution: 'Ejecución',
+        dbaScenarios: 'DBA',
+        highAvailability: 'Disponibilidad HA',
+        indexVisualizer: 'Índices',
+        tabOsConfig: 'OS Config',
+        tabPerfMon: 'PerfMon',
+        tabSqlOs: 'SQLOS',
+        tabModern: 'Moderno',
 
         // OS Level Config
         osConfigMainDesc: 'Explora configuraciones críticas a nivel de OS que impactan directamente en el rendimiento de SQL Server. Las malas configuraciones aquí suelen ser invisibles para las DMVs.',
@@ -1504,6 +1505,7 @@ export const translations = {
         tabTempdbIo: 'TempDB y E/S avanzada',
         tabReplication: 'Topologias de replicacion',
         tabVersionHistory: 'Versiones e historia',
+        tabIncidentQueries: 'Queries rápidas',
         tabXEvents: 'Extended Events',
     }
 };

@@ -21,6 +21,7 @@ const MODULE_COMPONENTS: Record<ModuleId, ModuleComponent> = {
   memory: lazyNamed(() => import('./components/Memory/MemoryOperations'), 'MemoryOperations'),
   execution: lazyNamed(() => import('./components/Execution/QueryExecution'), 'QueryExecution'),
   jobs: lazyNamed(() => import('./components/DBA/IndustryStandardJobs'), 'IndustryStandardJobs'),
+  'incident-queries': lazyNamed(() => import('./components/DBA/IncidentQuickQueries'), 'IncidentQuickQueries'),
   ha: lazyNamed(() => import('./components/HA/HighAvailability'), 'HighAvailability'),
   indexes: lazyNamed(() => import('./components/Storage/IndexVisualizer'), 'IndexVisualizer'),
   realcases: lazyNamed(() => import('./components/DBA/RealCasesPage'), 'RealCasesPage'),

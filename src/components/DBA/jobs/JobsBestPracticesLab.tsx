@@ -5,6 +5,8 @@ import { useLanguage } from '../../../contexts/LanguageContext';
 import { JOB_TSQL_SNIPPETS } from '../../../data/industryJobsData';
 import { cn } from '../../../lib/utils';
 import { CopyCodeBlock } from '../../Shared/CopyCodeBlock';
+import { DBAActionBoard } from '../../Shared/DBAActionBoard';
+import { GuidedLabPanel } from '../../Shared/GuidedLabPanel';
 
 type OwnerId = 'sa' | 'service' | 'user';
 type WindowId = 'offpeak' | 'peak';
@@ -13,6 +15,91 @@ type StrategyId = 'ola' | 'maintenance-plan';
 function clamp(min: number, value: number, max: number) {
   return Math.max(min, Math.min(max, value));
 }
+
+const LAB_PRESETS = [
+  {
+    id: 'fragile',
+    title: { en: 'Fragile job', es: 'Job frágil' },
+    detail: {
+      en: 'A realistic bad setup: personal owner, no notifications, peak window and maintenance plan.',
+      es: 'Un mal setup realista: owner personal, sin notificaciones, ventana de pico y maintenance plan.',
+    },
+    state: {
+      strategy: 'maintenance-plan' as const,
+      owner: 'user' as const,
+      notify: false,
+      logToTable: false,
+      separateJobs: false,
+      windowId: 'peak' as const,
+      retries: 0,
+    },
+  },
+  {
+    id: 'baseline',
+    title: { en: 'Baseline DBA', es: 'Baseline DBA' },
+    detail: {
+      en: 'A decent operational baseline: Ola, notifications, logging and off-peak scheduling.',
+      es: 'Una baseline operativa decente: Ola, notificaciones, logging y ejecución off-peak.',
+    },
+    state: {
+      strategy: 'ola' as const,
+      owner: 'service' as const,
+      notify: true,
+      logToTable: true,
+      separateJobs: true,
+      windowId: 'offpeak' as const,
+      retries: 2,
+    },
+  },
+  {
+    id: 'hardened',
+    title: { en: 'Hardened runbook', es: 'Runbook endurecido' },
+    detail: {
+      en: 'A setup you can explain and operate: stable owner, alerts, retries, split jobs and low-risk window.',
+      es: 'Un setup que puedes explicar y operar: owner estable, alertas, retries, jobs separados y ventana de bajo riesgo.',
+    },
+    state: {
+      strategy: 'ola' as const,
+      owner: 'sa' as const,
+      notify: true,
+      logToTable: true,
+      separateJobs: true,
+      windowId: 'offpeak' as const,
+      retries: 4,
+    },
+  },
+] as const;
+
+const GUIDE_STEPS = [
+  {
+    title: { en: 'Break the job on purpose', es: 'Rompe el job a propósito' },
+    detail: {
+      en: 'Start from a fragile setup so you can see which options create operational risk.',
+      es: 'Empieza por un setup frágil para ver qué opciones crean riesgo operativo.',
+    },
+  },
+  {
+    title: { en: 'Stabilize the basics', es: 'Estabiliza lo básico' },
+    detail: {
+      en: 'Fix owner, notifications, retries and schedule before chasing advanced ideas.',
+      es: 'Arregla owner, notificaciones, retries y horario antes de perseguir ideas avanzadas.',
+    },
+  },
+  {
+    title: { en: 'Choose the right maintenance strategy', es: 'Elige la estrategia correcta' },
+    detail: {
+      en: 'The key lesson is that job design and maintenance strategy are part of the same reliability story.',
+      es: 'La lección clave es que el diseño del job y la estrategia de mantenimiento forman la misma historia de fiabilidad.',
+    },
+  },
+  {
+    title: { en: 'Leave a runbook behind', es: 'Deja un runbook detrás' },
+    detail: {
+      en: 'You have learned the lab when you can explain who owns the job, how it alerts and how you would validate failure.',
+      es: 'Has aprendido el lab cuando sabes explicar quién es el owner, cómo alerta y cómo validarías un fallo.',
+    },
+  },
+] as const;
 
 interface JobsBestPracticesLabProps {
   compact?: boolean;
@@ -27,6 +114,18 @@ export function JobsBestPracticesLab({ compact = false }: JobsBestPracticesLabPr
   const [separateJobs, setSeparateJobs] = useState(true);
   const [windowId, setWindowId] = useState<WindowId>('offpeak');
   const [retries, setRetries] = useState(2);
+
+  const applyPreset = (presetId: (typeof LAB_PRESETS)[number]['id']) => {
+    const preset = LAB_PRESETS.find((item) => item.id === presetId);
+    if (!preset) return;
+    setStrategy(preset.state.strategy);
+    setOwner(preset.state.owner);
+    setNotify(preset.state.notify);
+    setLogToTable(preset.state.logToTable);
+    setSeparateJobs(preset.state.separateJobs);
+    setWindowId(preset.state.windowId);
+    setRetries(preset.state.retries);
+  };
 
   const { risk, warnings } = useMemo(() => {
     let score = 0;
@@ -94,6 +193,68 @@ export function JobsBestPracticesLab({ compact = false }: JobsBestPracticesLabPr
 
   const health = 100 - risk;
   const healthStyle = health >= 80 ? 'text-emerald-300' : health >= 55 ? 'text-amber-300' : 'text-rose-300';
+  const guideStep = health >= 85 ? 3 : health >= 65 ? 2 : health >= 40 ? 1 : 0;
+  const dbaFocus =
+    health < 40
+      ? {
+          en: 'This job is fragile. A senior DBA would treat it as an incident waiting to happen, not as “maintenance configured”.',
+          es: 'Este job es fragil. Un DBA senior lo trataria como una incidencia esperando ocurrir, no como “mantenimiento configurado”.',
+        }
+      : health < 75
+        ? {
+            en: 'The job works, but it is still operationally weak. The DBA now removes silent-failure paths and narrows risk during peak hours.',
+            es: 'El job funciona, pero sigue siendo debil operativamente. Ahora el DBA elimina vias de fallo silencioso y reduce riesgo en horas pico.',
+          }
+        : {
+            en: 'The setup is healthy enough. The next DBA move is leaving traceability, tested restores and a clean runbook behind.',
+            es: 'La configuracion es razonablemente sana. El siguiente paso DBA es dejar trazabilidad, restores probados y un runbook limpio.',
+          };
+
+  const dbaActions =
+    health < 40
+      ? [
+          {
+            en: 'Move ownership away from personal users and wire notifications before the next failure goes silent.',
+            es: 'Saca el ownership de usuarios personales y conecta notificaciones antes de que el siguiente fallo pase en silencio.',
+          },
+          {
+            en: 'Stop using one giant maintenance plan for everything and split backup, integrity and index work.',
+            es: 'Deja de usar un maintenance plan gigante para todo y separa backup, integrity e index work.',
+          },
+          {
+            en: 'Take the job out of peak hours before tuning anything else.',
+            es: 'Saca el job de horas pico antes de tunear cualquier otra cosa.',
+          },
+        ]
+      : health < 75
+        ? [
+            {
+              en: 'Keep the strategy but harden retries, output logging and operator visibility.',
+              es: 'Mantén la estrategia pero endurece retries, output logging y visibilidad para el operador.',
+            },
+            {
+              en: 'Review whether the maintenance window still matches the real write workload.',
+              es: 'Revisa si la ventana de mantenimiento sigue encajando con la carga real de escrituras.',
+            },
+            {
+              en: 'Document what should happen when the job fails, not only when it succeeds.',
+              es: 'Documenta qué debe pasar cuando el job falla, no solo cuando sale bien.',
+            },
+          ]
+        : [
+            {
+              en: 'Validate restore drills and msdb retention so the job history remains useful under pressure.',
+              es: 'Valida restores de prueba y la retencion de msdb para que el historial del job siga siendo util bajo presion.',
+            },
+            {
+              en: 'Review index, backup and integrity runtimes separately instead of trusting one green status.',
+              es: 'Revisa por separado los tiempos de index, backup e integrity en lugar de fiarte de un solo estado verde.',
+            },
+            {
+              en: 'Leave a runbook with owner, alert path and first-response commands for the next DBA on call.',
+              es: 'Deja un runbook con owner, ruta de alerta y comandos de primera respuesta para el siguiente DBA de guardia.',
+            },
+          ];
   const healthChip =
     health >= 80
       ? 'border-emerald-500/25 bg-emerald-500/10 text-emerald-200'
@@ -102,8 +263,8 @@ export function JobsBestPracticesLab({ compact = false }: JobsBestPracticesLabPr
         : 'border-rose-500/25 bg-rose-500/10 text-rose-200';
 
   return (
-    <div className={cn('grid gap-4 lg:gap-6', compact ? 'grid-cols-1' : 'xl:grid-cols-[minmax(0,1.14fr)_420px]')}>
-      <div className="glass-panel rounded-2xl border border-white/10 p-4 sm:p-6">
+    <div className={cn('grid gap-4 lg:gap-6 h-full', compact ? 'xl:grid-cols-[minmax(0,1.08fr)_340px]' : 'xl:grid-cols-[minmax(0,1.14fr)_420px]')}>
+      <div className={cn('glass-panel rounded-2xl border border-white/10 p-4 sm:p-6', compact && 'min-h-0 overflow-hidden flex flex-col')}>
         {!compact ? (
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div className="min-w-0 flex-1">
@@ -134,7 +295,53 @@ export function JobsBestPracticesLab({ compact = false }: JobsBestPracticesLabPr
           </div>
         )}
 
-        <div className="mt-6 grid gap-4 lg:grid-cols-2">
+        {!compact ? <div className="mt-5">
+          <GuidedLabPanel
+            language={language}
+            compact={compact}
+            accent="emerald"
+            title={{ en: 'How to work this lab', es: 'Cómo trabajar este lab' }}
+            objective={{
+              en: 'Learn to read a job as an operational system: ownership, alerting, logging and maintenance strategy all matter together.',
+              es: 'Aprende a leer un job como un sistema operativo: ownership, alertas, logging y estrategia de mantenimiento importan juntos.',
+            }}
+            watchItems={[
+              {
+                en: 'A healthy score is not cosmetic: it means fewer silent failures and easier recovery.',
+                es: 'Una salud alta no es cosmética: significa menos fallos silenciosos y recuperación más fácil.',
+              },
+              {
+                en: 'Do not judge only the maintenance command. Judge the whole runbook around it.',
+                es: 'No juzgues solo el comando de mantenimiento. Juzga todo el runbook que lo rodea.',
+              },
+              {
+                en: 'Use the presets below to compare a bad setup against a production-worthy one.',
+                es: 'Usa los presets de abajo para comparar un setup malo contra uno digno de producción.',
+              },
+            ]}
+            steps={GUIDE_STEPS}
+            currentStep={guideStep}
+            footer={{
+              en: 'If you can explain why a job will fail loudly instead of silently, the lab already did its job.',
+              es: 'Si sabes explicar por qué un job fallará de forma visible y no silenciosa, el lab ya hizo su trabajo.',
+            }}
+          />
+        </div> : null}
+
+        <div className={cn('mt-5 grid gap-3', compact ? 'sm:grid-cols-3' : 'lg:grid-cols-3')}>
+          {LAB_PRESETS.map((preset) => (
+            <button
+              key={preset.id}
+              onClick={() => applyPreset(preset.id)}
+              className="rounded-3xl border border-white/10 bg-black/20 p-4 text-left transition-all hover:border-white/20 hover:bg-white/[0.06]"
+            >
+              <div className="text-sm font-bold text-white">{language === 'es' ? preset.title.es : preset.title.en}</div>
+              {!compact ? <p className="mt-2 text-sm leading-7 text-white/70">{language === 'es' ? preset.detail.es : preset.detail.en}</p> : null}
+            </button>
+          ))}
+        </div>
+
+        <div className={cn('mt-6 grid gap-4 lg:grid-cols-2', compact && 'min-h-0 flex-1')}>
           <div className="rounded-3xl border border-white/10 bg-black/20 p-5">
             <div className="text-[11px] font-bold uppercase tracking-[0.22em] text-white/40">
               {language === 'es' ? 'Configuracion' : 'Configuration'}
@@ -268,7 +475,7 @@ export function JobsBestPracticesLab({ compact = false }: JobsBestPracticesLabPr
             </div>
           </div>
 
-          <div className="rounded-3xl border border-white/10 bg-black/20 p-5">
+          <div className={cn('rounded-3xl border border-white/10 bg-black/20 p-5', compact && 'min-h-0 overflow-y-auto')}>
             <div className="flex items-center justify-between gap-3">
               <div className="text-[11px] font-bold uppercase tracking-[0.22em] text-white/40">
                 {language === 'es' ? 'Riesgos' : 'Risks'}
@@ -374,6 +581,50 @@ export function JobsBestPracticesLab({ compact = false }: JobsBestPracticesLabPr
           </div>
         </div> : null}
       </div>
+
+      {compact ? (
+        <div className="grid min-h-0 h-full gap-4 xl:grid-rows-[auto_minmax(0,1fr)_auto]">
+          <div className="glass-panel rounded-2xl border border-white/10 p-4">
+            <div className="grid gap-3 sm:grid-cols-3 xl:grid-cols-1">
+              {[
+                { label: language === 'es' ? 'Salud' : 'Health', value: `${health}%` },
+                { label: language === 'es' ? 'Riesgo' : 'Risk', value: `${risk}%` },
+                { label: language === 'es' ? 'Estrategia' : 'Strategy', value: strategy === 'ola' ? 'Ola' : 'Maintenance Plan' },
+              ].map((cell) => (
+                <div key={cell.label} className="rounded-2xl border border-white/10 bg-black/20 p-3">
+                  <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-white/40">{cell.label}</div>
+                  <div className="mt-2 text-base font-black text-white">{cell.value}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <DBAActionBoard
+            language={language}
+            accent={health >= 80 ? 'emerald' : health >= 55 ? 'amber' : 'rose'}
+            title={{ en: 'What the DBA does now', es: 'Que hace ahora el DBA' }}
+            focus={dbaFocus}
+            actions={dbaActions}
+            caution={{
+              en: 'A green job that nobody can audit or restore around is still not production-grade.',
+              es: 'Un job verde que nadie puede auditar ni rodear con restores sigue sin ser de nivel produccion.',
+            }}
+          />
+
+          <div className="glass-panel rounded-2xl border border-white/10 p-4">
+            <div className="text-[11px] font-bold uppercase tracking-[0.22em] text-white/45">
+              {language === 'es' ? 'Script operativo' : 'Operational script'}
+            </div>
+            <div className="mt-3">
+              <CopyCodeBlock
+                code={strategy === 'ola' ? JOB_TSQL_SNIPPETS.olaBackups : JOB_TSQL_SNIPPETS.blitz}
+                accent={strategy === 'ola' ? 'emerald' : 'cyan'}
+                contentClassName="max-h-[220px]"
+              />
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       {!compact ? <div className="glass-panel rounded-2xl border border-white/10 p-6">
         <div className="flex items-center justify-between gap-3">

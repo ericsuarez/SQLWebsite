@@ -5,6 +5,8 @@ import { useLanguage } from '../../../contexts/LanguageContext';
 import { OLA_DEFAULT_THRESHOLDS, OLA_INDEX_SAMPLES, type OlaIndexSample, JOB_TSQL_SNIPPETS } from '../../../data/industryJobsData';
 import { cn } from '../../../lib/utils';
 import { CopyCodeBlock } from '../../Shared/CopyCodeBlock';
+import { DBAActionBoard } from '../../Shared/DBAActionBoard';
+import { GuidedLabPanel } from '../../Shared/GuidedLabPanel';
 
 type ActionId = 'skip' | 'reorganize' | 'rebuild';
 type PhaseId = 'queue' | 'gate' | 'bin';
@@ -31,6 +33,37 @@ const ACTION_STYLE: Record<ActionId, { border: string; bg: string; text: string;
     chip: 'border-rose-500/20 bg-rose-500/10 text-rose-200',
   },
 };
+
+const GUIDE_STEPS = [
+  {
+    title: { en: 'Watch the index enter the queue', es: 'Mira cómo entra el índice en la cola' },
+    detail: {
+      en: 'Start by reading fragmentation, size and write rate. That tells you whether maintenance will hurt or help.',
+      es: 'Empieza leyendo fragmentación, tamaño y tasa de escrituras. Eso te dice si el mantenimiento va a ayudar o va a doler.',
+    },
+  },
+  {
+    title: { en: 'Understand the decision gate', es: 'Entiende la puerta de decisión' },
+    detail: {
+      en: 'The useful part is not the rebuild itself: it is the rule that avoids rebuilding everything.',
+      es: 'La parte útil no es el rebuild en sí: es la regla que evita reconstruirlo todo.',
+    },
+  },
+  {
+    title: { en: 'See the routed operation', es: 'Ve la operación a la que se desvía' },
+    detail: {
+      en: 'Once the index lands in SKIP, REORGANIZE or REBUILD, compare how much log and CPU that choice consumes.',
+      es: 'Cuando el índice cae en SKIP, REORGANIZE o REBUILD, compara cuánto log y cuánta CPU consume esa elección.',
+    },
+  },
+  {
+    title: { en: 'Finish with the totals', es: 'Termina leyendo el acumulado' },
+    detail: {
+      en: 'The real lesson is operational: less log, less IO and less maintenance pain than a rebuild-all plan.',
+      es: 'La lección real es operativa: menos log, menos IO y menos dolor que con un rebuild-all.',
+    },
+  },
+] as const;
 
 function clamp(min: number, value: number, max: number) {
   return Math.max(min, Math.min(max, value));
@@ -187,9 +220,132 @@ export function OlaHallengrenSimulator({ compact = false }: OlaHallengrenSimulat
     return `EXEC dbo.IndexOptimize @Databases='USER_DATABASES', @Indexes='${sample.name}', @Action='${actionLabel}', @FragmentationLevel1=${reorgFromPct}, @FragmentationLevel2=${rebuildFromPct};`;
   }, [action, language, rebuildFromPct, reorgFromPct, sample]);
 
+  const guideStep = cursor >= OLA_INDEX_SAMPLES.length ? 3 : phase === 'queue' ? 0 : phase === 'gate' ? 1 : 2;
+  const dbaFocus =
+    cursor >= OLA_INDEX_SAMPLES.length
+      ? {
+          en: 'The queue is done. Now the DBA compares smart maintenance against rebuild-all and decides whether the thresholds fit the real estate.',
+          es: 'La cola ha terminado. Ahora el DBA compara mantenimiento inteligente contra rebuild-all y decide si los umbrales encajan con el estate real.',
+        }
+      : phase === 'queue'
+        ? {
+            en: 'Read the incoming index like an operational object: fragmentation alone is not enough.',
+            es: 'Lee el indice entrante como un objeto operativo: la fragmentacion sola no basta.',
+          }
+        : phase === 'gate'
+          ? {
+              en: 'Validate the decision gate against size, write rate and maintenance window before touching production.',
+              es: 'Valida la puerta de decision contra tamano, ritmo de escritura y ventana de mantenimiento antes de tocar produccion.',
+            }
+          : action === 'skip'
+            ? {
+                en: 'The best maintenance is often doing nothing. The DBA now validates that skipping is safe and documented.',
+                es: 'Muchas veces el mejor mantenimiento es no hacer nada. Ahora el DBA valida que saltarlo es seguro y queda documentado.',
+              }
+            : action === 'reorganize'
+              ? {
+                  en: 'REORGANIZE is the low-risk path. The DBA now verifies duration, log churn and whether the index stays healthy enough.',
+                  es: 'REORGANIZE es la via de bajo riesgo. Ahora el DBA valida duracion, churn de log y si el indice queda lo bastante sano.',
+                }
+              : {
+                  en: 'REBUILD is the heavy move. The DBA now checks log capacity, maintenance window and write pressure before letting it run.',
+                  es: 'REBUILD es el movimiento pesado. Ahora el DBA comprueba capacidad de log, ventana de mantenimiento y presion de escrituras antes de dejarlo correr.',
+                };
+
+  const dbaActions =
+    cursor >= OLA_INDEX_SAMPLES.length
+      ? [
+          {
+            en: 'Compare total log MB and elapsed time against a rebuild-all baseline before calling the strategy good.',
+            es: 'Compara MB de log totales y tiempo acumulado contra un baseline rebuild-all antes de dar la estrategia por buena.',
+          },
+          {
+            en: 'Review msdb history or LogToTable output so the job is auditable, not just fast.',
+            es: 'Revisa el historial de msdb o la salida LogToTable para que el job sea auditable, no solo rapido.',
+          },
+          {
+            en: 'Tune thresholds per estate, not by folklore: OLTP, ETL and DW windows rarely want the same cutoffs.',
+            es: 'Ajusta umbrales por estate, no por folclore: OLTP, ETL y DW rara vez quieren los mismos cortes.',
+          },
+        ]
+      : phase === 'queue'
+        ? [
+            {
+              en: 'Check fragmentation, pages and write rate together before deciding whether maintenance is worth the churn.',
+              es: 'Revisa fragmentacion, paginas y ritmo de escritura juntas antes de decidir si el mantenimiento compensa el churn.',
+            },
+            {
+              en: 'Ask whether the query pain is really fragmentation or a missing/covering index problem.',
+              es: 'Preguntate si el dolor de la query es de fragmentacion o realmente de un indice ausente/no cubriente.',
+            },
+            {
+              en: 'Confirm the maintenance window and log backup cadence before heavy operations.',
+              es: 'Confirma la ventana de mantenimiento y la cadencia de log backups antes de operaciones pesadas.',
+            },
+          ]
+        : phase === 'gate'
+          ? [
+              {
+                en: 'Validate the rule against actual workload, not just the percentage shown by a report.',
+                es: 'Valida la regla contra la carga real, no solo contra el porcentaje que muestra un informe.',
+              },
+              {
+                en: 'Consider that a 15% hot index can hurt more operationally than a cold 45% one.',
+                es: 'Ten en cuenta que un indice caliente al 15% puede doler mas operativamente que uno frio al 45%.',
+              },
+              {
+                en: 'If in doubt, prefer the safer operation and measure its result on the next cycle.',
+                es: 'Si dudas, prefiere la operacion mas segura y mide su resultado en el siguiente ciclo.',
+              },
+            ]
+          : action === 'skip'
+            ? [
+                {
+                  en: 'Document the skip so nobody turns it into a blind rebuild later.',
+                  es: 'Documenta el skip para que nadie lo convierta luego en un rebuild ciego.',
+                },
+                {
+                  en: 'Watch whether user complaints point to plan shape or lookups instead of fragmentation.',
+                  es: 'Observa si las quejas de usuarios apuntan a forma de plan o lookups y no a fragmentacion.',
+                },
+                {
+                  en: 'Recheck next cycle instead of spending log and IO now for no return.',
+                  es: 'Vuelve a medir en el siguiente ciclo en lugar de gastar log e IO ahora para nada.',
+                },
+              ]
+            : action === 'reorganize'
+              ? [
+                  {
+                    en: 'Track elapsed time and log churn to confirm REORGANIZE really stays lighter here.',
+                    es: 'Sigue tiempo acumulado y churn de log para confirmar que aqui REORGANIZE de verdad es mas ligero.',
+                  },
+                  {
+                    en: 'Validate whether stats still need a separate update after the operation.',
+                    es: 'Valida si despues de la operacion siguen necesitando un update stats aparte.',
+                  },
+                  {
+                    en: 'If fragmentation rebounds quickly, the root cause may be fillfactor or insert pattern.',
+                    es: 'Si la fragmentacion reaparece rapido, la causa raiz puede ser fillfactor o patron de insercion.',
+                  },
+                ]
+              : [
+                  {
+                    en: 'Check log size, VLF shape and backup cadence before a heavy rebuild starts.',
+                    es: 'Comprueba tamano del log, forma de VLFs y cadencia de backups antes de que arranque un rebuild pesado.',
+                  },
+                  {
+                    en: 'Confirm the window really tolerates CPU, IO and locking side effects.',
+                    es: 'Confirma que la ventana de verdad tolera efectos laterales de CPU, IO y locking.',
+                  },
+                  {
+                    en: 'After the rebuild, validate whether the pain was fragmentation or really an index-design problem.',
+                    es: 'Tras el rebuild, valida si el dolor era de fragmentacion o realmente de diseno de indice.',
+                  },
+                ];
+
   return (
-    <div className={cn('grid gap-4 lg:gap-6', compact ? 'grid-cols-1' : 'xl:grid-cols-[minmax(0,1.2fr)_420px]')}>
-      <div className="glass-panel rounded-2xl border border-white/10 p-4 sm:p-6">
+    <div className={cn('grid gap-4 lg:gap-6 h-full', compact ? 'xl:grid-cols-[minmax(0,1.08fr)_340px]' : 'xl:grid-cols-[minmax(0,1.2fr)_420px]')}>
+      <div className={cn('glass-panel rounded-2xl border border-white/10 p-4 sm:p-6', compact && 'min-h-0 overflow-hidden flex flex-col')}>
         <div className="flex flex-wrap items-start justify-between gap-4">
           {!compact ? (
             <div className="min-w-0 flex-1">
@@ -236,17 +392,60 @@ export function OlaHallengrenSimulator({ compact = false }: OlaHallengrenSimulat
           </div>
         </div>
 
+        {!compact ? <div className="mt-5">
+          <GuidedLabPanel
+            language={language}
+            compact={compact}
+            accent="amber"
+            title={{ en: 'How to learn from this lab', es: 'Cómo aprender con este lab' }}
+            objective={{
+              en: 'Do not look at Ola as a script only. Look at it as a decision engine that reduces unnecessary maintenance work.',
+              es: 'No mires Ola solo como un script. Míralo como un motor de decisión que reduce mantenimiento innecesario.',
+            }}
+            watchItems={[
+              {
+                en: 'Fragmentation by itself is not enough: size and write rate change the risk.',
+                es: 'La fragmentación sola no basta: el tamaño y la tasa de escrituras cambian el riesgo.',
+              },
+              {
+                en: 'The key idea is avoiding REBUILD ALL when the index does not need it.',
+                es: 'La idea clave es evitar REBUILD ALL cuando el índice no lo necesita.',
+              },
+              {
+                en: 'Read the final CPU/log totals as the real operational cost of the chosen strategy.',
+                es: 'Lee los totales finales de CPU/log como el coste operativo real de la estrategia elegida.',
+              },
+            ]}
+            steps={GUIDE_STEPS}
+            currentStep={guideStep}
+            footer={{
+              en: 'If you can explain why an index was skipped, reorganized or rebuilt, you already understood the lab.',
+              es: 'Si sabes explicar por qué un índice fue saltado, reorganizado o reconstruido, ya entendiste el lab.',
+            }}
+          />
+        </div> : null}
+
         {compact ? (
-          <div className="mt-4 rounded-2xl border border-cyan-500/20 bg-cyan-500/10 p-4">
-            <div className="text-[11px] font-bold uppercase tracking-[0.22em] text-cyan-200">
-              {language === 'es' ? 'Query que entra' : 'Incoming query'}
+          <div className="mt-4 grid gap-3 lg:grid-cols-[minmax(0,1fr)_220px]">
+            <div className="rounded-2xl border border-cyan-500/20 bg-cyan-500/10 p-4">
+              <div className="text-[11px] font-bold uppercase tracking-[0.22em] text-cyan-200">
+                {language === 'es' ? 'Query que entra' : 'Incoming query'}
+              </div>
+              <div className="mt-2 rounded-xl border border-white/10 bg-black/35 p-3 font-mono text-xs text-cyan-100 whitespace-pre-wrap break-words">
+                {liveQueryText}
+              </div>
             </div>
-            <div className="mt-2 rounded-xl border border-white/10 bg-black/35 p-3 font-mono text-xs text-cyan-100 whitespace-pre-wrap break-words">
-              {liveQueryText}
-            </div>
-            <div className="mt-3 text-xs text-white/70">
-              {language === 'es' ? 'Fase actual' : 'Current phase'}:{' '}
-              <span className="font-black text-white">{phase.toUpperCase()}</span>
+            <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-1">
+              {[
+                { label: language === 'es' ? 'Fase' : 'Phase', value: phase.toUpperCase() },
+                { label: language === 'es' ? 'Decision' : 'Decision', value: action.toUpperCase() },
+                { label: language === 'es' ? 'Ahorro log' : 'Log saved', value: fmtPct(totalSavingsPct) },
+              ].map((cell) => (
+                <div key={cell.label} className="rounded-2xl border border-white/10 bg-black/20 p-3">
+                  <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-white/40">{cell.label}</div>
+                  <div className="mt-2 text-sm font-black text-white">{cell.value}</div>
+                </div>
+              ))}
             </div>
           </div>
         ) : null}
@@ -354,21 +553,21 @@ export function OlaHallengrenSimulator({ compact = false }: OlaHallengrenSimulat
           </div>
         </div> : null}
 
-        <div className="mt-6 grid gap-4">
-          <div className="rounded-2xl border border-white/10 bg-black/20 p-5">
+        <div className={cn('mt-6 grid gap-4', compact && 'min-h-0 flex-1')}>
+          <div className={cn('rounded-2xl border border-white/10 bg-black/20 p-5', compact && 'min-h-0 flex-1 overflow-hidden flex flex-col')}>
             <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.22em] text-white/40">
               <ArrowRight className="h-4 w-4" />
               {language === 'es' ? 'Flujo visual' : 'Visual flow'}
             </div>
 
             <LayoutGroup id="ola-flow">
-              <div className="mt-4 grid gap-3 lg:grid-cols-3">
+              <div className={cn('mt-4 grid gap-3 lg:grid-cols-3', compact && 'min-h-0 flex-1')}>
                 <div className="rounded-3xl border border-white/10 bg-black/30 p-4">
                   <div className="text-xs font-bold text-white/70">{language === 'es' ? 'Entrada' : 'Input'}</div>
                   <div className="mt-2 text-[11px] text-white/55">
                     {language === 'es' ? 'Indices en cola' : 'Indexes in queue'}
                   </div>
-                  <div className="mt-4 min-h-[92px]">
+                  <div className={cn('mt-4 min-h-[92px]', compact && 'lg:min-h-[140px]')}>
                     {sample && phase === 'queue' && (
                       <motion.div layoutId="index-card" layout>
                         <IndexCard sample={sample} />
@@ -382,7 +581,7 @@ export function OlaHallengrenSimulator({ compact = false }: OlaHallengrenSimulat
                   <div className="mt-2 text-[11px] text-white/55">
                     {language === 'es' ? 'Regla por fragmentacion' : 'Fragmentation rule'}
                   </div>
-                  <div className="mt-4 min-h-[92px]">
+                  <div className={cn('mt-4 min-h-[92px]', compact && 'lg:min-h-[140px]')}>
                     {sample && phase === 'gate' && (
                       <motion.div layoutId="index-card" layout>
                         <IndexCard sample={sample} />
@@ -416,7 +615,7 @@ export function OlaHallengrenSimulator({ compact = false }: OlaHallengrenSimulat
                               {id === 'skip' ? '< low' : id === 'reorganize' ? 'medium' : 'high'}
                             </span>
                           </div>
-                          <div className="mt-3 min-h-[86px]">
+                          <div className={cn('mt-3 min-h-[86px]', compact && 'lg:min-h-[110px]')}>
                             {sample && phase === 'bin' && action === id && (
                               <motion.div layoutId="index-card" layout>
                                 <IndexCard sample={sample} />
@@ -431,7 +630,7 @@ export function OlaHallengrenSimulator({ compact = false }: OlaHallengrenSimulat
               </div>
             </LayoutGroup>
 
-            <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+            <div className={cn('mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-3', compact && 'overflow-y-auto pr-1')}>
               {OLA_INDEX_SAMPLES.map((item) => {
                 const result = processed[item.id];
                 const resultStyle = result ? ACTION_STYLE[result] : null;
@@ -479,6 +678,46 @@ export function OlaHallengrenSimulator({ compact = false }: OlaHallengrenSimulat
           ) : null}
         </div>
       </div>
+
+      {compact ? (
+        <div className="grid min-h-0 h-full gap-4 xl:grid-rows-[auto_minmax(0,1fr)_auto]">
+          <div className="glass-panel rounded-2xl border border-white/10 p-4">
+            <div className="grid gap-3 sm:grid-cols-3 xl:grid-cols-1">
+              {[
+                { label: language === 'es' ? 'CPU smart' : 'Smart CPU', value: Math.round(olaTotals.cpu).toString() },
+                { label: language === 'es' ? 'Log smart' : 'Smart log', value: `${Math.round(olaTotals.logMb)} MB` },
+                { label: language === 'es' ? 'Rebuild all' : 'Rebuild all', value: `${Math.round(planTotals.logMb)} MB` },
+              ].map((cell) => (
+                <div key={cell.label} className="rounded-2xl border border-white/10 bg-black/20 p-3">
+                  <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-white/40">{cell.label}</div>
+                  <div className="mt-2 text-base font-black text-white">{cell.value}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <DBAActionBoard
+            language={language}
+            accent={action === 'rebuild' ? 'rose' : action === 'reorganize' ? 'amber' : 'emerald'}
+            title={{ en: 'What the DBA does now', es: 'Que hace ahora el DBA' }}
+            focus={dbaFocus}
+            actions={dbaActions}
+            caution={{
+              en: 'Do not treat fragmentation percentage as the only truth. Size, writes, recovery objectives and log pressure matter too.',
+              es: 'No trates el porcentaje de fragmentacion como la unica verdad. Tambien importan tamano, escrituras, recovery objectives y presion sobre el log.',
+            }}
+          />
+
+          <div className="glass-panel rounded-2xl border border-white/10 p-4">
+            <div className="text-[11px] font-bold uppercase tracking-[0.22em] text-white/45">
+              {language === 'es' ? 'Script listo para probar' : 'Ready-to-test script'}
+            </div>
+            <div className="mt-3">
+              <CopyCodeBlock code={liveQueryText} accent="cyan" contentClassName="max-h-[220px]" />
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       {!compact ? (
       <div className="glass-panel rounded-2xl border border-white/10 p-6">

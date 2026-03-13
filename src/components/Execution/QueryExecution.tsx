@@ -4,6 +4,8 @@ import { Play, Clock, Lock, ShieldAlert, Cpu, Database, Activity, Code2, GitMerg
 import { cn } from '../../lib/utils';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { TSqlModal } from '../Shared/TSqlModal';
+import { CopyCodeBlock } from '../Shared/CopyCodeBlock';
+import { PlanOperatorLab } from './PlanOperatorLab';
 
 type WaitType = 'none' | 'lock' | 'latch' | 'spinlock';
 
@@ -14,13 +16,251 @@ interface QueryState {
     progress: number;
 }
 
+interface LocalText {
+    en: string;
+    es: string;
+}
+
+type OptimizerExampleId = 'seek-covering' | 'lookup-loops' | 'hash-join' | 'sort-order';
+
+interface PlanNode {
+    label: string;
+    summary: LocalText;
+    accent: string;
+}
+
+interface OptimizerExample {
+    id: OptimizerExampleId;
+    title: LocalText;
+    query: string;
+    planTitle: LocalText;
+    why: LocalText;
+    reuse: LocalText;
+    invalidation: LocalText;
+    nodes: PlanNode[];
+}
+
+const OPTIMIZER_PHASES: Array<{ title: LocalText; detail: LocalText; chip: string }> = [
+    {
+        title: { en: '1. Parse', es: '1. Parse' },
+        detail: {
+            en: 'SQL tokenizes and validates the T-SQL syntax. If the text is invalid, no plan exists yet.',
+            es: 'SQL trocea y valida la sintaxis T-SQL. Si el texto es inválido, aún no existe ningún plan.',
+        },
+        chip: 'border-blue-500/25 bg-blue-500/10 text-blue-200',
+    },
+    {
+        title: { en: '2. Bind / Algebrize', es: '2. Bind / Algebrizer' },
+        detail: {
+            en: 'Objects, columns, types and permissions are bound. Here SQL knows which tables, indexes and datatypes are involved.',
+            es: 'Se enlazan objetos, columnas, tipos y permisos. Aquí SQL ya sabe qué tablas, índices y tipos participan.',
+        },
+        chip: 'border-cyan-500/25 bg-cyan-500/10 text-cyan-200',
+    },
+    {
+        title: { en: '3. Optimize', es: '3. Optimize' },
+        detail: {
+            en: 'The optimizer estimates rows from statistics, enumerates alternatives and picks the cheapest estimated shape.',
+            es: 'El optimizador estima filas usando estadísticas, genera alternativas y elige la forma con menor coste estimado.',
+        },
+        chip: 'border-rose-500/25 bg-rose-500/10 text-rose-200',
+    },
+    {
+        title: { en: '4. Cache / Reuse', es: '4. Cache / Reuse' },
+        detail: {
+            en: 'If the text, SET options and schema still match, SQL can reuse the compiled plan instead of recompiling.',
+            es: 'Si el texto, las opciones SET y el esquema siguen cuadrando, SQL puede reutilizar el plan compilado en vez de recompilar.',
+        },
+        chip: 'border-emerald-500/25 bg-emerald-500/10 text-emerald-200',
+    },
+];
+
+const OPTIMIZER_EXAMPLES: OptimizerExample[] = [
+    {
+        id: 'seek-covering',
+        title: { en: 'Covering index -> seek only', es: 'Índice cubriente -> solo seek' },
+        query: "SELECT Name, Dept FROM dbo.Employees WHERE Salary = 62000;",
+        planTitle: { en: 'Index Seek -> return rows', es: 'Index Seek -> devolver filas' },
+        why: {
+            en: 'Predicate is selective and the nonclustered index already contains every requested column.',
+            es: 'El predicado es selectivo y el índice no clusterizado ya contiene todas las columnas pedidas.',
+        },
+        reuse: {
+            en: 'This is the ideal reusable plan shape when rowcount stays stable for the same predicate pattern.',
+            es: 'Esta es la forma ideal de plan reutilizable cuando el número de filas se mantiene estable para el mismo patrón de predicado.',
+        },
+        invalidation: {
+            en: 'Stats update, schema change or different SET options can force a fresh compile.',
+            es: 'Una actualización de estadísticas, un cambio de esquema o distintas opciones SET pueden forzar una nueva compilación.',
+        },
+        nodes: [
+            {
+                label: 'Index Seek',
+                summary: {
+                    en: 'Walks root -> branch -> leaf using the index key.',
+                    es: 'Recorre raíz -> rama -> hoja usando la clave del índice.',
+                },
+                accent: 'border-emerald-500/25 bg-emerald-500/10 text-emerald-200',
+            },
+            {
+                label: 'Output',
+                summary: {
+                    en: 'Rows already contain every needed column.',
+                    es: 'Las filas ya contienen todas las columnas necesarias.',
+                },
+                accent: 'border-cyan-500/25 bg-cyan-500/10 text-cyan-200',
+            },
+        ],
+    },
+    {
+        id: 'lookup-loops',
+        title: { en: 'Selective estimate -> loops + lookup', es: 'Estimación selectiva -> loops + lookup' },
+        query: "SELECT SalesOrderID, CustomerID, ShipAddress FROM Sales.Orders WHERE Status = 'Open';",
+        planTitle: { en: 'Index Seek -> Nested Loops -> Key Lookup', es: 'Index Seek -> Nested Loops -> Key Lookup' },
+        why: {
+            en: 'The optimizer expects few rows, so repeated point fetches look cheaper than a broad scan.',
+            es: 'El optimizador espera pocas filas, así que varios fetches puntuales parecen más baratos que un scan amplio.',
+        },
+        reuse: {
+            en: 'If the first compile sniffs a selective value, the same plan can later be reused for a much fatter value.',
+            es: 'Si la primera compilación “sniffea” un valor muy selectivo, el mismo plan puede reutilizarse luego para un valor mucho más gordo.',
+        },
+        invalidation: {
+            en: 'Bad reuse usually appears with parameter sniffing, skewed distributions or new statistics.',
+            es: 'La mala reutilización suele aparecer con parameter sniffing, distribuciones sesgadas o estadísticas nuevas.',
+        },
+        nodes: [
+            {
+                label: 'Index Seek',
+                summary: {
+                    en: 'Finds candidate keys fast in the nonclustered index.',
+                    es: 'Encuentra rápido las claves candidatas en el índice no clusterizado.',
+                },
+                accent: 'border-emerald-500/25 bg-emerald-500/10 text-emerald-200',
+            },
+            {
+                label: 'Nested Loops',
+                summary: {
+                    en: 'For each outer row, launches the inner fetch.',
+                    es: 'Por cada fila externa, dispara la búsqueda interna.',
+                },
+                accent: 'border-amber-500/25 bg-amber-500/10 text-amber-200',
+            },
+            {
+                label: 'Key Lookup',
+                summary: {
+                    en: 'Uses the clustered key to fetch columns missing from the NCI.',
+                    es: 'Usa la clave clustered para traer las columnas que faltan en el NCI.',
+                },
+                accent: 'border-fuchsia-500/25 bg-fuchsia-500/10 text-fuchsia-200',
+            },
+        ],
+    },
+    {
+        id: 'hash-join',
+        title: { en: 'Large join -> hash match', es: 'Join grande -> hash match' },
+        query: "SELECT c.CustomerID, SUM(f.Amount) FROM FactSales f JOIN DimCustomer c ON f.CustomerKey = c.CustomerKey GROUP BY c.CustomerID;",
+        planTitle: { en: 'Scan -> Hash Match -> Aggregate', es: 'Scan -> Hash Match -> Aggregate' },
+        why: {
+            en: 'When inputs are large and unsorted, building a hash table can beat thousands of random seeks.',
+            es: 'Cuando las entradas son grandes y no están ordenadas, construir una hash table puede ganar a miles de seeks aleatorios.',
+        },
+        reuse: {
+            en: 'The shape can reuse well if cardinality is stable and the memory grant is still valid.',
+            es: 'La forma puede reutilizarse bien si la cardinalidad es estable y el memory grant sigue siendo válido.',
+        },
+        invalidation: {
+            en: 'If row estimates drift, the same plan may spill to tempdb and stop being healthy.',
+            es: 'Si las estimaciones se desvían, el mismo plan puede empezar a derramar a tempdb y dejar de ser sano.',
+        },
+        nodes: [
+            {
+                label: 'Index / Table Scan',
+                summary: {
+                    en: 'Reads wide inputs because no cheap selective path exists.',
+                    es: 'Lee entradas amplias porque no existe una ruta selectiva barata.',
+                },
+                accent: 'border-amber-500/25 bg-amber-500/10 text-amber-200',
+            },
+            {
+                label: 'Hash Match',
+                summary: {
+                    en: 'Builds buckets from one side and probes them with the other.',
+                    es: 'Construye buckets con un lado y hace probe con el otro.',
+                },
+                accent: 'border-violet-500/25 bg-violet-500/10 text-violet-200',
+            },
+            {
+                label: 'Aggregate',
+                summary: {
+                    en: 'Collapses rows after the join result is materialized.',
+                    es: 'Agrupa y resume las filas tras materializar el join.',
+                },
+                accent: 'border-cyan-500/25 bg-cyan-500/10 text-cyan-200',
+            },
+        ],
+    },
+    {
+        id: 'sort-order',
+        title: { en: 'No ordered path -> sort', es: 'Sin ruta ordenada -> sort' },
+        query: "SELECT TOP (5000) Name, OrderTotal FROM Sales.Invoice ORDER BY OrderTotal DESC;",
+        planTitle: { en: 'Seek/Scan -> Sort -> Top', es: 'Seek/Scan -> Sort -> Top' },
+        why: {
+            en: 'If no index already delivers the needed order, SQL must sort before returning rows.',
+            es: 'Si ningún índice entrega ya el orden necesario, SQL tiene que ordenar antes de devolver las filas.',
+        },
+        reuse: {
+            en: 'A stable rowcount can keep this plan healthy, but growth can turn the same sort into a tempdb spill.',
+            es: 'Un volumen estable puede mantener sano este plan, pero si crece la carga el mismo sort puede acabar haciendo spill a tempdb.',
+        },
+        invalidation: {
+            en: 'An index aligned with ORDER BY can replace the sort on the next compile.',
+            es: 'Un índice alineado con el ORDER BY puede reemplazar el sort en la siguiente compilación.',
+        },
+        nodes: [
+            {
+                label: 'Read path',
+                summary: {
+                    en: 'Rows are read in a non-useful order for the final output.',
+                    es: 'Las filas se leen en un orden no útil para la salida final.',
+                },
+                accent: 'border-blue-500/25 bg-blue-500/10 text-blue-200',
+            },
+            {
+                label: 'Sort',
+                summary: {
+                    en: 'Orders the rowset in memory or tempdb.',
+                    es: 'Ordena el conjunto en memoria o tempdb.',
+                },
+                accent: 'border-rose-500/25 bg-rose-500/10 text-rose-200',
+            },
+            {
+                label: 'Top',
+                summary: {
+                    en: 'Returns the first rows only after the correct order exists.',
+                    es: 'Devuelve las primeras filas solo después de que exista el orden correcto.',
+                },
+                accent: 'border-emerald-500/25 bg-emerald-500/10 text-emerald-200',
+            },
+        ],
+    },
+];
+
+function pickText(language: 'en' | 'es', text: LocalText) {
+    return language === 'es' ? text.es : text.en;
+}
+
 export function QueryExecution() {
     const { t, language } = useLanguage();
     const [activeTab, setActiveTab] = useState<'execution' | 'optimizer' | 'dmvs'>('execution');
+    const [activeOptimizerPhase, setActiveOptimizerPhase] = useState(2);
+    const [activePlanExampleId, setActivePlanExampleId] = useState<OptimizerExampleId>('lookup-loops');
     const [queries, setQueries] = useState<QueryState[]>([]);
     const [activeWaitType, setActiveWaitType] = useState<WaitType>('none');
     const [logs, setLogs] = useState<string[]>(['System idle...']);
     const [isTsqlOpen, setIsTsqlOpen] = useState(false);
+
+    const activeOptimizerExample = OPTIMIZER_EXAMPLES.find((example) => example.id === activePlanExampleId) ?? OPTIMIZER_EXAMPLES[0];
 
     const addLog = (msg: string) => setLogs(p => [msg, ...p].slice(0, 5));
 
@@ -315,61 +555,113 @@ export function QueryExecution() {
                             exit={{ opacity: 0, y: -10 }}
                             className="min-h-full w-full overflow-y-auto pb-4"
                         >
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                <div className="glass-panel p-6 rounded-2xl border-t-4 border-red-500 flex flex-col gap-4">
-                                    <h3 className="text-xl font-bold flex items-center gap-2 text-red-400">
-                                        <GitMerge className="w-5 h-5" /> {t('optTitle')}
-                                    </h3>
-                                    <p className="text-muted-foreground text-sm">{t('optDesc')}</p>
+                            <div className="grid gap-6 xl:grid-cols-[minmax(0,1.18fr)_360px]">
+                                <div className="glass-panel rounded-3xl border border-red-500/20 p-4 sm:p-6">
+                                    <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                                        <div className="max-w-4xl">
+                                            <h3 className="text-xl font-bold flex items-center gap-2 text-red-400">
+                                                <GitMerge className="w-5 h-5" /> {t('optTitle')}
+                                            </h3>
+                                            <p className="mt-2 text-sm leading-7 text-white/75">
+                                                {language === 'es'
+                                                    ? 'Aquí ves cómo nace el plan, por qué puede reutilizarse desde caché y qué forma toma según estadísticas, índice, orden requerido y volumen real.'
+                                                    : 'Here you see how the plan is born, why it can be reused from cache, and which shape it takes depending on statistics, index, required order, and real volume.'}
+                                            </p>
+                                        </div>
 
-                                    <div className="mt-4 flex flex-col gap-4 relative">
-                                        <div className="absolute left-4 top-4 bottom-4 w-0.5 bg-white/10" />
+                                        <div className="flex flex-wrap gap-2">
+                                            <span className="rounded-full border border-white/10 bg-black/20 px-3 py-1 text-xs font-bold text-white/60">query_hash</span>
+                                            <span className="rounded-full border border-white/10 bg-black/20 px-3 py-1 text-xs font-bold text-white/60">plan_handle</span>
+                                            <span className="rounded-full border border-white/10 bg-black/20 px-3 py-1 text-xs font-bold text-white/60">stats</span>
+                                            <span className="rounded-full border border-white/10 bg-black/20 px-3 py-1 text-xs font-bold text-white/60">SET options</span>
+                                        </div>
+                                    </div>
 
-                                        <div className="flex gap-4 relative z-10">
-                                            <div className="w-8 h-8 rounded-full bg-blue-500/20 border-2 border-blue-500 flex flex-shrink-0 items-center justify-center font-bold text-xs text-blue-400">1</div>
-                                            <div>
-                                                <h4 className="font-bold text-blue-400">{t('phaseParsing')}</h4>
-                                                <p className="text-sm text-muted-foreground">{t('phaseParsingDesc')}</p>
+                                    <div className="mt-5 grid gap-3 xl:grid-cols-4">
+                                        {OPTIMIZER_PHASES.map((phase, index) => {
+                                            const isActive = index === activeOptimizerPhase;
+                                            return (
+                                                <button
+                                                    key={phase.title.en}
+                                                    onClick={() => setActiveOptimizerPhase(index)}
+                                                    className={cn('rounded-2xl border p-4 text-left transition-all', isActive ? phase.chip : 'border-white/10 bg-black/20 text-white/70 hover:border-white/20')}
+                                                >
+                                                    <div className="text-[10px] font-black uppercase tracking-[0.18em]">
+                                                        {pickText(language, phase.title)}
+                                                    </div>
+                                                    <p className="mt-2 text-xs leading-6">{pickText(language, phase.detail)}</p>
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+
+                                    <div className="mt-5 grid gap-4 xl:grid-cols-[minmax(0,1.05fr)_300px]">
+                                        <div className="rounded-3xl border border-white/10 bg-black/25 p-5">
+                                            <div className="text-[11px] font-black uppercase tracking-[0.22em] text-white/45">
+                                                {language === 'es' ? 'Qué pasa en esta fase' : 'What happens in this phase'}
+                                            </div>
+                                            <h4 className="mt-2 text-xl font-black text-white">{pickText(language, OPTIMIZER_PHASES[activeOptimizerPhase]?.title ?? OPTIMIZER_PHASES[0].title)}</h4>
+                                            <p className="mt-3 text-sm leading-7 text-white/80">{pickText(language, OPTIMIZER_PHASES[activeOptimizerPhase]?.detail ?? OPTIMIZER_PHASES[0].detail)}</p>
+
+                                            <div className="mt-4 grid gap-3 md:grid-cols-3">
+                                                {[
+                                                    {
+                                                        title: language === 'es' ? 'Compilación' : 'Compilation',
+                                                        value: language === 'es' ? 'Se crea una forma de plan' : 'A plan shape is created',
+                                                    },
+                                                    {
+                                                        title: language === 'es' ? 'Reutilización' : 'Reuse',
+                                                        value: language === 'es' ? 'Puede saltarse la compilación' : 'Can skip recompilation',
+                                                    },
+                                                    {
+                                                        title: language === 'es' ? 'Recompila si' : 'Recompiles if',
+                                                        value: language === 'es' ? 'Cambian stats, schema o SET' : 'Stats, schema or SET options change',
+                                                    },
+                                                ].map((card) => (
+                                                    <div key={card.title} className="rounded-2xl border border-white/10 bg-black/20 p-4">
+                                                        <div className="text-[10px] font-bold uppercase tracking-[0.16em] text-white/40">{card.title}</div>
+                                                        <div className="mt-2 text-sm font-bold text-white">{card.value}</div>
+                                                    </div>
+                                                ))}
                                             </div>
                                         </div>
 
-                                        <div className="flex gap-4 relative z-10">
-                                            <div className="w-8 h-8 rounded-full bg-cyan-500/20 border-2 border-cyan-500 flex flex-shrink-0 items-center justify-center font-bold text-xs text-cyan-400">2</div>
-                                            <div>
-                                                <h4 className="font-bold text-cyan-400">{t('phaseBinding')}</h4>
-                                                <p className="text-sm text-muted-foreground">{t('phaseBindingDesc')}</p>
+                                        <div className="rounded-3xl border border-amber-500/20 bg-amber-500/10 p-5">
+                                            <div className="text-[11px] font-bold uppercase tracking-[0.22em] text-amber-200/80">
+                                                {language === 'es' ? 'Cache y reutilización' : 'Cache and reuse'}
                                             </div>
-                                        </div>
-
-                                        <div className="flex gap-4 relative z-10 bg-red-500/10 p-4 -ml-4 rounded-xl border border-red-500/30">
-                                            <div className="w-8 h-8 rounded-full bg-red-500/20 border-2 border-red-500 flex flex-shrink-0 items-center justify-center font-bold text-xs text-red-400">3</div>
-                                            <div>
-                                                <h4 className="font-bold text-red-400">{t('phaseOptimization')}</h4>
-                                                <p className="text-sm text-muted-foreground">{t('phaseOptimizationDesc')}</p>
-                                                <div className="mt-2 text-xs font-mono text-center bg-black/40 py-2 rounded border border-white/5">
-                                                    {t('costCpuIo')}
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <div className="flex gap-4 relative z-10">
-                                            <div className="w-8 h-8 rounded-full bg-emerald-500/20 border-2 border-emerald-500 flex flex-shrink-0 items-center justify-center font-bold text-xs text-emerald-400">4</div>
-                                            <div>
-                                                <h4 className="font-bold text-emerald-400">{t('phaseExecution')}</h4>
-                                                <p className="text-sm text-muted-foreground">{t('phaseExecutionDesc')}</p>
+                                            <div className="mt-3 space-y-3 text-sm leading-7 text-white/80">
+                                                <p>
+                                                    {language === 'es'
+                                                        ? 'El motor guarda el plan compilado en caché y lo reutiliza si el texto, el contexto y las opciones siguen siendo equivalentes.'
+                                                        : 'The engine stores the compiled plan in cache and reuses it if text, context, and options still match.'}
+                                                </p>
+                                                <p>
+                                                    {language === 'es'
+                                                        ? 'Eso ahorra CPU, pero también puede reutilizar una mala forma de plan si el primer valor compilado no representa bien al resto.'
+                                                        : 'That saves CPU, but it can also reuse a bad plan shape if the first compiled value does not represent later executions.'}
+                                                </p>
+                                                <p className="rounded-2xl border border-white/10 bg-black/20 p-3">
+                                                    {language === 'es'
+                                                        ? 'Aquí es donde entran parameter sniffing, update stats, OPTION(RECOMPILE), plan guides o Query Store.'
+                                                        : 'This is where parameter sniffing, update stats, OPTION(RECOMPILE), plan guides, or Query Store come in.'}
+                                                </p>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
 
-                                <div className="glass-panel p-6 rounded-2xl border-t-4 border-amber-500 flex flex-col gap-4">
+                                <div className="glass-panel rounded-3xl border border-amber-500/20 p-4 sm:p-6">
                                     <h3 className="text-xl font-bold flex items-center gap-2 text-amber-400">
                                         <ChartBar className="w-5 h-5" /> {t('statsTitle')}
                                     </h3>
-                                    <p className="text-muted-foreground text-sm">{t('statsDesc')}</p>
+                                    <p className="mt-2 text-sm leading-7 text-white/75">
+                                        {language === 'es'
+                                            ? 'El optimizador no adivina: estima cardinalidad a partir de estadísticas e histogramas. Si esa estimación sale mal, puede elegir un plan muy malo aunque el operador “suene” correcto.'
+                                            : 'The optimizer does not guess: it estimates cardinality from statistics and histograms. If that estimate goes wrong, it can choose a very bad plan even if the operator name sounds right.'}
+                                    </p>
 
-                                    <div className="mt-6 p-4 bg-black/30 rounded-xl border border-white/5 relative overflow-hidden">
-                                        {/* Mock Histogram */}
+                                    <div className="mt-6 rounded-2xl border border-white/10 bg-black/25 p-4">
                                         <div className="flex items-end gap-2 h-32 ml-4 mb-4 border-b border-white/20 pb-1">
                                             <div className="w-8 bg-blue-500/50 h-[20%] rounded-t" />
                                             <div className="w-8 bg-blue-500/60 h-[50%] rounded-t" />
@@ -383,8 +675,111 @@ export function QueryExecution() {
                                             sys.stats_columns / DBCC SHOW_STATISTICS
                                         </div>
                                     </div>
+
+                                    <div className="mt-4 space-y-3">
+                                        {[
+                                            language === 'es' ? 'Pocas filas esperadas -> suele gustarle Seek + Nested Loops.' : 'Few expected rows -> often favors Seek + Nested Loops.',
+                                            language === 'es' ? 'Muchas filas / entrada ancha -> suele empujar hacia Hash Match o Scan.' : 'Many rows / wide input -> often pushes toward Hash Match or Scan.',
+                                            language === 'es' ? 'ORDER BY sin índice alineado -> aparece Sort.' : 'ORDER BY without aligned index -> Sort appears.',
+                                        ].map((item) => (
+                                            <div key={item} className="rounded-2xl border border-white/10 bg-black/20 p-3 text-sm leading-7 text-white/75">
+                                                {item}
+                                            </div>
+                                        ))}
+                                    </div>
                                 </div>
                             </div>
+
+                            <div className="mt-8 glass-panel rounded-3xl border border-fuchsia-500/20 p-4 sm:p-6">
+                                <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+                                    <div className="max-w-4xl">
+                                        <div className="text-[11px] font-bold uppercase tracking-[0.24em] text-fuchsia-300/80">
+                                            {language === 'es' ? 'Ejemplos de creación de planes' : 'Plan creation examples'}
+                                        </div>
+                                        <h3 className="mt-2 text-2xl font-black text-white">
+                                            {language === 'es' ? 'Cómo acaba montándose cada plan' : 'How each plan shape gets assembled'}
+                                        </h3>
+                                        <p className="mt-3 text-sm leading-7 text-white/75">
+                                            {language === 'es'
+                                                ? 'Cada ejemplo enseña la query, la forma de plan elegida, por qué la eligió el optimizador y cuándo esa misma forma se vuelve peligrosa al reutilizarse.'
+                                                : 'Each example shows the query, the chosen plan shape, why the optimizer chose it, and when the same shape becomes dangerous when reused.'}
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <div className="mt-5 flex flex-wrap gap-2">
+                                    {OPTIMIZER_EXAMPLES.map((example) => (
+                                        <button
+                                            key={example.id}
+                                            onClick={() => setActivePlanExampleId(example.id)}
+                                            className={cn('rounded-2xl border px-4 py-2 text-sm font-bold transition-all', activeOptimizerExample.id === example.id ? 'border-fuchsia-500/30 bg-fuchsia-500/15 text-fuchsia-200' : 'border-white/10 bg-black/20 text-white/65 hover:border-white/20 hover:text-white')}
+                                        >
+                                            {pickText(language, example.title)}
+                                        </button>
+                                    ))}
+                                </div>
+
+                                <div className="mt-6 grid gap-6 xl:grid-cols-[minmax(0,1.1fr)_340px]">
+                                    <div className="min-w-0">
+                                        <div className="rounded-3xl border border-white/10 bg-black/25 p-5">
+                                            <div className="text-[11px] font-bold uppercase tracking-[0.22em] text-white/45">
+                                                {language === 'es' ? 'Query que compila' : 'Query being compiled'}
+                                            </div>
+                                            <div className="mt-4">
+                                                <CopyCodeBlock code={activeOptimizerExample.query} accent="cyan" contentClassName="max-h-[160px]" />
+                                            </div>
+                                        </div>
+
+                                        <div className="mt-4 rounded-3xl border border-white/10 bg-black/25 p-5">
+                                            <div className="flex items-center justify-between gap-3">
+                                                <div>
+                                                    <div className="text-[11px] font-bold uppercase tracking-[0.22em] text-white/45">
+                                                        {language === 'es' ? 'Forma de plan elegida' : 'Chosen plan shape'}
+                                                    </div>
+                                                    <h4 className="mt-2 text-xl font-black text-white">{pickText(language, activeOptimizerExample.planTitle)}</h4>
+                                                </div>
+                                                <div className="rounded-full border border-white/10 bg-black/20 px-3 py-1 text-xs font-bold text-white/60">
+                                                    {language === 'es' ? 'Compila y luego reutiliza' : 'Compile then reuse'}
+                                                </div>
+                                            </div>
+
+                                            <div className="mt-5 grid gap-3 lg:grid-cols-3">
+                                                {activeOptimizerExample.nodes.map((node) => (
+                                                    <div key={`${activeOptimizerExample.id}-${node.label}`} className={cn('rounded-2xl border p-4', node.accent)}>
+                                                        <div className="text-sm font-black">{node.label}</div>
+                                                        <p className="mt-2 text-sm leading-7 text-white/80">{pickText(language, node.summary)}</p>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-4">
+                                        <div className="rounded-3xl border border-white/10 bg-black/20 p-5">
+                                            <div className="text-[11px] font-bold uppercase tracking-[0.22em] text-white/45">
+                                                {language === 'es' ? 'Por qué sale este plan' : 'Why this plan appears'}
+                                            </div>
+                                            <p className="mt-3 text-sm leading-7 text-white/75">{pickText(language, activeOptimizerExample.why)}</p>
+                                        </div>
+
+                                        <div className="rounded-3xl border border-white/10 bg-black/20 p-5">
+                                            <div className="text-[11px] font-bold uppercase tracking-[0.22em] text-white/45">
+                                                {language === 'es' ? 'Cómo se reutiliza' : 'How reuse works'}
+                                            </div>
+                                            <p className="mt-3 text-sm leading-7 text-white/75">{pickText(language, activeOptimizerExample.reuse)}</p>
+                                        </div>
+
+                                        <div className="rounded-3xl border border-amber-500/20 bg-amber-500/10 p-5">
+                                            <div className="text-[11px] font-bold uppercase tracking-[0.22em] text-amber-200/80">
+                                                {language === 'es' ? 'Cuándo deja de servir' : 'When it stops being healthy'}
+                                            </div>
+                                            <p className="mt-3 text-sm leading-7 text-white/80">{pickText(language, activeOptimizerExample.invalidation)}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <PlanOperatorLab />
                         </motion.div>
                     )}
 

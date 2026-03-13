@@ -5,6 +5,8 @@ import { useLanguage } from '../../../contexts/LanguageContext';
 import { BLITZ_FINDINGS, BLITZCACHE_ROWS, JOB_TSQL_SNIPPETS, type FindingSeverity } from '../../../data/industryJobsData';
 import { cn } from '../../../lib/utils';
 import { CopyCodeBlock } from '../../Shared/CopyCodeBlock';
+import { DBAActionBoard } from '../../Shared/DBAActionBoard';
+import { GuidedLabPanel } from '../../Shared/GuidedLabPanel';
 
 const SEVERITY_STYLE: Record<FindingSeverity, { chip: string; row: string }> = {
   critical: {
@@ -24,6 +26,37 @@ const SEVERITY_STYLE: Record<FindingSeverity, { chip: string; row: string }> = {
     row: 'hover:bg-emerald-500/5',
   },
 };
+
+const GUIDE_STEPS = [
+  {
+    title: { en: 'Run the broad triage first', es: 'Empieza con el triaje amplio' },
+    detail: {
+      en: 'sp_Blitz is for finding where the fire is. Do not jump to tuning before you know the class of problem.',
+      es: 'sp_Blitz sirve para saber dónde está el fuego. No saltes al tuning sin saber primero de qué clase de problema hablas.',
+    },
+  },
+  {
+    title: { en: 'Prioritize by severity', es: 'Prioriza por severidad' },
+    detail: {
+      en: 'Critical and warning findings tell you where to spend time first. Good findings are baseline, not action items.',
+      es: 'Los hallazgos critical y warning te dicen dónde gastar tiempo primero. Los good son baseline, no acción inmediata.',
+    },
+  },
+  {
+    title: { en: 'Move into plan cache evidence', es: 'Baja a la evidencia de plan cache' },
+    detail: {
+      en: 'sp_BlitzCache is where you connect the health check to a concrete query, plan and resource pattern.',
+      es: 'sp_BlitzCache es donde conectas el health check con una query concreta, su plan y su patrón de consumo.',
+    },
+  },
+  {
+    title: { en: 'Validate with SQL before changing anything', es: 'Valida con SQL antes de tocar nada' },
+    detail: {
+      en: 'The lab is complete only when you can explain the why and show the supporting DMV or script.',
+      es: 'El lab no termina hasta que sabes explicar el por qué y mostrar la DMV o el script que lo demuestra.',
+    },
+  },
+] as const;
 
 function pick(language: 'en' | 'es', text: { en: string; es: string }) {
   return language === 'es' ? text.es : text.en;
@@ -50,9 +83,52 @@ export function FirstResponderKitLab({ compact = false }: FirstResponderKitLabPr
     return list.find((item) => item.id === selectedId) ?? list[0];
   }, [selectedId, tool]);
 
+  const guideStep = tool === 'cache' ? (severity === 'all' ? 2 : 3) : severity === 'all' ? 0 : 1;
+  const dbaFocus =
+    tool === 'blitz'
+      ? {
+          en: 'This is triage, not final diagnosis. The DBA now decides whether the finding is root cause, symptom, or baseline noise.',
+          es: 'Esto es triaje, no diagnostico final. Ahora el DBA decide si el hallazgo es causa raiz, sintoma o ruido de baseline.',
+        }
+      : {
+          en: 'Now the DBA must connect the cache row to one concrete query shape, one resource pattern, and one safe next action.',
+          es: 'Ahora el DBA debe conectar la fila de cache con una forma concreta de query, un patron de recurso y una siguiente accion segura.',
+        };
+
+  const dbaActions =
+    tool === 'blitz'
+      ? [
+          {
+            en: 'Validate the finding with the supporting DMV or script before changing any server-wide setting.',
+            es: 'Valida el hallazgo con la DMV o script de soporte antes de cambiar nada global en el servidor.',
+          },
+          {
+            en: 'Decide whether it points to CPU, waits, memory, backups or plan volatility, then narrow to one workload.',
+            es: 'Decide si apunta a CPU, waits, memoria, backups o volatilidad de planes y luego baja a una sola carga.',
+          },
+          {
+            en: 'Document whether this is a one-off alert or something that deserves a permanent runbook.',
+            es: 'Documenta si es una alerta puntual o algo que merece un runbook permanente.',
+          },
+        ]
+      : [
+          {
+            en: 'Open the plan or Query Store evidence for this query before you touch indexes or hints.',
+            es: 'Abre el plan o la evidencia de Query Store de esta query antes de tocar indices o hints.',
+          },
+          {
+            en: 'Check if the pain is reads, CPU, lookups, implicit conversions or memory grant shape.',
+            es: 'Revisa si el dolor viene de lecturas, CPU, lookups, conversiones implicitas o forma del memory grant.',
+          },
+          {
+            en: 'Pick the smallest safe mitigation first: fix types, cover the lookup, or stabilize the plan.',
+            es: 'Elige primero la mitigacion segura mas pequena: arreglar tipos, cubrir el lookup o estabilizar el plan.',
+          },
+        ];
+
   return (
-    <div className={cn('grid gap-4 lg:gap-6', compact ? 'grid-cols-1' : 'xl:grid-cols-[minmax(0,1.2fr)_420px]')}>
-      <div className="glass-panel rounded-2xl border border-white/10 p-4 sm:p-6">
+    <div className={cn('grid gap-4 lg:gap-6 h-full', compact ? 'xl:grid-cols-[minmax(0,1.08fr)_340px]' : 'xl:grid-cols-[minmax(0,1.2fr)_420px]')}>
+      <div className={cn('glass-panel rounded-2xl border border-white/10 p-4 sm:p-6', compact && 'min-h-0 overflow-hidden flex flex-col')}>
         {!compact ? (
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div className="min-w-0 flex-1">
@@ -84,6 +160,39 @@ export function FirstResponderKitLab({ compact = false }: FirstResponderKitLabPr
             </p>
           </div>
         )}
+
+        {!compact ? <div className="mt-5">
+          <GuidedLabPanel
+            language={language}
+            compact={compact}
+            accent="sky"
+            title={{ en: 'How to read this health check', es: 'Cómo leer este health check' }}
+            objective={{
+              en: 'Think like a DBA: first classify the problem, then narrow it, then prove it with evidence.',
+              es: 'Piensa como un DBA: primero clasifica el problema, luego lo acotas y al final lo pruebas con evidencia.',
+            }}
+            watchItems={[
+              {
+                en: 'Severity gives you order, not the full diagnosis.',
+                es: 'La severidad te da el orden, no el diagnóstico completo.',
+              },
+              {
+                en: 'A finding only matters when you can tie it to a real query or resource pattern.',
+                es: 'Un hallazgo solo importa de verdad cuando lo atas a una query real o a un patrón de recurso.',
+              },
+              {
+                en: 'Use the SQL on the right as proof, not as decoration.',
+                es: 'Usa el SQL de la derecha como prueba, no como decoración.',
+              },
+            ]}
+            steps={GUIDE_STEPS}
+            currentStep={guideStep}
+            footer={{
+                en: 'If you can explain why a finding is important and how you would validate it, the lab already taught the right habit.',
+              es: 'Si sabes explicar por qué un hallazgo importa y cómo lo validarías, el lab ya te enseñó el hábito correcto.',
+            }}
+          />
+        </div> : null}
 
         <div className="mt-6 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
           <div className="flex w-full flex-wrap gap-2 rounded-2xl border border-white/10 bg-black/20 p-1 lg:w-auto">
@@ -134,14 +243,14 @@ export function FirstResponderKitLab({ compact = false }: FirstResponderKitLabPr
           </div>
         </div>
 
-        <div className="mt-6 rounded-3xl border border-white/10 bg-black/25 overflow-hidden">
+        <div className={cn('mt-6 rounded-3xl border border-white/10 bg-black/25 overflow-hidden', compact && 'min-h-0 flex-1 flex flex-col')}>
           <div className="hidden border-b border-white/10 px-4 py-3 text-[11px] font-bold uppercase tracking-[0.22em] text-white/40 md:grid md:grid-cols-[140px_minmax(0,1fr)_120px]">
             <div>{language === 'es' ? 'Severidad' : 'Severity'}</div>
             <div>{language === 'es' ? 'Hallazgo' : 'Finding'}</div>
             <div className="text-right">{language === 'es' ? 'Badge' : 'Badge'}</div>
           </div>
 
-          <div className="divide-y divide-white/10">
+          <div className={cn('divide-y divide-white/10', compact && 'min-h-0 overflow-y-auto')}>
             {rows.map((item) => {
               const isActive = item.id === selected?.id;
               const style = SEVERITY_STYLE[item.severity];
@@ -198,7 +307,7 @@ export function FirstResponderKitLab({ compact = false }: FirstResponderKitLabPr
         </div>
       </div>
 
-      <div className="glass-panel rounded-2xl border border-white/10 p-4 sm:p-6">
+      <div className={cn('glass-panel rounded-2xl border border-white/10 p-4 sm:p-6', compact && 'min-h-0 overflow-hidden flex flex-col')}>
         <AnimatePresence mode="wait">
           <motion.div
             key={`${tool}-${selected?.id ?? 'none'}`}
@@ -220,7 +329,20 @@ export function FirstResponderKitLab({ compact = false }: FirstResponderKitLabPr
             </div>
 
             {selected ? (
-              <div className="mt-4 space-y-4">
+              <div className={cn('mt-4 space-y-4', compact && 'min-h-0 flex-1 overflow-y-auto pr-1')}>
+                {compact ? (
+                  <DBAActionBoard
+                    language={language}
+                    accent={tool === 'cache' ? 'violet' : 'sky'}
+                    title={{ en: 'What the DBA does now', es: 'Que hace ahora el DBA' }}
+                    focus={dbaFocus}
+                    actions={dbaActions}
+                    caution={{
+                      en: 'A finding is only useful when you can prove it with live evidence or plan evidence.',
+                      es: 'Un hallazgo solo sirve de verdad cuando puedes demostrarlo con evidencia en vivo o evidencia de plan.',
+                    }}
+                  />
+                ) : null}
                 {tool === 'blitz' ? (
                   <>
                     <div className="rounded-3xl border border-white/10 bg-black/20 p-5">
@@ -240,8 +362,8 @@ export function FirstResponderKitLab({ compact = false }: FirstResponderKitLabPr
                         ))}
                       </div>
                     </div>
-                    <CopyCodeBlock code={(selected as (typeof BLITZ_FINDINGS)[number]).tsql} accent="cyan" />
-                    <CopyCodeBlock code={JOB_TSQL_SNIPPETS.blitz} accent="cyan" />
+                    <CopyCodeBlock code={(selected as (typeof BLITZ_FINDINGS)[number]).tsql} accent="cyan" contentClassName={compact ? 'max-h-[220px]' : undefined} />
+                    {!compact ? <CopyCodeBlock code={JOB_TSQL_SNIPPETS.blitz} accent="cyan" /> : null}
                   </>
                 ) : (
                   <>
@@ -278,8 +400,8 @@ export function FirstResponderKitLab({ compact = false }: FirstResponderKitLabPr
                         ))}
                       </div>
                     </div>
-                    <CopyCodeBlock code={(selected as (typeof BLITZCACHE_ROWS)[number]).tsql} accent="cyan" />
-                    <CopyCodeBlock code={JOB_TSQL_SNIPPETS.blitzCache} accent="blue" />
+                    <CopyCodeBlock code={(selected as (typeof BLITZCACHE_ROWS)[number]).tsql} accent="cyan" contentClassName={compact ? 'max-h-[220px]' : undefined} />
+                    {!compact ? <CopyCodeBlock code={JOB_TSQL_SNIPPETS.blitzCache} accent="blue" /> : null}
                   </>
                 )}
               </div>
