@@ -508,6 +508,12 @@ export function TempDBAndIO() {
     activeBaseline.healthy,
     activeBaseline.warning
   );
+  const activeBaselineReadout =
+    activeBaselineState === 'healthy'
+      ? pick(language, activeBaseline.healthyText)
+      : activeBaselineState === 'warning'
+        ? pick(language, activeBaseline.warningText)
+        : pick(language, activeBaseline.criticalText);
   const filteredBaselines =
     activeBaselineScope === 'all'
       ? TEMPDB_IO_BASELINES
@@ -594,17 +600,17 @@ export function TempDBAndIO() {
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="max-w-4xl">
             <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-white/40">
-              {language === 'es' ? 'Tiempos y valores de I/O del motor' : 'Engine I/O timings and baselines'}
+              {language === 'es' ? 'Radar I/O del motor' : 'Engine I/O radar'}
             </p>
             <h3 className="mt-2 text-2xl font-bold text-white">
               {language === 'es'
-                ? 'No es solo TempDB: aqui estan lecturas, escrituras, log, memoria y la forma correcta de leer cada numero'
-                : 'This is not only TempDB: here you get reads, writes, log, memory, and the right way to read each number'}
+                ? 'Lecturas, escrituras, log, waits y memoria en una sola vista'
+                : 'Reads, writes, log, waits, and memory in one view'}
             </h3>
             <p className="mt-3 max-w-5xl text-sm leading-7 text-white/75">
               {language === 'es'
-                ? 'No hay un numero magico universal para todo, pero si hay heuristicas muy utiles. Aqui puedes comparar tus valores con referencias practicas de lectura, escritura, log, waits y memoria, y ver exactamente con que DMV o contador medirlos.'
-                : 'There is no single magic number for everything, but there are very useful heuristics. Here you can compare your values with practical baselines for reads, writes, log, waits, and memory, and see exactly which DMV or counter measures them.'}
+                ? 'Comparas el valor, ves la gravedad y lanzas la query correcta sin perderte entre texto.'
+                : 'Compare the value, read the severity, and run the right query without drowning in text.'}
             </p>
           </div>
 
@@ -620,7 +626,7 @@ export function TempDBAndIO() {
           </div>
         </div>
 
-        <div className="mt-6 grid gap-3 xl:grid-cols-5">
+        <div className="mt-6 grid gap-3 md:grid-cols-2 xl:grid-cols-5">
           {symptomRoutes.map((route) => (
             <button
               key={route.id}
@@ -633,18 +639,18 @@ export function TempDBAndIO() {
               }}
               className="rounded-3xl border border-white/10 bg-black/20 p-4 text-left transition-all hover:border-white/20 hover:bg-white/[0.05]"
             >
-              <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-white/45">
+              <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-white/42">
                 {language === 'es' ? 'Empieza por aqui' : 'Start here'}
               </div>
               <div className="mt-2 text-sm font-bold text-white">{route.title}</div>
-              <p className="mt-2 text-sm leading-7 text-white/65">{route.detail}</p>
-              <div className="mt-3 flex flex-wrap gap-2">
+              <p className="mt-1 text-xs leading-6 text-white/62">{route.detail}</p>
+              <div className="mt-3 flex flex-wrap gap-1.5">
                 {route.baselineIds.map((baselineId) => {
                   const metric = TEMPDB_IO_BASELINES.find((item) => item.id === baselineId);
                   return metric ? (
                     <span
                       key={`${route.id}-${baselineId}`}
-                      className="rounded-full border border-white/10 bg-black/25 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.16em] text-white/60"
+                      className="rounded-full border border-white/10 bg-black/25 px-2 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-white/58"
                     >
                       {pick(language, metric.title)}
                     </span>
@@ -702,11 +708,11 @@ export function TempDBAndIO() {
                       ? `${metricStyle.panel} shadow-[0_0_30px_rgba(34,211,238,0.08)]`
                       : 'border-white/10 bg-black/20 hover:border-white/20 hover:bg-white/[0.05]'
                   )}
-                >
+                  >
                   <div className="flex items-start justify-between gap-3">
                     <div>
                       <div className="text-sm font-bold text-white">{pick(language, metric.title)}</div>
-                      <p className="mt-2 text-sm leading-7 text-white/65">{pick(language, metric.summary)}</p>
+                      <p className="mt-1 text-xs leading-6 text-white/55">{pick(language, metric.summary)}</p>
                     </div>
                     <span className={cn('rounded-full border px-3 py-1 text-[11px] font-bold', metricStyle.chip)}>
                       {metric.defaultValue}
@@ -737,11 +743,11 @@ export function TempDBAndIO() {
                               : 'tempdb'}
                     </span>
                   </div>
-                  <div className="mt-4 flex flex-wrap gap-2">
+                  <div className="mt-3 flex flex-wrap gap-1.5">
                     {metric.badges.slice(0, 3).map((badge) => (
                       <span
                         key={`${metric.id}-${badge}`}
-                        className="rounded-full border border-white/10 bg-black/25 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.16em] text-white/60"
+                        className="rounded-full border border-white/10 bg-black/25 px-2 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-white/58"
                       >
                         {badge}
                       </span>
@@ -757,7 +763,7 @@ export function TempDBAndIO() {
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div className="min-w-0">
                   <div className={cn('text-[11px] font-bold uppercase tracking-[0.22em]', BASELINE_STATE_STYLES[activeBaselineState].text)}>
-                    {language === 'es' ? 'Lectura operativa' : 'Operational reading'}
+                    {language === 'es' ? 'Lectura operativa' : 'Operational read'}
                   </div>
                   <h4 className="mt-2 text-xl font-bold text-white">{pick(language, activeBaseline.title)}</h4>
                 </div>
@@ -767,7 +773,7 @@ export function TempDBAndIO() {
                 </span>
               </div>
 
-              <p className="mt-3 text-sm leading-7 text-white/85">{pick(language, activeBaseline.whatToRead)}</p>
+              <p className="mt-3 text-sm leading-7 text-white/82">{pick(language, activeBaseline.whatToRead)}</p>
 
               <div className="mt-5">
                 <div className="flex items-center justify-between gap-3 text-[11px] font-bold uppercase tracking-[0.18em] text-white/45">
@@ -789,34 +795,42 @@ export function TempDBAndIO() {
                 />
               </div>
 
-              <div className="mt-5 grid gap-3">
-                {[
-                  {
-                    id: 'healthy',
-                    title: language === 'es' ? 'Sano' : 'Healthy',
-                    body: pick(language, activeBaseline.healthyText),
-                  },
-                  {
-                    id: 'warning',
-                    title: language === 'es' ? 'Vigilar' : 'Watch',
-                    body: pick(language, activeBaseline.warningText),
-                  },
-                  {
-                    id: 'critical',
-                    title: language === 'es' ? 'Mal' : 'Bad',
-                    body: pick(language, activeBaseline.criticalText),
-                  },
-                ].map((item) => {
-                  const style = BASELINE_STATE_STYLES[item.id as BaselineState];
-                  return (
-                    <div key={item.id} className={cn('rounded-2xl border p-4', style.panel)}>
-                      <div className={cn('text-[11px] font-bold uppercase tracking-[0.18em]', style.text)}>
+              <div className="mt-5 rounded-2xl border border-white/10 bg-black/25 p-4">
+                <div className="flex flex-wrap gap-2">
+                  {[
+                    { id: 'healthy', title: language === 'es' ? 'Sano' : 'Healthy' },
+                    { id: 'warning', title: language === 'es' ? 'Vigilar' : 'Watch' },
+                    { id: 'critical', title: language === 'es' ? 'Mal' : 'Bad' },
+                  ].map((item) => {
+                    const style = BASELINE_STATE_STYLES[item.id as BaselineState];
+                    return (
+                      <span
+                        key={item.id}
+                        className={cn(
+                          'rounded-full border px-3 py-1 text-[10px] font-bold uppercase tracking-[0.16em]',
+                          style.chip
+                        )}
+                      >
                         {item.title}
-                      </div>
-                      <p className="mt-2 text-sm leading-7 text-white/80">{item.body}</p>
-                    </div>
-                  );
-                })}
+                      </span>
+                    );
+                  })}
+                </div>
+
+                <div className="mt-4 h-2 overflow-hidden rounded-full bg-white/10">
+                  <div className="grid h-full grid-cols-3 overflow-hidden rounded-full">
+                    <div className="bg-emerald-400/60" />
+                    <div className="bg-amber-400/60" />
+                    <div className="bg-rose-400/60" />
+                  </div>
+                </div>
+
+                <div className="mt-4 rounded-2xl border border-white/10 bg-black/25 p-4">
+                  <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-white/42">
+                    {language === 'es' ? 'Lectura actual' : 'Current read'}
+                  </div>
+                  <p className="mt-2 text-sm leading-7 text-white/82">{activeBaselineReadout}</p>
+                </div>
               </div>
             </div>
 
@@ -824,7 +838,7 @@ export function TempDBAndIO() {
               <div className="text-[11px] font-bold uppercase tracking-[0.22em] text-white/40">
                 {language === 'es' ? 'Query para medirlo' : 'Query to measure it'}
               </div>
-              <p className="mt-2 text-sm leading-7 text-white/70">{pick(language, activeBaseline.summary)}</p>
+              <p className="mt-2 text-sm leading-7 text-white/68">{pick(language, activeBaseline.summary)}</p>
               <div className="mt-4">
                 <CopyCodeBlock code={activeBaseline.query} accent="cyan" />
               </div>
