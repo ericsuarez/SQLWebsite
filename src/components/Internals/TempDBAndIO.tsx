@@ -345,6 +345,7 @@ function metricTone(value: number, reverse?: boolean) {
 }
 
 type BaselineState = 'healthy' | 'warning' | 'critical';
+type BaselineScope = (typeof TEMPDB_IO_BASELINES)[number]['scope'] | 'all';
 
 const BASELINE_STATE_STYLES: Record<BaselineState, { chip: string; panel: string; text: string }> = {
   healthy: {
@@ -406,8 +407,17 @@ function baselineStateFor(value: number, healthy: number, warning: number) {
   return 'critical';
 }
 
+const BASELINE_SCOPE_STYLES: Record<Exclude<BaselineScope, 'all'>, string> = {
+  tempdb: 'border-rose-500/25 bg-rose-500/10 text-rose-200',
+  reads: 'border-blue-500/25 bg-blue-500/10 text-blue-200',
+  writes: 'border-violet-500/25 bg-violet-500/10 text-violet-200',
+  log: 'border-amber-500/25 bg-amber-500/10 text-amber-200',
+  memory: 'border-emerald-500/25 bg-emerald-500/10 text-emerald-200',
+};
+
 export function TempDBAndIO() {
   const { language, t } = useLanguage();
+  const [activeBaselineScope, setActiveBaselineScope] = useState<BaselineScope>('all');
   const [activeBaselineId, setActiveBaselineId] = useState<(typeof TEMPDB_IO_BASELINES)[number]['id']>('hot-waiters');
   const [baselineProbeValue, setBaselineProbeValue] = useState(TEMPDB_IO_BASELINES[0]?.defaultValue ?? 0);
   const [activeDiagnosticId, setActiveDiagnosticId] = useState<(typeof TEMPDB_IO_DIAGNOSTIC_CASES)[number]['id']>('metadata');
@@ -463,6 +473,14 @@ export function TempDBAndIO() {
   useEffect(() => {
     setSelectedDiagnosticChoiceId(null);
   }, [activeDiagnosticId]);
+
+  useEffect(() => {
+    if (activeBaselineScope === 'all') return;
+    const firstMetricInScope = TEMPDB_IO_BASELINES.find((metric) => metric.scope === activeBaselineScope);
+    if (firstMetricInScope && firstMetricInScope.id !== activeBaselineId) {
+      setActiveBaselineId(firstMetricInScope.id);
+    }
+  }, [activeBaselineScope, activeBaselineId]);
 
   const tempdbVisual = useMemo(() => {
     const stepIndex = tempdbFrame % activeWorkload.steps.length;
@@ -537,6 +555,10 @@ export function TempDBAndIO() {
     activeBaseline.healthy,
     activeBaseline.warning
   );
+  const filteredBaselines =
+    activeBaselineScope === 'all'
+      ? TEMPDB_IO_BASELINES
+      : TEMPDB_IO_BASELINES.filter((metric) => metric.scope === activeBaselineScope);
   const selectedDiagnosticChoice =
     activeDiagnostic.choices.find((choice) => choice.id === selectedDiagnosticChoiceId) ?? null;
   const correctDiagnosticChoice =
@@ -544,6 +566,53 @@ export function TempDBAndIO() {
     activeDiagnostic.choices[0];
   const diagnosticAccent = CASE_ACCENT_STYLES[activeDiagnostic.accent];
   const isCorrectDiagnosticChoice = selectedDiagnosticChoiceId === activeDiagnostic.correctChoiceId;
+  const symptomRoutes = [
+    {
+      id: 'slow-first-load',
+      title: language === 'es' ? 'La primera carga va lenta' : 'First load is slow',
+      detail:
+        language === 'es'
+          ? 'Mira latencia de lectura y el wait medio PAGEIOLATCH.'
+          : 'Start with read latency and average PAGEIOLATCH wait.',
+      baselineIds: ['data-read-ms', 'pageiolatch-wait-ms'] as const,
+    },
+    {
+      id: 'slow-commit',
+      title: language === 'es' ? 'El commit va lento' : 'Commits feel slow',
+      detail:
+        language === 'es'
+          ? 'Cruza latencia de log con WRITELOG medio.'
+          : 'Cross log latency with average WRITELOG wait.',
+      baselineIds: ['log-write-ms', 'writelog-wait-ms'] as const,
+    },
+    {
+      id: 'write-bursts',
+      title: language === 'es' ? 'Parones al escribir' : 'Write bursts and stalls',
+      detail:
+        language === 'es'
+          ? 'Mira escritura de datos y cola de I/O pendiente.'
+          : 'Look at data write latency and pending I/O.',
+      baselineIds: ['data-write-ms', 'pending-io'] as const,
+    },
+    {
+      id: 'tempdb-pain',
+      title: language === 'es' ? 'TempDB duele' : 'TempDB is hurting',
+      detail:
+        language === 'es'
+          ? 'Separa latencia de TempDB de contencion de metadatos.'
+          : 'Separate TempDB latency from allocation contention.',
+      baselineIds: ['tempdb-read-ms', 'hot-waiters'] as const,
+    },
+    {
+      id: 'not-disk',
+      title: language === 'es' ? 'Parece disco pero no lo es' : 'Looks like I/O but is not',
+      detail:
+        language === 'es'
+          ? 'Comprueba Lazy Writer y Free List Stalls.'
+          : 'Check Lazy Writer and Free List Stalls.',
+      baselineIds: ['lazy-writes', 'free-list-stalls'] as const,
+    },
+  ];
 
   return (
     <div className="flex h-full flex-col gap-6 text-slate-200">
@@ -579,17 +648,17 @@ export function TempDBAndIO() {
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="max-w-4xl">
             <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-white/40">
-              {language === 'es' ? 'Valores normales y como leerlos' : 'Normal values and how to read them'}
+              {language === 'es' ? 'Tiempos y valores de I/O del motor' : 'Engine I/O timings and baselines'}
             </p>
             <h3 className="mt-2 text-2xl font-bold text-white">
               {language === 'es'
-                ? 'Primero mira si el numero es sano, despues ve a la query y solo entonces decide si esta roto'
-                : 'Read the number first, jump to the query second, and only then decide whether it is actually broken'}
+                ? 'No es solo TempDB: aqui estan lecturas, escrituras, log, memoria y la forma correcta de leer cada numero'
+                : 'This is not only TempDB: here you get reads, writes, log, memory, and the right way to read each number'}
             </h3>
             <p className="mt-3 max-w-5xl text-sm leading-7 text-white/75">
               {language === 'es'
-                ? 'No hay un numero magico universal para todo, pero si hay heuristicas muy utiles. Aqui puedes comparar tus valores con una referencia practica y ver exactamente con que DMV o contador medirlo.'
-                : 'There is no single magic number for everything, but there are very useful heuristics. Here you can compare your values against a practical baseline and see exactly which DMV or counter measures it.'}
+                ? 'No hay un numero magico universal para todo, pero si hay heuristicas muy utiles. Aqui puedes comparar tus valores con referencias practicas de lectura, escritura, log, waits y memoria, y ver exactamente con que DMV o contador medirlos.'
+                : 'There is no single magic number for everything, but there are very useful heuristics. Here you can compare your values with practical baselines for reads, writes, log, waits, and memory, and see exactly which DMV or counter measures them.'}
             </p>
           </div>
 
@@ -605,9 +674,70 @@ export function TempDBAndIO() {
           </div>
         </div>
 
+        <div className="mt-6 grid gap-3 xl:grid-cols-5">
+          {symptomRoutes.map((route) => (
+            <button
+              key={route.id}
+              onClick={() => {
+                const metric = TEMPDB_IO_BASELINES.find((item) => item.id === route.baselineIds[0]);
+                if (metric) {
+                  setActiveBaselineScope(metric.scope);
+                  setActiveBaselineId(metric.id);
+                }
+              }}
+              className="rounded-3xl border border-white/10 bg-black/20 p-4 text-left transition-all hover:border-white/20 hover:bg-white/[0.05]"
+            >
+              <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-white/45">
+                {language === 'es' ? 'Empieza por aqui' : 'Start here'}
+              </div>
+              <div className="mt-2 text-sm font-bold text-white">{route.title}</div>
+              <p className="mt-2 text-sm leading-7 text-white/65">{route.detail}</p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {route.baselineIds.map((baselineId) => {
+                  const metric = TEMPDB_IO_BASELINES.find((item) => item.id === baselineId);
+                  return metric ? (
+                    <span
+                      key={`${route.id}-${baselineId}`}
+                      className="rounded-full border border-white/10 bg-black/25 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.16em] text-white/60"
+                    >
+                      {pick(language, metric.title)}
+                    </span>
+                  ) : null;
+                })}
+              </div>
+            </button>
+          ))}
+        </div>
+
+        <div className="mt-6 flex flex-wrap gap-2">
+          {[
+            { id: 'all', label: language === 'es' ? 'Todo' : 'All' },
+            { id: 'reads', label: language === 'es' ? 'Lecturas' : 'Reads' },
+            { id: 'writes', label: language === 'es' ? 'Escrituras' : 'Writes' },
+            { id: 'log', label: 'Log' },
+            { id: 'tempdb', label: 'TempDB' },
+            { id: 'memory', label: language === 'es' ? 'Memoria' : 'Memory' },
+          ].map((scope) => (
+            <button
+              key={scope.id}
+              onClick={() => setActiveBaselineScope(scope.id as BaselineScope)}
+              className={cn(
+                'rounded-full border px-4 py-2 text-xs font-bold transition-all',
+                activeBaselineScope === scope.id
+                  ? scope.id === 'all'
+                    ? 'border-cyan-500/25 bg-cyan-500/10 text-cyan-200'
+                    : BASELINE_SCOPE_STYLES[scope.id as Exclude<BaselineScope, 'all'>]
+                  : 'border-white/10 bg-black/20 text-white/60 hover:border-white/20 hover:bg-white/[0.05] hover:text-white'
+              )}
+            >
+              {scope.label}
+            </button>
+          ))}
+        </div>
+
         <div className="mt-6 grid gap-6 xl:grid-cols-[minmax(0,1.06fr)_380px]">
           <div className="grid gap-3 md:grid-cols-2">
-            {TEMPDB_IO_BASELINES.map((metric) => {
+            {filteredBaselines.map((metric) => {
               const isActive = metric.id === activeBaseline.id;
               const metricState = baselineStateFor(
                 metric.defaultValue,
@@ -635,6 +765,30 @@ export function TempDBAndIO() {
                     <span className={cn('rounded-full border px-3 py-1 text-[11px] font-bold', metricStyle.chip)}>
                       {metric.defaultValue}
                       {metric.unit}
+                    </span>
+                  </div>
+                  <div className="mt-3">
+                    <span
+                      className={cn(
+                        'rounded-full border px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.16em]',
+                        BASELINE_SCOPE_STYLES[metric.scope]
+                      )}
+                    >
+                      {metric.scope === 'reads'
+                        ? language === 'es'
+                          ? 'lecturas'
+                          : 'reads'
+                        : metric.scope === 'writes'
+                          ? language === 'es'
+                            ? 'escrituras'
+                            : 'writes'
+                          : metric.scope === 'log'
+                            ? 'log'
+                            : metric.scope === 'memory'
+                              ? language === 'es'
+                                ? 'memoria'
+                                : 'memory'
+                              : 'tempdb'}
                     </span>
                   </div>
                   <div className="mt-4 flex flex-wrap gap-2">

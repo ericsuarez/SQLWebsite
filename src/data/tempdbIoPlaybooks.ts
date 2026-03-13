@@ -10,9 +10,12 @@ export interface TempDbIoBaseline {
     | 'data-read-ms'
     | 'data-write-ms'
     | 'log-write-ms'
+    | 'pageiolatch-wait-ms'
+    | 'writelog-wait-ms'
     | 'pending-io'
     | 'lazy-writes'
     | 'free-list-stalls';
+  scope: 'tempdb' | 'reads' | 'writes' | 'log' | 'memory';
   title: LocalizedText;
   summary: LocalizedText;
   whatToRead: LocalizedText;
@@ -72,6 +75,7 @@ export interface TempDbIoDiagnosticCase {
 export const TEMPDB_IO_BASELINES: TempDbIoBaseline[] = [
   {
     id: 'hot-waiters',
+    scope: 'tempdb',
     title: { en: 'TempDB hot waiters', es: 'Sesiones esperando en TempDB' },
     summary: {
       en: 'Active waiters on 2:1:1 / 2:1:2 / 2:1:3.',
@@ -104,6 +108,7 @@ WHERE wait_type LIKE 'PAGELATCH%'
   },
   {
     id: 'tempdb-read-ms',
+    scope: 'tempdb',
     title: { en: 'TempDB read latency', es: 'Latencia de lectura en TempDB' },
     summary: {
       en: 'Average read ms for TempDB files.',
@@ -134,6 +139,7 @@ ORDER BY avg_read_ms DESC;`,
   },
   {
     id: 'data-read-ms',
+    scope: 'reads',
     title: { en: 'Data read latency', es: 'Latencia de lectura de datos' },
     summary: {
       en: 'Average read ms across data files.',
@@ -168,6 +174,7 @@ ORDER BY avg_read_ms DESC;`,
   },
   {
     id: 'data-write-ms',
+    scope: 'writes',
     title: { en: 'Data write latency', es: 'Latencia de escritura de datos' },
     summary: {
       en: 'Average write ms across data files.',
@@ -202,6 +209,7 @@ ORDER BY avg_write_ms DESC;`,
   },
   {
     id: 'log-write-ms',
+    scope: 'log',
     title: { en: 'Log write latency', es: 'Latencia de escritura del log' },
     summary: {
       en: 'Average write ms for log files.',
@@ -234,7 +242,75 @@ WHERE mf.type_desc = 'LOG'
 ORDER BY avg_write_ms DESC;`,
   },
   {
+    id: 'pageiolatch-wait-ms',
+    scope: 'reads',
+    title: { en: 'PAGEIOLATCH avg wait', es: 'Espera media PAGEIOLATCH' },
+    summary: {
+      en: 'Average wait ms for disk reads into the buffer pool.',
+      es: 'Espera media en ms de las lecturas desde disco hacia el buffer pool.',
+    },
+    whatToRead: {
+      en: 'Use it when users say the first load is slow or reads feel heavy. This is a read-latency symptom, not a TempDB latch symptom.',
+      es: 'Usalo cuando los usuarios digan que la primera carga va lenta o que leer pesa mucho. Esto es sintoma de lectura a disco, no de latch de TempDB.',
+    },
+    unit: 'ms',
+    min: 0,
+    max: 60,
+    step: 1,
+    defaultValue: 11,
+    healthy: 10,
+    warning: 25,
+    direction: 'lower-is-better',
+    healthyText: { en: '< 10 ms: reads are usually healthy.', es: '< 10 ms: las lecturas suelen estar sanas.' },
+    warningText: { en: '10-25 ms: watch storage plus read volume.', es: '10-25 ms: vigila almacenamiento mas volumen de lectura.' },
+    criticalText: { en: '> 25 ms: disk reads are now clearly hurting queries.', es: '> 25 ms: las lecturas a disco ya estan dañando las queries.' },
+    badges: ['PAGEIOLATCH_SH', 'read path', 'avg wait'],
+    query: `WITH w AS (
+  SELECT wait_type,
+         wait_time_ms,
+         waiting_tasks_count
+  FROM sys.dm_os_wait_stats
+  WHERE wait_type IN ('PAGEIOLATCH_SH','PAGEIOLATCH_EX','PAGEIOLATCH_UP')
+)
+SELECT wait_type,
+       wait_time_ms / NULLIF(waiting_tasks_count, 0) AS avg_wait_ms,
+       waiting_tasks_count
+FROM w
+ORDER BY avg_wait_ms DESC;`,
+  },
+  {
+    id: 'writelog-wait-ms',
+    scope: 'log',
+    title: { en: 'WRITELOG avg wait', es: 'Espera media WRITELOG' },
+    summary: {
+      en: 'Average wait ms while commit waits for log hardening.',
+      es: 'Espera media en ms mientras el commit espera a endurecer el log.',
+    },
+    whatToRead: {
+      en: 'Use it when short INSERT/UPDATE transactions feel sticky. This is commit-path evidence, not generic data-file latency.',
+      es: 'Usalo cuando transacciones cortas de INSERT o UPDATE se sientan pegajosas. Esto es evidencia de la ruta de commit, no de la latencia generica de los datos.',
+    },
+    unit: 'ms',
+    min: 0,
+    max: 40,
+    step: 1,
+    defaultValue: 7,
+    healthy: 5,
+    warning: 15,
+    direction: 'lower-is-better',
+    healthyText: { en: '< 5 ms: healthy commit path.', es: '< 5 ms: ruta de commit sana.' },
+    warningText: { en: '5-15 ms: watch log latency, VLFs and sync hardening.', es: '5-15 ms: vigila latencia del log, VLF y endurecimiento sincronizado.' },
+    criticalText: { en: '> 15 ms: the log path is now a visible bottleneck.', es: '> 15 ms: la ruta del log ya es un cuello visible.' },
+    badges: ['WRITELOG', 'commit path', 'avg wait'],
+    query: `SELECT wait_type,
+       wait_time_ms / NULLIF(waiting_tasks_count, 0) AS avg_wait_ms,
+       waiting_tasks_count
+FROM sys.dm_os_wait_stats
+WHERE wait_type = 'WRITELOG';`,
+  },
+  {
     id: 'pending-io',
+    scope: 'writes',
     title: { en: 'Pending I/O', es: 'I/O pendientes' },
     summary: {
       en: 'Outstanding I/O requests right now.',
@@ -265,6 +341,7 @@ ORDER BY io_pending_ms_ticks DESC;`,
   },
   {
     id: 'lazy-writes',
+    scope: 'memory',
     title: { en: 'Lazy writes/sec', es: 'Lazy writes/sec' },
     summary: {
       en: 'How often Lazy Writer flushes to recover buffers.',
@@ -293,6 +370,7 @@ ORDER BY counter_name;`,
   },
   {
     id: 'free-list-stalls',
+    scope: 'memory',
     title: { en: 'Free list stalls/sec', es: 'Free list stalls/sec' },
     summary: {
       en: 'How often a worker cannot get a free buffer immediately.',
