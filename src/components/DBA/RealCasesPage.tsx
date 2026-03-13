@@ -2,14 +2,15 @@ import { useMemo } from 'react';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { REAL_CASES } from '../DBA/realCasesData';
 import { RealCaseScenario } from '../DBA/RealCaseScenario';
+import { IncidentDecisionLab } from './IncidentDecisionLab';
 import { AlertTriangle } from 'lucide-react';
 
 export function RealCasesPage() {
     const { t, language } = useLanguage();
     const description =
         language === 'es'
-            ? 'Solo incidentes transversales de SQL Server. TempDB, Missing Index y Extended Events viven ahora en modulos propios para evitar duplicados.'
-            : 'Cross-layer SQL Server incidents only. TempDB, missing-index analysis and Extended Events now live in their own dedicated modules to avoid duplication.';
+            ? 'Incidentes transversales de SQL Server mas una ruta guiada para decidir que sospechar, que query lanzar y como avanzaria un DBA en una incidencia real.'
+            : 'Cross-layer SQL Server incidents plus a guided route for deciding what to suspect, which query to run, and how a DBA would move through a real incident.';
     const visibleCases = useMemo(
         () =>
             REAL_CASES.filter(
@@ -37,10 +38,11 @@ export function RealCasesPage() {
                 </p>
                 <p className="mt-2 text-sm leading-7 text-white/80">
                     {language === 'es'
-                        ? 'Aqui quedan solo incidentes transversales de produccion. TempDB, Missing Index y XE se han quitado de esta vista porque ya tienen modulo dedicado y se veian duplicados.'
-                        : 'Only cross-layer production incidents remain here. TempDB, Missing Index and XE were removed from this view because they already have dedicated modules and looked duplicated.'}
+                        ? 'Aqui tienes dos capas: primero la ruta guiada para entrenar sospecha DBA y despues los escenarios transversales de produccion. TempDB, Missing Index y XE siguen con modulo dedicado para no duplicar simuladores.'
+                        : 'You now have two layers here: the guided DBA suspicion route first, and the cross-layer production incidents after that. TempDB, missing-index analysis and XE still keep their own modules to avoid duplicate simulators.'}
                 </p>
             </div>
+            <IncidentDecisionLab />
             <div className="flex-1 min-h-0">
                 <RealCaseScenario cases={visibleCases} />
             </div>
