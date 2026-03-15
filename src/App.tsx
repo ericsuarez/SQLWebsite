@@ -7,6 +7,7 @@ import {
   Routes,
   useNavigate,
   useParams,
+  useSearchParams,
   type NavigateFunction,
 } from 'react-router-dom';
 import { MarketingLayout } from './components/Layout/MarketingLayout';
@@ -137,6 +138,27 @@ function WorkspaceModuleRoute({ surface }: { surface: SurfaceId }) {
   );
 }
 
+function LegacyLibraryRedirect() {
+  const params = useParams();
+  const [searchParams] = useSearchParams();
+  const routeModuleId = params.moduleId as ModuleId | undefined;
+  const moduleDefinition = routeModuleId ? getModuleDefinition(routeModuleId) : undefined;
+
+  if (!routeModuleId || !moduleDefinition) {
+    return <Navigate to={SURFACE_DEFINITIONS.learn.route} replace />;
+  }
+
+  return (
+    <Navigate
+      to={buildModulePath(moduleDefinition.primaryHome, moduleDefinition.id, {
+        view: searchParams.get('view') ?? moduleDefinition.defaultSubview,
+        mode: searchParams.get('mode') ?? moduleDefinition.defaultMode,
+      })}
+      replace
+    />
+  );
+}
+
 function AppRoutes() {
   return (
     <Routes>
@@ -152,12 +174,12 @@ function AppRoutes() {
       <Route path="/learn" element={<RootLayoutShell surface="learn" />} />
       <Route path="/labs" element={<RootLayoutShell surface="labs" />} />
       <Route path="/diagnose" element={<RootLayoutShell surface="diagnose" />} />
-      <Route path="/library" element={<RootLayoutShell surface="library" />} />
 
       <Route path="/learn/:moduleId" element={<WorkspaceModuleRoute surface="learn" />} />
       <Route path="/labs/:moduleId" element={<WorkspaceModuleRoute surface="labs" />} />
       <Route path="/diagnose/:moduleId" element={<WorkspaceModuleRoute surface="diagnose" />} />
-      <Route path="/library/:moduleId" element={<WorkspaceModuleRoute surface="library" />} />
+      <Route path="/library" element={<Navigate to="/learn" replace />} />
+      <Route path="/library/:moduleId" element={<LegacyLibraryRedirect />} />
 
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

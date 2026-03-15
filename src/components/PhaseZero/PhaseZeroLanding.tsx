@@ -1,8 +1,8 @@
 import { ArrowRight, Cpu, Database, PlayCircle, Radar, ShieldCheck } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '../../contexts/LanguageContext';
-import { SURFACE_DEFINITIONS } from '../Layout/moduleCatalog';
 import { cn } from '../../lib/utils';
+import { SURFACE_DEFINITIONS } from '../Layout/moduleCatalog';
 
 function pick(language: 'en' | 'es', value: { en: string; es: string }) {
   return language === 'es' ? value.es : value.en;
@@ -17,34 +17,34 @@ export function PhaseZeroLanding() {
       surface: SURFACE_DEFINITIONS.learn,
       preview:
         language === 'es'
-          ? ['Arquitectura y bases del motor', 'Memoria, índices y optimizador', 'Nivel 1, 2 y 3 con XP visual']
-          : ['Engine architecture and storage', 'Memory, indexes, and optimizer', 'Level 1, 2 and 3 with visual XP'],
+          ? ['Arquitectura y bases del motor', 'Memoria, índices y optimizador', 'Ruta por niveles con XP visual']
+          : ['Engine architecture and storage', 'Memory, indexes, and optimizer', 'Level-based path with visual XP'],
     },
     {
       surface: SURFACE_DEFINITIONS.labs,
       preview:
         language === 'es'
-          ? ['Labs de incidencias guiadas', 'Play fullscreen para seguir la query', 'TLog, TempDB, Jobs y operador del plan']
-          : ['Guided incident labs', 'Fullscreen play views', 'TLog, TempDB, Jobs, and plan operators'],
+          ? ['Labs guiados de incidencias', 'Vistas play centradas en la query', 'TLog, TempDB, Jobs y operadores del plan']
+          : ['Guided incident labs', 'Play views focused on the query', 'TLog, TempDB, Jobs, and plan operators'],
     },
     {
       surface: SURFACE_DEFINITIONS.diagnose,
       preview:
         language === 'es'
-          ? ['Queries rápidas y triage', 'Extended Events y postmortems', 'Runbooks de HA/DR y checklist operativo']
-          : ['Quick queries and triage', 'Extended Events and postmortems', 'HA/DR runbooks and operational checks'],
+          ? ['Queries rápidas y triage', 'Extended Events y postmortems', 'Runbooks de HA/DR y respuesta']
+          : ['Quick queries and triage', 'Extended Events and postmortems', 'HA/DR runbooks and response'],
     },
   ];
+
   const surfaceDots = {
     learn: 'bg-teal-300',
     labs: 'bg-amber-300',
     diagnose: 'bg-lime-300',
-    library: 'bg-cyan-300',
   } as const;
 
   return (
     <div className="min-h-screen overflow-hidden bg-[radial-gradient(circle_at_top_left,rgba(13,148,136,0.16),transparent_28%),radial-gradient(circle_at_top_right,rgba(245,158,11,0.14),transparent_34%),radial-gradient(circle_at_bottom_left,rgba(132,204,22,0.12),transparent_30%),linear-gradient(180deg,#0a0f10_0%,#111718_100%)] text-zinc-100">
-      <div className="absolute inset-0 -z-10 overflow-hidden pointer-events-none">
+      <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
         <div className="absolute left-[-8%] top-[-10%] h-[36rem] w-[36rem] rounded-full bg-teal-500/10 blur-[140px]" />
         <div className="absolute right-[-10%] top-[8%] h-[34rem] w-[34rem] rounded-full bg-amber-500/10 blur-[140px]" />
         <div className="absolute bottom-[-20%] left-[18%] h-[28rem] w-[28rem] rounded-full bg-lime-500/10 blur-[140px]" />
@@ -74,10 +74,10 @@ export function PhaseZeroLanding() {
               {language === 'es' ? 'Filosofía' : 'Philosophy'}
             </a>
             <button
-              onClick={() => navigate('/library')}
+              onClick={() => navigate('/diagnose')}
               className="rounded-xl border border-white/10 bg-white/6 px-4 py-2 text-white transition-colors hover:bg-white/10"
             >
-              {language === 'es' ? 'Biblioteca técnica' : 'Technical library'}
+              {language === 'es' ? 'Ir a diagnosticar' : 'Go to diagnose'}
             </button>
           </div>
         </div>
@@ -87,20 +87,20 @@ export function PhaseZeroLanding() {
         <div className="grid gap-10 xl:grid-cols-[minmax(0,1.05fr)_360px] xl:items-start">
           <div className="max-w-4xl">
             <div className="inline-flex items-center gap-2 rounded-full border border-teal-500/20 bg-teal-500/10 px-3 py-1 text-sm font-medium text-teal-200">
-              <span className="h-2 w-2 rounded-full bg-teal-400 animate-pulse" />
+              <span className="h-2 w-2 animate-pulse rounded-full bg-teal-400" />
               {language === 'es' ? 'Plataforma de simulación visual' : 'Visual simulation platform'}
             </div>
             <h1 className="mt-6 text-5xl font-black leading-[1.04] tracking-tight text-white sm:text-6xl xl:text-7xl">
-              {language === 'es' ? 'Entiende SQL Server' : 'Understand SQL Server'}
+              {language === 'es' ? 'Aprende SQL Server' : 'Learn SQL Server'}
               <br />
               <span className="bg-gradient-to-r from-teal-300 via-amber-200 to-lime-300 bg-clip-text text-transparent">
-                {language === 'es' ? 'viendo sus entrañas' : 'by watching its internals'}
+                {language === 'es' ? 'viendo qué ocurre por dentro' : 'by watching what happens inside'}
               </span>
             </h1>
             <p className="mt-6 max-w-3xl text-lg leading-8 text-white/68 sm:text-xl">
               {language === 'es'
-                ? 'Aprende arquitectura, practica troubleshooting y diagnostica incidencias sin tocar una producción real. SQLLab enseña el porqué técnico antes del parche rápido.'
-                : 'Learn architecture, practice troubleshooting, and diagnose incidents without touching a real production system. SQLLab teaches the why before the quick fix.'}
+                ? 'Empieza por el motor, pasa a laboratorios guiados y termina en diagnóstico real. SQLLab separa aprender, practicar y responder para que no tengas que saltar sin rumbo entre pestañas.'
+                : 'Start with the engine, move into guided labs, and finish in real diagnosis. SQLLab separates learning, practice, and response so you do not have to jump aimlessly between tabs.'}
             </p>
 
             <div className="mt-8 flex flex-wrap items-center gap-4">
@@ -112,11 +112,11 @@ export function PhaseZeroLanding() {
                 {language === 'es' ? 'Empezar por Nivel 1' : 'Start with Level 1'}
               </button>
               <button
-                onClick={() => navigate('/library')}
+                onClick={() => navigate('/labs')}
                 className="inline-flex items-center gap-2 rounded-2xl border border-white/10 bg-white/6 px-6 py-3 text-sm font-black text-white transition-all hover:bg-white/10"
               >
                 <Radar className="h-5 w-5 text-lime-300" />
-                {language === 'es' ? 'Entrar al workspace' : 'Enter workspace'}
+                {language === 'es' ? 'Ver labs guiados' : 'Open guided labs'}
               </button>
             </div>
           </div>
@@ -132,7 +132,7 @@ export function PhaseZeroLanding() {
                   <div className="text-sm font-black text-white">100% Client-Side</div>
                   <p className="mt-2 text-sm leading-7 text-white/74">
                     {language === 'es'
-                      ? 'Todo el motor que ves está simulado en React. No hay conexión a una base real ni riesgo de romper nada.'
+                      ? 'Todo lo que ves está simulado en React. No hay conexión a una base real ni riesgo de romper nada.'
                       : 'Everything you see is simulated in React. There is no live database connection and no risk of breaking anything.'}
                   </p>
                 </div>
@@ -158,26 +158,26 @@ export function PhaseZeroLanding() {
               {language === 'es' ? 'Fase 0' : 'Phase 0'}
             </div>
             <h2 className="mt-3 text-3xl font-black text-white sm:text-4xl">
-              {language === 'es' ? 'El camino del DBA, sin mezclarlo todo' : 'The DBA path, without mixing everything together'}
+              {language === 'es' ? 'Tres caminos claros para no mezclarlo todo' : 'Three clear paths so nothing gets mixed together'}
             </h2>
             <p className="mt-4 text-sm leading-7 text-white/70 sm:text-base">
               {language === 'es'
-                ? 'Tres puertas distintas para que cada usuario sepa por dónde empezar: aprender el motor, practicar bajo presión o diagnosticar una incidencia real.'
-                : 'Three clear doors so every user knows where to start: learn the engine, practice under pressure, or diagnose a real incident.'}
+                ? 'Cada área tiene un objetivo distinto. Aprende cuando necesitas base, practica cuando quieres ver el motor reaccionar y diagnostica cuando ya hay una incidencia delante.'
+                : 'Each area has a different job. Learn when you need the mental model, practice when you want to watch the engine react, and diagnose when an incident is already live.'}
             </p>
           </div>
 
           <div className="mt-8 grid gap-4 lg:grid-cols-3">
             {cards.map(({ surface, preview }) => {
               const Icon = surface.icon;
+
               return (
                 <button
                   key={surface.id}
                   onClick={() => navigate(surface.route)}
                   className={cn(
-                    'group rounded-[1.75rem] border p-6 text-left transition-all hover:-translate-y-1',
-                    surface.cardClassName,
-                    'shadow-[0_25px_80px_rgba(0,0,0,0.22)]'
+                    'group rounded-[1.75rem] border p-6 text-left shadow-[0_25px_80px_rgba(0,0,0,0.22)] transition-all hover:-translate-y-1',
+                    surface.cardClassName
                   )}
                 >
                   <div className="flex items-start justify-between gap-4">
@@ -223,12 +223,14 @@ export function PhaseZeroLanding() {
                   <div className="text-sm font-black text-white">{language === 'es' ? 'Aprende viendo' : 'Learn by watching'}</div>
                   <p className="mt-2 text-sm leading-7 text-white/74">
                     {language === 'es'
-                      ? 'El motor, la memoria, los waits y el log se ven y se siguen, no se intuyen leyendo solo texto.'
-                      : 'The engine, memory, waits, and log can be seen and followed, not just inferred from static text.'}
+                      ? 'El motor, la memoria, los waits y el log se siguen visualmente; no dependen solo de texto estático.'
+                      : 'The engine, memory, waits, and log are followed visually instead of relying on static text alone.'}
                   </p>
                 </div>
                 <div className="rounded-2xl border border-lime-500/20 bg-lime-500/10 p-4">
-                  <div className="text-sm font-black text-white">{language === 'es' ? 'Practica sin romper nada' : 'Practice without breaking anything'}</div>
+                  <div className="text-sm font-black text-white">
+                    {language === 'es' ? 'Practica sin romper nada' : 'Practice without breaking anything'}
+                  </div>
                   <p className="mt-2 text-sm leading-7 text-white/74">
                     {language === 'es'
                       ? 'Puedes simular bloqueos, spill, WRITELOG o contención de TempDB sin tocar una instancia real.'

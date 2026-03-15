@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { ChevronDown, Compass, Database, PanelLeftClose, PanelLeftOpen, X } from 'lucide-react';
+import { ChevronDown, Database, PanelLeftClose, PanelLeftOpen, X } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { useLanguage } from '../../contexts/LanguageContext';
 import {
@@ -47,11 +47,6 @@ const SURFACE_ACCENTS = {
     chip: 'border-lime-500/25 bg-lime-500/10 text-lime-200',
     button: 'border-lime-500/25 bg-lime-500/10 text-lime-100 hover:bg-lime-500/20',
   },
-  library: {
-    rail: 'bg-cyan-400',
-    chip: 'border-cyan-500/25 bg-cyan-500/10 text-cyan-200',
-    button: 'border-cyan-500/25 bg-cyan-500/10 text-cyan-100 hover:bg-cyan-500/20',
-  },
 } as const;
 
 export function Sidebar({
@@ -70,15 +65,16 @@ export function Sidebar({
   const showCompact = isCollapsed && !isMobileOpen;
   const normalizedQuery = normalizeSearchValue(searchQuery);
   const hasSearch = normalizedQuery.length > 0;
+  const showModuleIndex = Boolean(currentModule) || hasSearch;
   const accents = SURFACE_ACCENTS[currentSurface];
-  const guide = currentSurface === 'library' ? null : SURFACE_GUIDES[currentSurface];
+  const guide = SURFACE_GUIDES[currentSurface];
   const sequence = getSurfaceSequence(currentSurface);
   const starterModule = sequence.length > 0 ? getModuleDefinition(sequence[0]) : undefined;
   const currentDefinition = currentModule ? getModuleDefinition(currentModule) : undefined;
   const currentStepIndex = currentModule ? getModuleStepIndex(currentSurface, currentModule) : -1;
   const nextModule =
-    currentSurface !== 'library' && currentModule
-      ? getModuleDefinition(sequence[currentStepIndex + 1] as ModuleId)
+    currentModule && currentStepIndex >= 0 && currentStepIndex < sequence.length - 1
+      ? getModuleDefinition(sequence[currentStepIndex + 1])
       : undefined;
 
   const sections = useMemo(() => {
@@ -128,7 +124,7 @@ export function Sidebar({
   const renderModuleButton = (module: (typeof ALL_MODULES)[number]) => {
     const Icon = module.icon;
     const isActive = currentModule === module.id;
-    const stepIndex = currentSurface === 'library' ? -1 : getModuleStepIndex(currentSurface, module.id);
+    const stepIndex = getModuleStepIndex(currentSurface, module.id);
 
     return (
       <button
@@ -143,10 +139,12 @@ export function Sidebar({
         )}
         title={t(module.titleKey)}
       >
-        {isActive && !showCompact ? <div className={cn('absolute inset-y-2 left-0 w-1 rounded-r-full', accents.rail)} /> : null}
+        {isActive && !showCompact ? (
+          <div className={cn('absolute inset-y-2 left-0 w-1 rounded-r-full', accents.rail)} />
+        ) : null}
 
         <div className={cn('flex items-center', showCompact ? 'justify-center' : 'gap-3')}>
-          {!showCompact && stepIndex >= 0 ? (
+          {!showCompact ? (
             <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-white/10 bg-black/25 text-[10px] font-black text-white/60">
               {stepIndex + 1}
             </div>
@@ -183,10 +181,7 @@ export function Sidebar({
         )}
       >
         <div className="flex items-center justify-between gap-3">
-          <button
-            onClick={() => onSurfaceChange(currentSurface)}
-            className={cn('flex min-w-0 items-center gap-3', showCompact && 'justify-center')}
-          >
+          <div className={cn('flex min-w-0 items-center gap-3', showCompact && 'justify-center')}>
             <div className="rounded-xl border border-teal-500/25 bg-teal-500/10 p-2 shadow-[0_0_30px_rgba(20,184,166,0.08)]">
               <Database className="h-5 w-5 text-teal-300" />
             </div>
@@ -200,7 +195,7 @@ export function Sidebar({
                 </p>
               </div>
             ) : null}
-          </button>
+          </div>
 
           <button
             type="button"
@@ -212,7 +207,43 @@ export function Sidebar({
           </button>
         </div>
 
-        {!showCompact && guide ? (
+        {!showCompact ? (
+          <div className="mt-4 grid gap-2">
+            {(Object.keys(SURFACE_DEFINITIONS) as SurfaceId[]).map((surface) => {
+              const meta = SURFACE_DEFINITIONS[surface];
+              const Icon = meta.icon;
+              const isActive = surface === currentSurface;
+
+              return (
+                <button
+                  key={surface}
+                  onClick={() => onSurfaceChange(surface)}
+                  className={cn(
+                    'flex items-center justify-between rounded-xl border px-3 py-2.5 text-left transition-all',
+                    isActive
+                      ? 'border-white/10 bg-white/10 text-white'
+                      : 'border-transparent bg-white/[0.02] text-white/60 hover:border-white/10 hover:bg-white/[0.05] hover:text-white'
+                  )}
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="rounded-lg border border-white/10 bg-black/25 p-2">
+                      <Icon className={cn('h-4 w-4', meta.textClassName)} />
+                    </div>
+                    <div>
+                      <div className="text-sm font-black text-white">{pick(language, meta.title)}</div>
+                      <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-white/38">
+                        {pick(language, meta.kicker)}
+                      </div>
+                    </div>
+                  </div>
+                  {isActive ? <div className={cn('h-8 w-1 rounded-full', accents.rail)} /> : null}
+                </button>
+              );
+            })}
+          </div>
+        ) : null}
+
+        {!showCompact ? (
           <div className="mt-4 rounded-2xl border border-white/10 bg-slate-950/60 p-3">
             <div className="flex items-center justify-between gap-3">
               <div>
@@ -222,7 +253,7 @@ export function Sidebar({
                 <div className="mt-1 text-sm font-black text-white">{pick(language, guide.title)}</div>
               </div>
               <span className={cn('rounded-full border px-2 py-1 text-[10px] font-black uppercase tracking-[0.14em]', accents.chip)}>
-                {currentSurface === 'learn' ? 'guided' : currentSurface}
+                {currentSurface}
               </span>
             </div>
 
@@ -232,7 +263,7 @@ export function Sidebar({
               {currentModule ? (
                 <>
                   <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-white/38">
-                    {language === 'es' ? 'Sigues por aqui' : 'You continue here'}
+                    {language === 'es' ? 'Ahora vas por aqui' : 'You are here now'}
                   </div>
                   <div className="mt-1 text-sm font-black text-white">
                     {currentDefinition ? t(currentDefinition.titleKey) : currentModule}
@@ -267,7 +298,6 @@ export function Sidebar({
                   accents.button
                 )}
               >
-                <Compass className="h-4 w-4" />
                 {currentModule ? pick(language, guide.continueLabel) : pick(language, guide.startLabel)}
               </button>
             ) : null}
@@ -276,61 +306,6 @@ export function Sidebar({
       </div>
 
       <nav className={cn('flex-1 overflow-y-auto', showCompact ? 'p-3' : 'p-4')}>
-        {!showCompact ? (
-          <div className="mb-4 space-y-4">
-            <div>
-              <div className="mb-2 flex items-center gap-2 px-2">
-                <span className={cn('h-2 w-2 rounded-full', accents.rail)} />
-                <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-white/42">
-                  {currentSurface === 'library'
-                    ? language === 'es'
-                      ? 'Catalogo experto'
-                      : 'Expert catalog'
-                    : language === 'es'
-                    ? 'Ruta principal'
-                    : 'Main route'}
-                </span>
-              </div>
-
-              <div className="grid gap-2">
-                {(Object.keys(SURFACE_DEFINITIONS) as SurfaceId[]).map((surface) => {
-                  const isActive = surface === currentSurface;
-                  const meta = SURFACE_DEFINITIONS[surface];
-                  const Icon = meta.icon;
-
-                  return (
-                    <button
-                      key={surface}
-                      onClick={() => onSurfaceChange(surface)}
-                      className={cn(
-                        'flex items-center justify-between rounded-xl border px-3 py-2.5 text-left transition-all',
-                        isActive
-                          ? 'border-white/10 bg-white/10 text-white'
-                          : 'border-transparent bg-white/[0.02] text-white/60 hover:border-white/10 hover:bg-white/[0.05] hover:text-white'
-                      )}
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="rounded-lg border border-white/10 bg-black/25 p-2">
-                          <Icon className={cn('h-4 w-4', meta.textClassName)} />
-                        </div>
-                        <div>
-                          <div className="text-sm font-black text-white">{pick(language, meta.title)}</div>
-                          <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-white/38">
-                            {pick(language, meta.kicker)}
-                          </div>
-                        </div>
-                      </div>
-                      {isActive ? <div className={cn('h-8 w-1 rounded-full', accents.rail)} /> : null}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            <div className="h-px bg-white/5" />
-          </div>
-        ) : null}
-
         <div className="space-y-3">
           {sections.map((section) => {
             const isExpanded = hasSearch || expandedSections[section.id];
@@ -349,7 +324,7 @@ export function Sidebar({
                       <div className="mt-1 truncate text-xs text-white/55">{pick(language, section.goal)}</div>
                     </div>
                     <div className="flex items-center gap-2">
-                      {'xp' in section && section.xp ? (
+                      {section.xp ? (
                         <span className="rounded-full border border-white/10 bg-black/30 px-2 py-1 text-[10px] font-black text-white/45">
                           XP {section.xp}
                         </span>
@@ -369,9 +344,23 @@ export function Sidebar({
                 ) : null}
 
                 {isExpanded ? (
-                  <div className={cn('space-y-1 border-t border-white/10', showCompact ? 'px-1 py-2' : 'px-2 py-2')}>
-                    {section.modules.map((module) => renderModuleButton(module))}
-                  </div>
+                  showModuleIndex ? (
+                    <div className={cn('space-y-1 border-t border-white/10', showCompact ? 'px-1 py-2' : 'px-2 py-2')}>
+                      {section.modules.map((module) => renderModuleButton(module))}
+                    </div>
+                  ) : (
+                    <div className="border-t border-white/10 px-3 py-3">
+                      <div className="rounded-2xl border border-white/10 bg-black/25 p-4">
+                        <div className="text-[10px] font-black uppercase tracking-[0.16em] text-white/42">
+                          {language === 'es' ? 'Qué vas a ver aquí' : 'What this block covers'}
+                        </div>
+                        <p className="mt-2 text-sm leading-7 text-white/62">{pick(language, section.description)}</p>
+                        <div className="mt-3 text-xs text-white/45">
+                          {section.moduleIds.length} {language === 'es' ? 'módulos en esta etapa' : 'modules in this stage'}
+                        </div>
+                      </div>
+                    </div>
+                  )
                 ) : null}
               </div>
             );
@@ -379,7 +368,7 @@ export function Sidebar({
 
           {hasSearch && sections.length === 0 ? (
             <div className="rounded-xl border border-white/10 bg-black/20 px-3 py-3 text-xs text-white/55">
-              {language === 'es' ? 'Sin resultados en esta superficie' : 'No results in this surface'}
+              {language === 'es' ? 'Sin resultados en esta area' : 'No results in this area'}
             </div>
           ) : null}
         </div>

@@ -15,7 +15,6 @@ import {
 interface HeaderProps {
   currentSurface: SurfaceId;
   currentModule: ModuleId | null;
-  onSurfaceChange: (surface: SurfaceId) => void;
   onNavigateToModule: (surface: SurfaceId, moduleId: ModuleId) => void;
   searchQuery: string;
   onSearchQueryChange: (value: string) => void;
@@ -29,7 +28,6 @@ function pick(language: 'en' | 'es', value: { en: string; es: string }) {
 export function Header({
   currentSurface,
   currentModule,
-  onSurfaceChange,
   onNavigateToModule,
   searchQuery,
   onSearchQueryChange,
@@ -225,29 +223,6 @@ export function Header({
           </div>
         </div>
 
-        <div className="flex flex-wrap gap-2">
-          {(Object.keys(SURFACE_DEFINITIONS) as SurfaceId[]).map((surface) => {
-            const isActive = surface === currentSurface;
-            const meta = SURFACE_DEFINITIONS[surface];
-            const Icon = meta.icon;
-
-            return (
-              <button
-                key={surface}
-                onClick={() => onSurfaceChange(surface)}
-                className={cn(
-                  'flex items-center gap-2 rounded-full border px-4 py-2 text-xs font-black uppercase tracking-[0.16em] transition-all',
-                  isActive
-                    ? meta.chipClassName
-                    : 'border-white/10 bg-white/5 text-white/55 hover:bg-white/10 hover:text-white'
-                )}
-              >
-                <Icon className="h-3.5 w-3.5" />
-                {pick(language, meta.title)}
-              </button>
-            );
-          })}
-        </div>
       </div>
     </header>
   );

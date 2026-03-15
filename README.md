@@ -44,11 +44,6 @@ Go straight to triage, evidence, and response.
 - OS and platform checklists
 - HA/DR response paths
 
-### Expert Mode: Library
-`Library` exists as an expert-mode catalog for people who already know where they want to go. It is intentionally secondary to the three main journeys above.
-
----
-
 ## Core Promise
 
 The landing and product structure are designed to answer three questions quickly:
@@ -113,7 +108,7 @@ This project uses a modern frontend stack to simulate engine behavior entirely i
 - Tailwind CSS
 - i18n support for English and Spanish
 - Context-based shared state
-- Route-based navigation for `Learn`, `Labs`, `Diagnose`, and expert `Library`
+- Route-based navigation for `Learn`, `Labs`, and `Diagnose`
 
 The current product phase is intentionally client-side first:
 
@@ -151,9 +146,8 @@ The current direction is:
 
 1. Make the landing extremely clear
 2. Keep the main product paths obvious: Learn, Labs, Diagnose
-3. Treat Library as expert access, not as the emotional center of the product
-4. Expand simulated labs before introducing heavier backend infrastructure
-5. Add static analysis of SQL artifacts such as execution plans and XE files before considering controlled real-engine interaction
+3. Expand simulated labs before introducing heavier backend infrastructure
+4. Add static analysis of SQL artifacts such as execution plans and XE files before considering controlled real-engine interaction
 
 ---
 

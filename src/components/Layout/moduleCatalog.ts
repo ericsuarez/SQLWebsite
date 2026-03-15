@@ -40,9 +40,9 @@ export type ModuleId =
   | 'replication'
   | 'version-history';
 
-export type SurfaceId = 'learn' | 'labs' | 'diagnose' | 'library';
+export type SurfaceId = 'learn' | 'labs' | 'diagnose';
 export type LearnLevel = 1 | 2 | 3 | null;
-export type LibraryGroupId = 'engine' | 'operations' | 'internals';
+export type ModuleGroupId = 'engine' | 'operations' | 'internals';
 
 export interface LocalizedText {
   en: string;
@@ -56,9 +56,9 @@ export interface ModuleDefinition {
   color: string;
   aliases: string[];
   summary: LocalizedText;
-  primaryHome: Exclude<SurfaceId, 'library'>;
+  primaryHome: SurfaceId;
   availableIn: SurfaceId[];
-  libraryGroup: LibraryGroupId;
+  group: ModuleGroupId;
   level: LearnLevel;
   defaultSubview?: string;
   defaultMode?: string;
@@ -97,19 +97,14 @@ export interface SurfaceGuideDefinition {
   completeLabel: LocalizedText;
 }
 
-export interface LibraryGroupDefinition {
-  id: LibraryGroupId;
-  label: LocalizedText;
-}
-
 export const SURFACE_DEFINITIONS: Record<SurfaceId, SurfaceDefinition> = {
   learn: {
     id: 'learn',
     title: { en: 'Learn', es: 'Aprende' },
-    kicker: { en: 'Learning Route', es: 'Ruta de Aprendizaje' },
+    kicker: { en: 'Academy', es: 'Academia' },
     description: {
-      en: 'Build the mental model first: engine, memory, execution, waits, and internals with a guided order.',
-      es: 'Construye primero el mapa mental: motor, memoria, ejecucion, waits e internals en un orden guiado.',
+      en: 'Build the mental model first: engine, storage, memory, execution, waits, and advanced internals in order.',
+      es: 'Construye primero el mapa mental: motor, almacenamiento, memoria, ejecucion, waits e internals avanzados en orden.',
     },
     route: '/learn',
     icon: BookOpen,
@@ -120,9 +115,9 @@ export const SURFACE_DEFINITIONS: Record<SurfaceId, SurfaceDefinition> = {
   labs: {
     id: 'labs',
     title: { en: 'Practice', es: 'Practica' },
-    kicker: { en: 'Interactive Labs', es: 'Laboratorios Interactivos' },
+    kicker: { en: 'Labs', es: 'Labs' },
     description: {
-      en: 'Use guided simulations and fullscreen play views to watch what the engine is doing under pressure.',
+      en: 'Use guided simulations and play views to watch what the engine is doing under pressure.',
       es: 'Usa simulaciones guiadas y vistas play para ver que esta haciendo el motor bajo presion.',
     },
     route: '/labs',
@@ -134,10 +129,10 @@ export const SURFACE_DEFINITIONS: Record<SurfaceId, SurfaceDefinition> = {
   diagnose: {
     id: 'diagnose',
     title: { en: 'Diagnose', es: 'Diagnostica' },
-    kicker: { en: 'Triage & Evidence', es: 'Triage y Evidencia' },
+    kicker: { en: 'Triage & Response', es: 'Triage y Respuesta' },
     description: {
-      en: 'Jump straight into queries, XE, postmortems, and operational checklists when an incident is already live.',
-      es: 'Salta directo a queries, XE, postmortems y checklists operativos cuando la incidencia ya esta en marcha.',
+      en: 'Jump into queries, evidence capture, real cases, and operational response when an incident is already live.',
+      es: 'Salta a queries, captura de evidencia, casos reales y respuesta operativa cuando la incidencia ya esta en marcha.',
     },
     route: '/diagnose',
     icon: Radar,
@@ -145,72 +140,52 @@ export const SURFACE_DEFINITIONS: Record<SurfaceId, SurfaceDefinition> = {
     cardClassName: 'border-lime-500/20 bg-lime-500/10',
     textClassName: 'text-lime-300',
   },
-  library: {
-    id: 'library',
-    title: { en: 'Library', es: 'Biblioteca' },
-    kicker: { en: 'Expert Catalog', es: 'Catalogo Experto' },
-    description: {
-      en: 'Expert access to the full module catalog without the guided order.',
-      es: 'Acceso experto al catalogo completo de modulos sin pasar por la ruta guiada.',
-    },
-    route: '/library',
-    icon: Database,
-    chipClassName: 'border-cyan-500/25 bg-cyan-500/10 text-cyan-200',
-    cardClassName: 'border-cyan-500/20 bg-cyan-500/10',
-    textClassName: 'text-cyan-300',
-  },
 };
 
-export const SURFACE_GUIDES: Record<Exclude<SurfaceId, 'library'>, SurfaceGuideDefinition> = {
+export const SURFACE_GUIDES: Record<SurfaceId, SurfaceGuideDefinition> = {
   learn: {
     title: { en: 'Follow the engine in order', es: 'Sigue el motor en orden' },
     intro: {
-      en: 'Do not jump randomly between tabs. Start with engine shape, then memory and execution, and only then move into performance and internals.',
-      es: 'No saltes al azar entre pestanas. Empieza por la forma del motor, luego memoria y ejecucion, y solo despues entra en rendimiento e internals.',
+      en: 'Start with architecture and engine shape. Then move into memory and execution. Only after that go into performance and advanced internals.',
+      es: 'Empieza por arquitectura y forma del motor. Luego entra en memoria y ejecucion. Solo despues baja a rendimiento e internals avanzados.',
     },
     coaching: {
-      en: 'The goal here is a clean mental model before the advanced tooling.',
-      es: 'La meta aqui es construir un mapa mental limpio antes de abrir las herramientas avanzadas.',
+      en: 'This path is here so you stop jumping between concepts that only make sense once the base model is clear.',
+      es: 'Esta ruta existe para que dejes de saltar entre conceptos que solo tienen sentido cuando la base esta clara.',
     },
-    startLabel: { en: 'Start guided path', es: 'Empezar ruta guiada' },
-    continueLabel: { en: 'Continue path', es: 'Continuar ruta' },
-    completeLabel: { en: 'Finish this level', es: 'Cerrar este nivel' },
+    startLabel: { en: 'Start academy', es: 'Empezar academia' },
+    continueLabel: { en: 'Continue academy', es: 'Continuar academia' },
+    completeLabel: { en: 'Finish this stage', es: 'Cerrar esta etapa' },
   },
   labs: {
-    title: { en: 'Practice without opening everything at once', es: 'Practica sin abrirlo todo a la vez' },
+    title: { en: 'Train by watching the engine react', es: 'Entrena viendo reaccionar al motor' },
     intro: {
-      en: 'Start by reading the symptom, then watch the engine reaction, and only after that move into deeper internals and DBA runbooks.',
-      es: 'Empieza leyendo el sintoma, luego mira la reaccion del motor y solo despues entra en internals profundos y runbooks DBA.',
+      en: 'Read the symptom, watch the internal path, and then decide what a DBA would do next.',
+      es: 'Lee el sintoma, mira la ruta interna y despues decide que haria un DBA a continuacion.',
     },
     coaching: {
-      en: 'Each lab should teach suspicion, proof, and the next safe move.',
-      es: 'Cada lab deberia ensenarte sospecha, prueba y siguiente movimiento seguro.',
+      en: 'Every lab should teach suspicion, proof, and the next safe move, not just show a lot of text.',
+      es: 'Cada lab debe ensenar sospecha, prueba y siguiente movimiento seguro, no solo soltar mucho texto.',
     },
-    startLabel: { en: 'Start with the first drill', es: 'Empezar por el primer drill' },
-    continueLabel: { en: 'Keep practicing', es: 'Seguir practicando' },
-    completeLabel: { en: 'Move to the next drill', es: 'Pasar al siguiente drill' },
+    startLabel: { en: 'Start labs', es: 'Empezar labs' },
+    continueLabel: { en: 'Continue labs', es: 'Continuar labs' },
+    completeLabel: { en: 'Next lab block', es: 'Siguiente bloque' },
   },
   diagnose: {
     title: { en: 'Triage first, evidence second, action third', es: 'Primero triage, luego evidencia, despues accion' },
     intro: {
-      en: 'When production hurts, avoid opening every tool at once. Start with the smallest proof, capture what disappears, and then choose the operational response.',
-      es: 'Cuando produccion duele, evita abrir todas las herramientas a la vez. Empieza por la prueba minima, captura lo que desaparece y luego elige la respuesta operativa.',
+      en: 'Reduce noise first. Then capture what disappears. Finally decide the operational response.',
+      es: 'Primero reduce ruido. Luego captura lo que desaparece. Por ultimo decide la respuesta operativa.',
     },
     coaching: {
-      en: 'This path is built to reduce noise, not to show every metric at the same time.',
-      es: 'Esta ruta esta pensada para reducir ruido, no para mostrar todas las metricas a la vez.',
+      en: 'This route is for incidents that already exist. It should feel direct, not exploratory.',
+      es: 'Esta ruta es para incidencias que ya existen. Debe sentirse directa, no exploratoria.',
     },
-    startLabel: { en: 'Start with triage', es: 'Empezar por triage' },
-    continueLabel: { en: 'Continue investigation', es: 'Continuar investigacion' },
-    completeLabel: { en: 'Go to response', es: 'Ir a respuesta' },
+    startLabel: { en: 'Start triage', es: 'Empezar triage' },
+    continueLabel: { en: 'Continue diagnosis', es: 'Continuar diagnostico' },
+    completeLabel: { en: 'Move to response', es: 'Pasar a respuesta' },
   },
 };
-
-export const LIBRARY_GROUPS: LibraryGroupDefinition[] = [
-  { id: 'engine', label: { en: 'Engine Core', es: 'Core del Motor' } },
-  { id: 'operations', label: { en: 'Operations & DBA', es: 'Operaciones y DBA' } },
-  { id: 'internals', label: { en: 'Internals & Evolution', es: 'Internals y Evolucion' } },
-];
 
 export const MODULES: ModuleDefinition[] = [
   {
@@ -224,8 +199,8 @@ export const MODULES: ModuleDefinition[] = [
       es: 'Como se organiza SQL Server por capas, que bases de sistema existen y como encajan los ficheros.',
     },
     primaryHome: 'learn',
-    availableIn: ['learn', 'library'],
-    libraryGroup: 'engine',
+    availableIn: ['learn'],
+    group: 'engine',
     level: 1,
   },
   {
@@ -239,8 +214,8 @@ export const MODULES: ModuleDefinition[] = [
       es: 'Paginas, extents, ficheros, recovery y el comportamiento fisico del motor de almacenamiento.',
     },
     primaryHome: 'learn',
-    availableIn: ['learn', 'library'],
-    libraryGroup: 'engine',
+    availableIn: ['learn'],
+    group: 'engine',
     level: 1,
   },
   {
@@ -254,8 +229,8 @@ export const MODULES: ModuleDefinition[] = [
       es: 'Buffer Pool, clerks, grants y configuracion de memoria desde la vision del motor.',
     },
     primaryHome: 'learn',
-    availableIn: ['learn', 'library'],
-    libraryGroup: 'engine',
+    availableIn: ['learn'],
+    group: 'engine',
     level: 1,
   },
   {
@@ -269,8 +244,8 @@ export const MODULES: ModuleDefinition[] = [
       es: 'Pipeline de ejecucion, decisiones del optimizador, DMVs y operadores del plan.',
     },
     primaryHome: 'learn',
-    availableIn: ['learn', 'labs', 'library'],
-    libraryGroup: 'engine',
+    availableIn: ['learn', 'labs'],
+    group: 'engine',
     level: 1,
     defaultSubview: 'optimizer',
   },
@@ -285,8 +260,8 @@ export const MODULES: ModuleDefinition[] = [
       es: 'Indices clustered y nonclustered, lookups, cobertura, fragmentacion y coste de lectura.',
     },
     primaryHome: 'learn',
-    availableIn: ['learn', 'library'],
-    libraryGroup: 'engine',
+    availableIn: ['learn'],
+    group: 'engine',
     level: 2,
   },
   {
@@ -300,8 +275,8 @@ export const MODULES: ModuleDefinition[] = [
       es: 'Baselines de contadores para CPU, memoria e I/O cuando la instancia empieza a doler.',
     },
     primaryHome: 'learn',
-    availableIn: ['learn', 'diagnose', 'library'],
-    libraryGroup: 'operations',
+    availableIn: ['learn', 'diagnose'],
+    group: 'operations',
     level: 2,
   },
   {
@@ -315,8 +290,8 @@ export const MODULES: ModuleDefinition[] = [
       es: 'Schedulers, waits, workers, sincronizacion y el mapa mental de SQLOS.',
     },
     primaryHome: 'learn',
-    availableIn: ['learn', 'library'],
-    libraryGroup: 'operations',
+    availableIn: ['learn'],
+    group: 'operations',
     level: 2,
   },
   {
@@ -330,8 +305,8 @@ export const MODULES: ModuleDefinition[] = [
       es: 'La capa host: virtualizacion, IFI, LPIM, power plan y otros cuellos invisibles.',
     },
     primaryHome: 'diagnose',
-    availableIn: ['learn', 'labs', 'diagnose', 'library'],
-    libraryGroup: 'operations',
+    availableIn: ['learn', 'labs', 'diagnose'],
+    group: 'operations',
     level: 2,
   },
   {
@@ -345,8 +320,8 @@ export const MODULES: ModuleDefinition[] = [
       es: 'WAL, log flush, forma de los VLF y por que la latencia del commit vive en la ruta del log.',
     },
     primaryHome: 'learn',
-    availableIn: ['learn', 'labs', 'library'],
-    libraryGroup: 'internals',
+    availableIn: ['learn', 'labs'],
+    group: 'internals',
     level: 3,
     defaultSubview: 'flow',
   },
@@ -361,8 +336,8 @@ export const MODULES: ModuleDefinition[] = [
       es: 'Dolor de asignacion en TempDB, baselines de I/O, rafagas de checkpoint y comportamiento de lazy writer.',
     },
     primaryHome: 'learn',
-    availableIn: ['learn', 'labs', 'library'],
-    libraryGroup: 'internals',
+    availableIn: ['learn', 'labs'],
+    group: 'internals',
     level: 3,
     defaultSubview: 'tempdb',
   },
@@ -377,8 +352,8 @@ export const MODULES: ModuleDefinition[] = [
       es: 'ADR, IQP, Hekaton, SQLPAL y que cambio en las versiones modernas de SQL Server.',
     },
     primaryHome: 'learn',
-    availableIn: ['learn', 'library'],
-    libraryGroup: 'internals',
+    availableIn: ['learn'],
+    group: 'internals',
     level: 3,
   },
   {
@@ -392,8 +367,8 @@ export const MODULES: ModuleDefinition[] = [
       es: 'Publisher, distributor, subscriber y las topologias principales de replicacion.',
     },
     primaryHome: 'learn',
-    availableIn: ['learn', 'library'],
-    libraryGroup: 'internals',
+    availableIn: ['learn'],
+    group: 'internals',
     level: 3,
   },
   {
@@ -407,8 +382,8 @@ export const MODULES: ModuleDefinition[] = [
       es: 'Linaje de versiones, historia de releases, ramas de servicing y por que importan algunas features.',
     },
     primaryHome: 'learn',
-    availableIn: ['learn', 'library'],
-    libraryGroup: 'internals',
+    availableIn: ['learn'],
+    group: 'internals',
     level: 3,
   },
   {
@@ -422,8 +397,8 @@ export const MODULES: ModuleDefinition[] = [
       es: 'Always On, modos de commit, sync lag y el runbook DBA para incidencias de HA/DR.',
     },
     primaryHome: 'diagnose',
-    availableIn: ['learn', 'diagnose', 'library'],
-    libraryGroup: 'operations',
+    availableIn: ['learn', 'diagnose'],
+    group: 'operations',
     level: 3,
   },
   {
@@ -437,8 +412,8 @@ export const MODULES: ModuleDefinition[] = [
       es: 'Drills guiados de incidencia centrados en sospecha, prueba y siguiente paso DBA.',
     },
     primaryHome: 'labs',
-    availableIn: ['labs', 'library'],
-    libraryGroup: 'operations',
+    availableIn: ['labs'],
+    group: 'operations',
     level: null,
     defaultMode: 'play',
   },
@@ -453,8 +428,8 @@ export const MODULES: ModuleDefinition[] = [
       es: 'Mantenimiento, health checks y habitos operativos alrededor de SQL Agent jobs.',
     },
     primaryHome: 'diagnose',
-    availableIn: ['labs', 'diagnose', 'library'],
-    libraryGroup: 'operations',
+    availableIn: ['labs', 'diagnose'],
+    group: 'operations',
     level: null,
     defaultMode: 'play',
   },
@@ -469,8 +444,8 @@ export const MODULES: ModuleDefinition[] = [
       es: 'Packs de triage listos para blockers, CPU, waits, memoria, TempDB, log y problemas de AG.',
     },
     primaryHome: 'diagnose',
-    availableIn: ['diagnose', 'library'],
-    libraryGroup: 'operations',
+    availableIn: ['diagnose'],
+    group: 'operations',
     level: null,
     defaultSubview: 'detect',
     defaultMode: 'play',
@@ -486,8 +461,8 @@ export const MODULES: ModuleDefinition[] = [
       es: 'Captura lo que las DMVs no ven: blocked process, deadlock graphs, attention y evidencia duradera.',
     },
     primaryHome: 'diagnose',
-    availableIn: ['diagnose', 'library'],
-    libraryGroup: 'operations',
+    availableIn: ['diagnose'],
+    group: 'operations',
     level: null,
     defaultMode: 'play',
   },
@@ -502,8 +477,8 @@ export const MODULES: ModuleDefinition[] = [
       es: 'Postmortems transversales para leer la incidencia completa desde el sintoma hasta la respuesta operativa.',
     },
     primaryHome: 'diagnose',
-    availableIn: ['diagnose', 'library'],
-    libraryGroup: 'operations',
+    availableIn: ['diagnose'],
+    group: 'operations',
     level: null,
   },
 ];
@@ -513,18 +488,18 @@ export const SURFACE_SECTIONS: Record<SurfaceId, SurfaceSectionDefinition[]> = {
     {
       id: 'level-1',
       surface: 'learn',
-      label: { en: 'Level 1 · Engine Fundamentals', es: 'Nivel 1 · Fundamentos del motor' },
+      label: { en: 'Stage 1 · Engine Fundamentals', es: 'Etapa 1 · Fundamentos del motor' },
       description: {
-        en: 'Start with the shape of SQL Server before diving into advanced diagnostics.',
-        es: 'Empieza por la forma de SQL Server antes de entrar en el diagnostico avanzado.',
+        en: 'Start with how SQL Server is shaped before jumping into waits or production incidents.',
+        es: 'Empieza por como esta montado SQL Server antes de saltar a waits o incidencias de produccion.',
       },
       goal: {
-        en: 'Understand how engine, pages, memory, and execution fit together before you worry about waits or incidents.',
-        es: 'Entiende como encajan motor, paginas, memoria y ejecucion antes de preocuparte por waits o incidencias.',
+        en: 'Understand how architecture, storage, memory, and execution fit together.',
+        es: 'Entiende como encajan arquitectura, almacenamiento, memoria y ejecucion.',
       },
       outcome: {
-        en: 'When you finish this level, you can read a query path from files to memory to execution.',
-        es: 'Cuando cierres este nivel, ya podras leer el camino de una query desde ficheros hasta memoria y ejecucion.',
+        en: 'You finish this stage with a clean model of how a query moves through the engine.',
+        es: 'Cierras esta etapa con un modelo claro de como se mueve una query por el motor.',
       },
       moduleIds: ['architecture', 'storage', 'memory', 'execution'],
       level: 1,
@@ -533,18 +508,18 @@ export const SURFACE_SECTIONS: Record<SurfaceId, SurfaceSectionDefinition[]> = {
     {
       id: 'level-2',
       surface: 'learn',
-      label: { en: 'Level 2 · Performance & Design', es: 'Nivel 2 · Rendimiento y diseno' },
+      label: { en: 'Stage 2 · Performance & Design', es: 'Etapa 2 · Rendimiento y diseno' },
       description: {
-        en: 'Plan shape, indexes, waits, counters, and the host settings that change behavior.',
-        es: 'Forma del plan, indices, waits, contadores y ajustes del host que cambian el comportamiento.',
+        en: 'Move into indexes, schedulers, counters, and host settings that change behavior.',
+        es: 'Pasa a indices, schedulers, contadores y ajustes del host que cambian el comportamiento.',
       },
       goal: {
-        en: 'Learn why one plan shape or one host setting can change CPU, memory pressure, and latency.',
-        es: 'Aprende por que una forma de plan o un ajuste del host puede cambiar CPU, presion de memoria y latencia.',
+        en: 'Learn why shape, counters, waits, and configuration all point to the same problem from different angles.',
+        es: 'Aprende por que forma, contadores, waits y configuracion apuntan al mismo problema desde angulos distintos.',
       },
       outcome: {
-        en: 'When you finish this level, counters, waits, and index behavior stop looking disconnected.',
-        es: 'Cuando cierres este nivel, contadores, waits y comportamiento de indices dejaran de parecer cosas separadas.',
+        en: 'You stop reading performance symptoms as isolated signals.',
+        es: 'Dejas de leer los sintomas de rendimiento como senales aisladas.',
       },
       moduleIds: ['indexes', 'sqlos', 'perfmon', 'osconfig'],
       level: 2,
@@ -553,18 +528,18 @@ export const SURFACE_SECTIONS: Record<SurfaceId, SurfaceSectionDefinition[]> = {
     {
       id: 'level-3',
       surface: 'learn',
-      label: { en: 'Level 3 · Advanced Internals', es: 'Nivel 3 · Internals avanzados' },
+      label: { en: 'Stage 3 · Advanced Internals', es: 'Etapa 3 · Internals avanzados' },
       description: {
-        en: 'Recovery, TempDB, replication, version history, and the internals that explain edge behavior.',
-        es: 'Recovery, TempDB, replicacion, historia de versiones e internals que explican el comportamiento limite.',
+        en: 'Open the low-level paths that explain recovery, TempDB pain, replication, versioning, and HA behavior.',
+        es: 'Abre las rutas de bajo nivel que explican recovery, dolor de TempDB, replicacion, versionado y comportamiento de HA.',
       },
       goal: {
-        en: 'Move into the low-level paths that explain commits, recovery, TempDB pain, replication flow, and platform evolution.',
-        es: 'Entra en las rutas de bajo nivel que explican commits, recovery, dolor de TempDB, flujo de replicacion y evolucion de la plataforma.',
+        en: 'Understand the internals that usually feel opaque even to experienced DBAs.',
+        es: 'Entiende los internals que suelen parecer opacos incluso a DBAs con experiencia.',
       },
       outcome: {
-        en: 'When you finish this level, you can explain incidents that usually feel opaque even to experienced DBAs.',
-        es: 'Cuando cierres este nivel, podras explicar incidencias que suelen parecer opacas incluso a DBAs con experiencia.',
+        en: 'You can explain why deep engine problems happen instead of treating them like black magic.',
+        es: 'Puedes explicar por que ocurren los problemas profundos del motor en lugar de tratarlos como magia negra.',
       },
       moduleIds: ['tlog-internals', 'tempdb-io', 'modern', 'replication', 'version-history', 'ha'],
       level: 3,
@@ -575,54 +550,54 @@ export const SURFACE_SECTIONS: Record<SurfaceId, SurfaceSectionDefinition[]> = {
     {
       id: 'guided-incidents',
       surface: 'labs',
-      label: { en: 'Guided Incident Labs', es: 'Laboratorios guiados de incidencias' },
+      label: { en: 'Block 1 · Guided Incident Drills', es: 'Bloque 1 · Drills guiados de incidencia' },
       description: {
-        en: 'Work from symptom to proof without leaving the play view.',
-        es: 'Trabaja del sintoma a la prueba sin salir de la vista play.',
+        en: 'Start with the symptom, then prove the suspicion, then choose the next DBA move.',
+        es: 'Empieza por el sintoma, luego prueba la sospecha y despues elige el siguiente paso DBA.',
       },
       goal: {
-        en: 'Build the habit of reading the symptom first and resisting the urge to jump to fixes.',
-        es: 'Construye el habito de leer primero el sintoma y resistir la tentacion de saltar al fix.',
+        en: 'Train the habit of reading before fixing.',
+        es: 'Entrena el habito de leer antes de arreglar.',
       },
       outcome: {
-        en: 'After this stage, you should be able to explain why the chosen suspicion is stronger than the alternatives.',
-        es: 'Despues de esta fase, deberias poder explicar por que la sospecha elegida es mas fuerte que las alternativas.',
+        en: 'You should be able to explain why one suspicion is stronger than another.',
+        es: 'Deberias poder explicar por que una sospecha es mas fuerte que otra.',
       },
       moduleIds: ['incident-labs', 'execution'],
     },
     {
       id: 'engine-labs',
       surface: 'labs',
-      label: { en: 'Engine Internals Labs', es: 'Labs de internals del motor' },
+      label: { en: 'Block 2 · Engine Internals Labs', es: 'Bloque 2 · Labs de internals del motor' },
       description: {
-        en: 'Visual flows for log, TempDB, and host pain points.',
-        es: 'Flujos visuales para log, TempDB y cuellos del host.',
+        en: 'Watch the internal path when the bottleneck is in log, TempDB, or the host layer.',
+        es: 'Mira la ruta interna cuando el cuello esta en log, TempDB o la capa host.',
       },
       goal: {
-        en: 'Watch what really happens under the covers when log, TempDB, or the host layer become the bottleneck.',
-        es: 'Mira que pasa de verdad por debajo cuando el cuello esta en log, TempDB o la capa host.',
+        en: 'See what really happens under the covers, not just the symptom.',
+        es: 'Ver que pasa de verdad por debajo, no solo el sintoma.',
       },
       outcome: {
-        en: 'After this stage, you should be able to connect the symptom with the internal path that produced it.',
-        es: 'Despues de esta fase, deberias poder conectar el sintoma con la ruta interna que lo produjo.',
+        en: 'You should connect the symptom with the internal path that produced it.',
+        es: 'Deberias conectar el sintoma con la ruta interna que lo produjo.',
       },
       moduleIds: ['tlog-internals', 'tempdb-io', 'osconfig'],
     },
     {
       id: 'dba-labs',
       surface: 'labs',
-      label: { en: 'DBA Practice Labs', es: 'Labs de practica DBA' },
+      label: { en: 'Block 3 · DBA Practice', es: 'Bloque 3 · Practica DBA' },
       description: {
-        en: 'Maintenance decisions, runbooks, and operational practice.',
-        es: 'Decisiones de mantenimiento, runbooks y practica operativa.',
+        en: 'Train the operational side: maintenance, runbooks, and safe day-two habits.',
+        es: 'Entrena la parte operativa: mantenimiento, runbooks y habitos seguros de dia dos.',
       },
       goal: {
-        en: 'Train the operational side: maintenance, health checks, and safe day-two habits.',
-        es: 'Entrena la parte operativa: mantenimiento, health checks y habitos seguros de dia dos.',
+        en: 'Understand what a DBA automates, reviews, and never trusts blindly.',
+        es: 'Entiende que automatiza un DBA, que revisa y que nunca confia a ciegas.',
       },
       outcome: {
-        en: 'After this stage, you should know what a DBA would automate, what they would review, and what they would not trust blindly.',
-        es: 'Despues de esta fase, deberias saber que automatizaria un DBA, que revisaria y que no confiaria a ciegas.',
+        en: 'You finish with a stronger operational instinct, not just theory.',
+        es: 'Terminas con mejor instinto operativo, no solo teoria.',
       },
       moduleIds: ['jobs'],
     },
@@ -631,7 +606,7 @@ export const SURFACE_SECTIONS: Record<SurfaceId, SurfaceSectionDefinition[]> = {
     {
       id: 'triage',
       surface: 'diagnose',
-      label: { en: 'Fast Triage', es: 'Triage rapido' },
+      label: { en: 'Block 1 · Fast Triage', es: 'Bloque 1 · Triage rapido' },
       description: {
         en: 'Start with the smallest proof that isolates the symptom.',
         es: 'Empieza por la prueba minima que aisla el sintoma.',
@@ -641,99 +616,48 @@ export const SURFACE_SECTIONS: Record<SurfaceId, SurfaceSectionDefinition[]> = {
         es: 'Reduce ruido rapido y decide si el problema huele a CPU, memoria, TempDB, log o host.',
       },
       outcome: {
-        en: 'After this stage, you should know what to run first without opening ten tabs.',
-        es: 'Despues de esta fase, deberias saber que lanzar primero sin abrir diez pestanas.',
+        en: 'You know what to run first without opening ten tabs.',
+        es: 'Sabes que lanzar primero sin abrir diez pestanas.',
       },
       moduleIds: ['incident-queries', 'perfmon', 'osconfig'],
     },
     {
       id: 'evidence',
       surface: 'diagnose',
-      label: { en: 'Evidence & Capture', es: 'Evidencia y captura' },
+      label: { en: 'Block 2 · Evidence & Capture', es: 'Bloque 2 · Evidencia y captura' },
       description: {
-        en: 'Persist what disappears from live DMVs when the incident clears itself.',
-        es: 'Persiste lo que desaparece de las DMVs vivas cuando la incidencia se limpia sola.',
-      },
-      goal: {
-        en: 'Capture the evidence that live DMVs lose once the pressure drops.',
+        en: 'Capture the evidence that live DMVs lose when pressure drops.',
         es: 'Captura la evidencia que las DMVs vivas pierden cuando baja la presion.',
       },
+      goal: {
+        en: 'Know when DMVs are enough and when you need XE or a postmortem view.',
+        es: 'Saber cuando bastan las DMVs y cuando necesitas XE o una vista postmortem.',
+      },
       outcome: {
-        en: 'After this stage, you should know when to trust DMVs and when you need XE or a postmortem view.',
-        es: 'Despues de esta fase, deberias saber cuando confiar en DMVs y cuando necesitas XE o una vista postmortem.',
+        en: 'You stop losing critical evidence just because the incident cleared itself.',
+        es: 'Dejas de perder evidencia critica solo porque la incidencia se limpio sola.',
       },
       moduleIds: ['xevents', 'realcases'],
     },
     {
       id: 'operations',
       surface: 'diagnose',
-      label: { en: 'Operational Response', es: 'Respuesta operativa' },
+      label: { en: 'Block 3 · Operational Response', es: 'Bloque 3 · Respuesta operativa' },
       description: {
-        en: 'Jobs, HA/DR, and platform checks to turn evidence into action.',
-        es: 'Jobs, HA/DR y comprobaciones de plataforma para convertir evidencia en accion.',
-      },
-      goal: {
         en: 'Convert proof into a controlled operational response instead of an improvised fix.',
         es: 'Convierte la prueba en una respuesta operativa controlada en lugar de un fix improvisado.',
       },
+      goal: {
+        en: 'Close the loop after diagnosis with jobs, HA/DR, and safe action paths.',
+        es: 'Cerrar el ciclo tras el diagnostico con jobs, HA/DR y rutas seguras de accion.',
+      },
       outcome: {
-        en: 'After this stage, you should know how a DBA closes the loop after the diagnosis.',
-        es: 'Despues de esta fase, deberias saber como cierra el ciclo un DBA despues del diagnostico.',
+        en: 'You understand how a DBA responds after the diagnosis is clear.',
+        es: 'Entiendes como responde un DBA despues de que el diagnostico ya este claro.',
       },
       moduleIds: ['jobs', 'ha'],
     },
   ],
-  library: LIBRARY_GROUPS.map((group) => ({
-    id: group.id,
-    surface: 'library',
-    label: group.label,
-    description:
-      group.id === 'engine'
-        ? {
-            en: 'Core engine concepts and plan behavior.',
-            es: 'Conceptos del motor y comportamiento de planes.',
-          }
-        : group.id === 'operations'
-        ? {
-            en: 'DBA operations, triage, and platform controls.',
-            es: 'Operacion DBA, triage y controles de plataforma.',
-          }
-        : {
-            en: 'Advanced internals, evolution, and storage paths.',
-            es: 'Internals avanzados, evolucion y rutas de almacenamiento.',
-          },
-    goal:
-      group.id === 'engine'
-        ? {
-            en: 'Browse the engine topics directly without the guided order.',
-            es: 'Navega los temas del motor directamente sin pasar por la ruta guiada.',
-          }
-        : group.id === 'operations'
-        ? {
-            en: 'Jump straight to the operational tools and incident content you already know you need.',
-            es: 'Salta directo a las herramientas operativas y al contenido de incidencias que ya sabes que necesitas.',
-          }
-        : {
-            en: 'Open the advanced internals catalog directly when you already have the mental model.',
-            es: 'Abre directamente el catalogo de internals avanzados cuando ya tienes el mapa mental.',
-          },
-    outcome:
-      group.id === 'engine'
-        ? {
-            en: 'Use this mode when sequence matters less than speed.',
-            es: 'Usa este modo cuando importe menos el orden y mas la velocidad.',
-          }
-        : group.id === 'operations'
-        ? {
-            en: 'This is expert access, not the recommended first path.',
-            es: 'Esto es acceso experto, no la ruta recomendada para empezar.',
-          }
-        : {
-            en: 'Expert mode keeps advanced topics close without making them the default starting point.',
-            es: 'El modo experto mantiene cerca los temas avanzados sin convertirlos en el punto de entrada por defecto.',
-          },
-    moduleIds: MODULES.filter((module) => module.libraryGroup === group.id).map((module) => module.id),
-  })),
 };
 
 export const ALL_MODULES = MODULES;
@@ -752,10 +676,6 @@ export function getModuleDefinition(moduleId: ModuleId) {
 
 export function moduleSupportsSurface(module: ModuleDefinition, surface: SurfaceId) {
   return module.availableIn.includes(surface);
-}
-
-export function modulesForSurface(surface: SurfaceId) {
-  return MODULES.filter((module) => moduleSupportsSurface(module, surface));
 }
 
 export function getPrimarySectionForModule(moduleId: ModuleId) {

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { AlertTriangle, Box, ChevronRight, Cpu, Database, DatabaseBackup, FileText, HardDrive, LayoutTemplate, MonitorIcon, Play, Save, Server, Settings, ShieldCheck } from 'lucide-react';
+import { AlertTriangle, ArrowLeft, ArrowRight, BookOpen, Box, ChevronRight, Cpu, Database, DatabaseBackup, FileText, HardDrive, LayoutTemplate, MonitorIcon, Play, Save, Server, Settings, ShieldCheck } from 'lucide-react';
 import { useLanguage } from '../../contexts/LanguageContext';
 import type { TranslationKey } from '../../i18n/translations';
 import {
@@ -18,6 +18,54 @@ const layers: { id: string; titleKey: TranslationKey; icon: any; color: string; 
     { id: 'storage', titleKey: 'layerStorage', icon: HardDrive, color: 'border-amber-500/50', bg: 'bg-amber-500/10' },
 ];
 
+const architectureSections = [
+    {
+        id: 'engine' as const,
+        accent: 'border-teal-500/25 bg-teal-500/10 text-teal-200',
+        panel: 'border-teal-500/25 bg-teal-500/10',
+        icon: Server,
+        order: '01',
+        title: {
+            en: 'Architecture Core',
+            es: 'Arquitectura Core',
+        },
+        summary: {
+            en: 'Layers, parser, optimizer, execution path, and how the request moves through the engine.',
+            es: 'Capas, parser, optimizer, ruta de ejecución y cómo se mueve la petición por el motor.',
+        },
+    },
+    {
+        id: 'sysdbs' as const,
+        accent: 'border-amber-500/25 bg-amber-500/10 text-amber-200',
+        panel: 'border-amber-500/25 bg-amber-500/10',
+        icon: DatabaseBackup,
+        order: '02',
+        title: {
+            en: 'System Databases',
+            es: 'Bases del sistema',
+        },
+        summary: {
+            en: 'master, model, msdb, and tempdb: what each one owns and how a DBA should use them.',
+            es: 'master, model, msdb y tempdb: qué controla cada una y cómo debería usarlas un DBA.',
+        },
+    },
+    {
+        id: 'files' as const,
+        accent: 'border-emerald-500/25 bg-emerald-500/10 text-emerald-200',
+        panel: 'border-emerald-500/25 bg-emerald-500/10',
+        icon: Save,
+        order: '03',
+        title: {
+            en: 'Database Files',
+            es: 'Ficheros de base de datos',
+        },
+        summary: {
+            en: 'MDF, NDF, and LDF roles so the physical layout makes sense before storage internals.',
+            es: 'Roles de MDF, NDF y LDF para que el layout físico tenga sentido antes de bajar a storage internals.',
+        },
+    },
+];
+
 export function ArchitectureOverview() {
     const [activeTab, setActiveTab] = useState<'engine' | 'sysdbs' | 'files'>('engine');
     const [activeLayer, setActiveLayer] = useState<string | null>(null);
@@ -27,6 +75,10 @@ export function ArchitectureOverview() {
     const { t, language } = useLanguage();
 
     const pick = (text: LocalizedText) => language === 'es' ? text.es : text.en;
+    const currentSectionIndex = architectureSections.findIndex((section) => section.id === activeTab);
+    const currentSection = architectureSections[currentSectionIndex] ?? architectureSections[0];
+    const previousSection = currentSectionIndex > 0 ? architectureSections[currentSectionIndex - 1] : undefined;
+    const nextSection = currentSectionIndex < architectureSections.length - 1 ? architectureSections[currentSectionIndex + 1] : undefined;
 
     const activeSystemDbGuide =
         SYSTEM_DATABASE_GUIDES.find((guide) => guide.id === activeSystemDb) ?? SYSTEM_DATABASE_GUIDES[0];
@@ -83,44 +135,99 @@ export function ArchitectureOverview() {
                         </p>
                     </div>
                 </div>
-
-                <div className="glass-panel flex w-full flex-wrap rounded-xl border border-white/10 bg-white/5 p-1 sm:w-fit">
-                    <button
-                        onClick={() => setActiveTab('engine')}
-                        className={cn(
-                            "px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2",
-                            activeTab === 'engine' ? "bg-primary text-primary-foreground shadow-glowBlue" : "text-muted-foreground hover:text-white hover:bg-white/5"
-                        )}
-                    >
-                        <Server className="w-4 h-4" />
-                        {t('archTitle')}
-                    </button>
-                    <button
-                        onClick={() => setActiveTab('sysdbs')}
-                        className={cn(
-                            "px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2",
-                            activeTab === 'sysdbs' ? "bg-amber-500 text-white shadow-glow" : "text-muted-foreground hover:text-white hover:bg-white/5"
-                        )}
-                    >
-                        <DatabaseBackup className="w-4 h-4" />
-                        {t('sysDbsTitle')}
-                    </button>
-                    <button
-                        onClick={() => setActiveTab('files')}
-                        className={cn(
-                            "px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2",
-                            activeTab === 'files' ? "bg-emerald-500 text-white shadow-glow" : "text-muted-foreground hover:text-white hover:bg-white/5"
-                        )}
-                    >
-                        <Save className="w-4 h-4" />
-                        {t('dbFilesTitle')}
-                    </button>
-                </div>
             </div>
 
-            <div className="relative min-h-0 flex-1">
-                <AnimatePresence mode="wait">
-                    {activeTab === 'engine' && (
+            <div className="grid min-h-0 flex-1 gap-6 xl:grid-cols-[280px_minmax(0,1fr)]">
+                <aside className="space-y-4">
+                    <div className="glass-panel rounded-3xl p-5">
+                        <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.22em] text-white/40">
+                            <BookOpen className="h-4 w-4 text-teal-300" />
+                            {language === 'es' ? 'Subapartados' : 'Subsections'}
+                        </div>
+                        <p className="mt-3 text-sm leading-7 text-white/62">
+                            {language === 'es'
+                                ? 'Entra por un bloque cada vez. Aquí eliges la parte de arquitectura que quieres ver y avanzas con anterior o siguiente.'
+                                : 'Go through one block at a time. Choose the architecture area you want and move with previous or next.'}
+                        </p>
+
+                        <div className="mt-5 space-y-3">
+                            {architectureSections.map((section) => {
+                                const Icon = section.icon;
+                                const isActive = section.id === activeTab;
+
+                                return (
+                                    <button
+                                        key={section.id}
+                                        onClick={() => setActiveTab(section.id)}
+                                        className={cn(
+                                            'w-full rounded-3xl border p-4 text-left transition-all',
+                                            isActive
+                                                ? `${section.panel} shadow-[0_20px_50px_rgba(0,0,0,0.18)]`
+                                                : 'border-white/10 bg-black/20 hover:border-white/20 hover:bg-white/[0.06]'
+                                        )}
+                                    >
+                                        <div className="flex items-start gap-3">
+                                            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-white/10 bg-black/25">
+                                                <Icon className={cn('h-5 w-5', isActive ? 'text-white' : 'text-white/50')} />
+                                            </div>
+                                            <div className="min-w-0 flex-1">
+                                                <div className="flex items-center justify-between gap-2">
+                                                    <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-white/40">
+                                                        {section.order}
+                                                    </span>
+                                                    {isActive ? (
+                                                        <span className={cn('rounded-full border px-2 py-1 text-[10px] font-bold uppercase tracking-[0.16em]', section.accent)}>
+                                                            {language === 'es' ? 'activo' : 'active'}
+                                                        </span>
+                                                    ) : null}
+                                                </div>
+                                                <div className="mt-2 text-base font-bold text-white">{pick(section.title)}</div>
+                                                <p className="mt-2 text-sm leading-6 text-white/60">{pick(section.summary)}</p>
+                                            </div>
+                                        </div>
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    </div>
+
+                    <div className="glass-panel rounded-3xl p-5">
+                        <div className="text-[11px] font-bold uppercase tracking-[0.22em] text-white/40">
+                            {language === 'es' ? 'Progreso del bloque' : 'Block progress'}
+                        </div>
+                        <h3 className="mt-3 text-lg font-bold text-white">{pick(currentSection.title)}</h3>
+                        <div className="mt-4 h-2 overflow-hidden rounded-full bg-white/8">
+                            <div
+                                className="h-full rounded-full bg-gradient-to-r from-teal-400 via-amber-300 to-emerald-300"
+                                style={{ width: `${((currentSectionIndex + 1) / architectureSections.length) * 100}%` }}
+                            />
+                        </div>
+                        <p className="mt-4 text-sm leading-7 text-white/62">{pick(currentSection.summary)}</p>
+
+                        <div className="mt-5 flex flex-col gap-3">
+                            <button
+                                onClick={() => previousSection && setActiveTab(previousSection.id)}
+                                disabled={!previousSection}
+                                className="inline-flex items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-bold text-white/70 transition-all hover:bg-white/10 hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
+                            >
+                                <ArrowLeft className="h-4 w-4" />
+                                {language === 'es' ? 'Anterior' : 'Previous'}
+                            </button>
+                            <button
+                                onClick={() => nextSection && setActiveTab(nextSection.id)}
+                                disabled={!nextSection}
+                                className="inline-flex items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-bold text-white/70 transition-all hover:bg-white/10 hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
+                            >
+                                {language === 'es' ? 'Siguiente' : 'Next'}
+                                <ArrowRight className="h-4 w-4" />
+                            </button>
+                        </div>
+                    </div>
+                </aside>
+
+                <div className="relative min-h-0 flex-1">
+                    <AnimatePresence mode="wait">
+                        {activeTab === 'engine' && (
                         <motion.div
                             key="engine"
                             initial={{ opacity: 0, y: 10 }}
@@ -247,9 +354,9 @@ export function ArchitectureOverview() {
                                 </div>
                             </div>
                         </motion.div>
-                    )}
+                        )}
 
-                    {activeTab === 'sysdbs' && (
+                        {activeTab === 'sysdbs' && (
                         <motion.div
                             key="sysdbs"
                             initial={{ opacity: 0, y: 10 }}
@@ -480,9 +587,9 @@ export function ArchitectureOverview() {
                                 </AnimatePresence>
                             </div>
                         </motion.div>
-                    )}
+                        )}
 
-                    {activeTab === 'files' && (
+                        {activeTab === 'files' && (
                         <motion.div
                             key="files"
                             initial={{ opacity: 0, y: 10 }}
@@ -516,8 +623,9 @@ export function ArchitectureOverview() {
                                 </div>
                             </div>
                         </motion.div>
-                    )}
-                </AnimatePresence>
+                        )}
+                    </AnimatePresence>
+                </div>
             </div>
         </div>
     );

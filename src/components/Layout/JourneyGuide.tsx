@@ -14,7 +14,7 @@ import {
 } from './moduleCatalog';
 
 interface JourneyGuideProps {
-  currentSurface: Exclude<SurfaceId, 'library'>;
+  currentSurface: SurfaceId;
   currentModule: ModuleId;
   onModuleChange: (moduleId: ModuleId) => void;
   onBackToSurface: (surface: SurfaceId) => void;
