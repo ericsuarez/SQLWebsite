@@ -1,12 +1,15 @@
 import { useEffect, useMemo, useState } from 'react';
-import { ChevronDown, Database, PanelLeftClose, PanelLeftOpen, X } from 'lucide-react';
+import { ChevronDown, Compass, Database, PanelLeftClose, PanelLeftOpen, X } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { useLanguage } from '../../contexts/LanguageContext';
 import {
   ALL_MODULES,
   SURFACE_DEFINITIONS,
+  SURFACE_GUIDES,
   SURFACE_SECTIONS,
   getModuleDefinition,
+  getModuleStepIndex,
+  getSurfaceSequence,
   normalizeSearchValue,
   type ModuleId,
   type SurfaceId,
@@ -24,6 +27,33 @@ interface SidebarProps {
   onCloseMobile: () => void;
 }
 
+function pick(language: 'en' | 'es', value: { en: string; es: string }) {
+  return language === 'es' ? value.es : value.en;
+}
+
+const SURFACE_ACCENTS = {
+  learn: {
+    rail: 'bg-teal-400',
+    chip: 'border-teal-500/25 bg-teal-500/10 text-teal-200',
+    button: 'border-teal-500/25 bg-teal-500/10 text-teal-100 hover:bg-teal-500/20',
+  },
+  labs: {
+    rail: 'bg-amber-400',
+    chip: 'border-amber-500/25 bg-amber-500/10 text-amber-200',
+    button: 'border-amber-500/25 bg-amber-500/10 text-amber-100 hover:bg-amber-500/20',
+  },
+  diagnose: {
+    rail: 'bg-lime-400',
+    chip: 'border-lime-500/25 bg-lime-500/10 text-lime-200',
+    button: 'border-lime-500/25 bg-lime-500/10 text-lime-100 hover:bg-lime-500/20',
+  },
+  library: {
+    rail: 'bg-cyan-400',
+    chip: 'border-cyan-500/25 bg-cyan-500/10 text-cyan-200',
+    button: 'border-cyan-500/25 bg-cyan-500/10 text-cyan-100 hover:bg-cyan-500/20',
+  },
+} as const;
+
 export function Sidebar({
   currentSurface,
   currentModule,
@@ -40,6 +70,16 @@ export function Sidebar({
   const showCompact = isCollapsed && !isMobileOpen;
   const normalizedQuery = normalizeSearchValue(searchQuery);
   const hasSearch = normalizedQuery.length > 0;
+  const accents = SURFACE_ACCENTS[currentSurface];
+  const guide = currentSurface === 'library' ? null : SURFACE_GUIDES[currentSurface];
+  const sequence = getSurfaceSequence(currentSurface);
+  const starterModule = sequence.length > 0 ? getModuleDefinition(sequence[0]) : undefined;
+  const currentDefinition = currentModule ? getModuleDefinition(currentModule) : undefined;
+  const currentStepIndex = currentModule ? getModuleStepIndex(currentSurface, currentModule) : -1;
+  const nextModule =
+    currentSurface !== 'library' && currentModule
+      ? getModuleDefinition(sequence[currentStepIndex + 1] as ModuleId)
+      : undefined;
 
   const sections = useMemo(() => {
     const baseSections = SURFACE_SECTIONS[currentSurface].map((section) => ({
@@ -80,31 +120,46 @@ export function Sidebar({
 
   useEffect(() => {
     if (!currentSectionId) return;
-    setExpandedSections((previous) => (previous[currentSectionId] ? previous : { ...previous, [currentSectionId]: true }));
+    setExpandedSections((previous) =>
+      previous[currentSectionId] ? previous : { ...previous, [currentSectionId]: true }
+    );
   }, [currentSectionId]);
 
   const renderModuleButton = (module: (typeof ALL_MODULES)[number]) => {
     const Icon = module.icon;
     const isActive = currentModule === module.id;
+    const stepIndex = currentSurface === 'library' ? -1 : getModuleStepIndex(currentSurface, module.id);
+
     return (
       <button
         key={module.id}
         onClick={() => onModuleChange(module.id)}
         className={cn(
-          'w-full rounded-xl text-left transition-all duration-300',
+          'relative w-full rounded-xl border text-left transition-all duration-300',
           showCompact ? 'flex justify-center px-0 py-3' : 'px-4 py-3',
           isActive
-            ? 'border border-white/10 bg-white/10 text-white shadow-[0_12px_30px_rgba(0,0,0,0.16)]'
-            : 'border border-transparent text-white/62 hover:border-white/10 hover:bg-white/[0.05] hover:text-white'
+            ? 'border-white/10 bg-white/10 text-white shadow-[0_12px_30px_rgba(0,0,0,0.16)]'
+            : 'border-transparent text-white/62 hover:border-white/10 hover:bg-white/[0.05] hover:text-white'
         )}
         title={t(module.titleKey)}
       >
+        {isActive && !showCompact ? <div className={cn('absolute inset-y-2 left-0 w-1 rounded-r-full', accents.rail)} /> : null}
+
         <div className={cn('flex items-center', showCompact ? 'justify-center' : 'gap-3')}>
-          <Icon className={cn('h-5 w-5', isActive ? module.color : 'text-white/40')} />
+          {!showCompact && stepIndex >= 0 ? (
+            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-white/10 bg-black/25 text-[10px] font-black text-white/60">
+              {stepIndex + 1}
+            </div>
+          ) : null}
+
+          <Icon className={cn('h-5 w-5 shrink-0', isActive ? module.color : 'text-white/40')} />
+
           {!showCompact ? (
             <div className="min-w-0">
               <div className="truncate text-sm font-semibold leading-tight">{t(module.titleKey)}</div>
-              <div className="mt-1 truncate text-xs text-white/42">{module.level ? `L${module.level}` : pickSurface(language, module.primaryHome)}</div>
+              <div className="mt-1 truncate text-xs text-white/42">
+                {module.level ? `L${module.level}` : pick(language, SURFACE_DEFINITIONS[module.primaryHome].title)}
+              </div>
             </div>
           ) : null}
         </div>
@@ -115,52 +170,171 @@ export function Sidebar({
   return (
     <aside
       className={cn(
-        'glass-panel fixed inset-y-0 left-0 z-40 flex h-full flex-col border-r border-white/10 bg-[#0d1314]/95 backdrop-blur-xl transition-transform duration-300 lg:static lg:z-auto lg:translate-x-0',
+        'fixed inset-y-0 left-0 z-40 flex h-full flex-col border-r border-white/10 bg-slate-900/95 backdrop-blur-xl transition-transform duration-300 lg:static lg:z-auto lg:translate-x-0',
         isMobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0',
         showCompact ? 'lg:w-20' : 'lg:w-80',
         'w-[88vw] max-w-[340px] lg:max-w-none'
       )}
     >
-      <div className={cn('flex items-center justify-between gap-3 border-b border-white/10 p-6 transition-all duration-300', showCompact && 'px-4 justify-center')}>
-        <div className="min-w-0">
-          <button onClick={() => onSurfaceChange(currentSurface)} className="flex min-w-0 items-center gap-3">
+      <div
+        className={cn(
+          'border-b border-white/5 bg-slate-950/30 p-4 transition-all duration-300',
+          showCompact && 'px-3'
+        )}
+      >
+        <div className="flex items-center justify-between gap-3">
+          <button
+            onClick={() => onSurfaceChange(currentSurface)}
+            className={cn('flex min-w-0 items-center gap-3', showCompact && 'justify-center')}
+          >
             <div className="rounded-xl border border-teal-500/25 bg-teal-500/10 p-2 shadow-[0_0_30px_rgba(20,184,166,0.08)]">
-              <Database className="h-6 w-6 text-teal-300" />
+              <Database className="h-5 w-5 text-teal-300" />
             </div>
             {!showCompact ? (
-              <div className="min-w-0">
+              <div className="min-w-0 text-left">
                 <h1 className="truncate bg-gradient-to-r from-teal-200 via-amber-100 to-lime-200 bg-clip-text text-lg font-black tracking-tight text-transparent">
                   {t('appTitle')}
                 </h1>
-                <p className="truncate text-xs font-medium text-white/46">{pickSurface(language, currentSurface)}</p>
+                <p className="truncate text-[10px] font-bold uppercase tracking-[0.18em] text-white/40">
+                  {pick(language, SURFACE_DEFINITIONS[currentSurface].title)}
+                </p>
               </div>
             ) : null}
           </button>
+
+          <button
+            type="button"
+            onClick={onCloseMobile}
+            className="flex rounded-lg border border-white/10 bg-white/5 p-2 text-white/55 transition-colors hover:bg-white/10 hover:text-white lg:hidden"
+            aria-label={language === 'es' ? 'Cerrar navegacion' : 'Close navigation'}
+          >
+            <X className="h-4 w-4" />
+          </button>
         </div>
 
-        <button
-          type="button"
-          onClick={onCloseMobile}
-          className="flex rounded-lg border border-white/10 bg-white/5 p-2 text-white/55 transition-colors hover:bg-white/10 hover:text-white lg:hidden"
-          aria-label={language === 'es' ? 'Cerrar navegación' : 'Close navigation'}
-        >
-          <X className="h-4 w-4" />
-        </button>
+        {!showCompact && guide ? (
+          <div className="mt-4 rounded-2xl border border-white/10 bg-slate-950/60 p-3">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-white/38">
+                  {language === 'es' ? 'Ruta activa' : 'Active route'}
+                </div>
+                <div className="mt-1 text-sm font-black text-white">{pick(language, guide.title)}</div>
+              </div>
+              <span className={cn('rounded-full border px-2 py-1 text-[10px] font-black uppercase tracking-[0.14em]', accents.chip)}>
+                {currentSurface === 'learn' ? 'guided' : currentSurface}
+              </span>
+            </div>
+
+            <p className="mt-3 text-xs leading-6 text-white/58">{pick(language, guide.coaching)}</p>
+
+            <div className="mt-3 rounded-2xl border border-white/10 bg-black/25 p-3">
+              {currentModule ? (
+                <>
+                  <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-white/38">
+                    {language === 'es' ? 'Sigues por aqui' : 'You continue here'}
+                  </div>
+                  <div className="mt-1 text-sm font-black text-white">
+                    {currentDefinition ? t(currentDefinition.titleKey) : currentModule}
+                  </div>
+                  <div className="mt-2 text-xs text-white/52">
+                    {language === 'es'
+                      ? `Paso ${currentStepIndex + 1} de ${sequence.length}`
+                      : `Step ${currentStepIndex + 1} of ${sequence.length}`}
+                  </div>
+                  {nextModule ? (
+                    <div className="mt-2 text-xs leading-6 text-white/58">
+                      {language === 'es' ? 'Siguiente:' : 'Next:'} {t(nextModule.titleKey)}
+                    </div>
+                  ) : null}
+                </>
+              ) : starterModule ? (
+                <>
+                  <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-white/38">
+                    {language === 'es' ? 'Punto de entrada' : 'Entry point'}
+                  </div>
+                  <div className="mt-1 text-sm font-black text-white">{t(starterModule.titleKey)}</div>
+                  <div className="mt-2 text-xs leading-6 text-white/58">{pick(language, starterModule.summary)}</div>
+                </>
+              ) : null}
+            </div>
+
+            {starterModule ? (
+              <button
+                onClick={() => onModuleChange(nextModule?.id ?? currentModule ?? starterModule.id)}
+                className={cn(
+                  'mt-3 inline-flex w-full items-center justify-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-black transition-all',
+                  accents.button
+                )}
+              >
+                <Compass className="h-4 w-4" />
+                {currentModule ? pick(language, guide.continueLabel) : pick(language, guide.startLabel)}
+              </button>
+            ) : null}
+          </div>
+        ) : null}
       </div>
 
       <nav className={cn('flex-1 overflow-y-auto', showCompact ? 'p-3' : 'p-4')}>
         {!showCompact ? (
-          <div className="mb-4 ml-2 flex items-center gap-2">
-            <span className={cn('h-2 w-2 rounded-full', currentSurface === 'learn' ? 'bg-teal-300' : currentSurface === 'labs' ? 'bg-amber-300' : currentSurface === 'diagnose' ? 'bg-lime-300' : 'bg-cyan-300')} />
-            <span className="text-xs font-semibold uppercase tracking-[0.18em] text-white/42">
-              {pickSurface(language, currentSurface)}
-            </span>
+          <div className="mb-4 space-y-4">
+            <div>
+              <div className="mb-2 flex items-center gap-2 px-2">
+                <span className={cn('h-2 w-2 rounded-full', accents.rail)} />
+                <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-white/42">
+                  {currentSurface === 'library'
+                    ? language === 'es'
+                      ? 'Catalogo experto'
+                      : 'Expert catalog'
+                    : language === 'es'
+                    ? 'Ruta principal'
+                    : 'Main route'}
+                </span>
+              </div>
+
+              <div className="grid gap-2">
+                {(Object.keys(SURFACE_DEFINITIONS) as SurfaceId[]).map((surface) => {
+                  const isActive = surface === currentSurface;
+                  const meta = SURFACE_DEFINITIONS[surface];
+                  const Icon = meta.icon;
+
+                  return (
+                    <button
+                      key={surface}
+                      onClick={() => onSurfaceChange(surface)}
+                      className={cn(
+                        'flex items-center justify-between rounded-xl border px-3 py-2.5 text-left transition-all',
+                        isActive
+                          ? 'border-white/10 bg-white/10 text-white'
+                          : 'border-transparent bg-white/[0.02] text-white/60 hover:border-white/10 hover:bg-white/[0.05] hover:text-white'
+                      )}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="rounded-lg border border-white/10 bg-black/25 p-2">
+                          <Icon className={cn('h-4 w-4', meta.textClassName)} />
+                        </div>
+                        <div>
+                          <div className="text-sm font-black text-white">{pick(language, meta.title)}</div>
+                          <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-white/38">
+                            {pick(language, meta.kicker)}
+                          </div>
+                        </div>
+                      </div>
+                      {isActive ? <div className={cn('h-8 w-1 rounded-full', accents.rail)} /> : null}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="h-px bg-white/5" />
           </div>
         ) : null}
 
         <div className="space-y-3">
           {sections.map((section) => {
             const isExpanded = hasSearch || expandedSections[section.id];
+
             return (
               <div key={section.id} className="rounded-2xl border border-white/10 bg-black/20">
                 {!showCompact ? (
@@ -169,14 +343,28 @@ export function Sidebar({
                     className="flex w-full items-center justify-between gap-3 px-3 py-3 text-left"
                   >
                     <div className="min-w-0">
-                      <div className="truncate text-[11px] font-black uppercase tracking-[0.18em] text-white/55">
-                        {language === 'es' ? section.label.es : section.label.en}
+                      <div className="truncate text-[10px] font-bold uppercase tracking-[0.18em] text-white/42">
+                        {pick(language, section.label)}
                       </div>
-                      <div className="mt-1 truncate text-xs text-white/38">
-                        {'xp' in section && section.xp ? `${section.xp} XP` : language === 'es' ? section.description.es : section.description.en}
-                      </div>
+                      <div className="mt-1 truncate text-xs text-white/55">{pick(language, section.goal)}</div>
                     </div>
-                    <ChevronDown className={cn('h-4 w-4 shrink-0 text-white/45 transition-transform', isExpanded ? 'rotate-180' : 'rotate-0')} />
+                    <div className="flex items-center gap-2">
+                      {'xp' in section && section.xp ? (
+                        <span className="rounded-full border border-white/10 bg-black/30 px-2 py-1 text-[10px] font-black text-white/45">
+                          XP {section.xp}
+                        </span>
+                      ) : (
+                        <span className="rounded-full border border-white/10 bg-black/30 px-2 py-1 text-[10px] font-black text-white/45">
+                          {section.moduleIds.length}
+                        </span>
+                      )}
+                      <ChevronDown
+                        className={cn(
+                          'h-4 w-4 shrink-0 text-white/45 transition-transform',
+                          isExpanded ? 'rotate-180' : 'rotate-0'
+                        )}
+                      />
+                    </div>
                   </button>
                 ) : null}
 
@@ -206,13 +394,11 @@ export function Sidebar({
           )}
         >
           {isCollapsed ? <PanelLeftOpen className="h-5 w-5" /> : <PanelLeftClose className="h-5 w-5" />}
-          {!showCompact ? <span>{isCollapsed ? (language === 'es' ? 'Expandir' : 'Expand') : language === 'es' ? 'Colapsar' : 'Collapse'}</span> : null}
+          {!showCompact ? (
+            <span>{isCollapsed ? (language === 'es' ? 'Expandir' : 'Expand') : language === 'es' ? 'Colapsar' : 'Collapse'}</span>
+          ) : null}
         </button>
       </div>
     </aside>
   );
-}
-
-function pickSurface(language: 'en' | 'es', surface: SurfaceId) {
-  return language === 'es' ? SURFACE_DEFINITIONS[surface].title.es : SURFACE_DEFINITIONS[surface].title.en;
 }

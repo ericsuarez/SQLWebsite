@@ -1,5 +1,6 @@
 import { useState, type ReactNode } from 'react';
 import { Header } from './Header';
+import { JourneyGuide } from './JourneyGuide';
 import { Sidebar } from './Sidebar';
 import type { ModuleId, SurfaceId } from './moduleCatalog';
 
@@ -70,7 +71,17 @@ export function RootLayout({
         />
 
         <main className="relative flex-1 overflow-x-clip overflow-y-auto overscroll-y-auto px-3 py-3 sm:px-4 md:px-6 md:py-5">
-          <div className="min-h-full w-full pb-6">{children}</div>
+          <div className="min-h-full w-full space-y-4 pb-6">
+            {currentSurface !== 'library' && currentModule ? (
+              <JourneyGuide
+                currentSurface={currentSurface}
+                currentModule={currentModule}
+                onModuleChange={handleModuleChange}
+                onBackToSurface={onSurfaceChange}
+              />
+            ) : null}
+            {children}
+          </div>
         </main>
       </div>
     </div>
