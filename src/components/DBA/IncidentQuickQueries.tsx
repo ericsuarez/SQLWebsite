@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Activity, ArrowRight, Cpu, Database, HardDrive, Lock, Play, Shield } from 'lucide-react';
+import { useSearchParams } from 'react-router-dom';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { cn } from '../../lib/utils';
 import { CopyCodeBlock } from '../Shared/CopyCodeBlock';
@@ -117,6 +118,7 @@ function actionBoardForPack(language: 'en' | 'es', activePack: (typeof INCIDENT_
 
 export function IncidentQuickQueries() {
   const { language } = useLanguage();
+  const [searchParams] = useSearchParams();
   const [viewMode, setViewMode] = useState<ViewMode>('intro');
   const [activePackId, setActivePackId] = useState<IncidentQuickPackId>('blocking');
   const [activeScriptId, setActiveScriptId] = useState<ScriptViewId>('detect');
@@ -134,6 +136,20 @@ export function IncidentQuickQueries() {
     [activePack, language]
   );
   const board = actionBoardForPack(language, activePack, activeScriptId);
+
+  useEffect(() => {
+    const mode = searchParams.get('mode');
+    if (mode === 'intro' || mode === 'play') {
+      setViewMode(mode);
+    }
+  }, [searchParams]);
+
+  useEffect(() => {
+    const view = searchParams.get('view');
+    if (view === 'detect' || view === 'deep' || view === 'action' || view === 'all') {
+      setActiveScriptId(view);
+    }
+  }, [searchParams]);
 
   if (viewMode === 'intro') {
     return (

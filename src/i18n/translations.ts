@@ -33,6 +33,7 @@ export const translations = {
         tabTempdbIo: 'TempDB & Advanced I/O',
         tabReplication: 'Replication Topologies',
         tabVersionHistory: 'Versions & History',
+        tabIncidentLabs: 'Incident Labs',
         tabIncidentQueries: 'Incident Quick Queries',
         tabXEvents: 'Extended Events',
 
@@ -1505,6 +1506,7 @@ export const translations = {
         tabTempdbIo: 'TempDB y E/S avanzada',
         tabReplication: 'Topologias de replicacion',
         tabVersionHistory: 'Versiones e historia',
+        tabIncidentLabs: 'Laboratorios de Incidencias',
         tabIncidentQueries: 'Queries rápidas',
         tabXEvents: 'Extended Events',
     }

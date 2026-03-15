@@ -79,11 +79,11 @@ const TEMPDB_WORKLOADS: TempDbWorkload[] = [
         title: { en: 'Create temp object', es: 'Crear objeto temporal' },
         detail: {
           en: 'The worker asks TempDB for the first page to host the temp structure.',
-          es: 'El worker pide a TempDB la primera pagina que alojara la estructura temporal.',
+          es: 'El worker pide a TempDB la primera página que alojará la estructura temporal.',
         },
       },
       {
-        title: { en: 'Touch allocation maps', es: 'Tocar mapas de asignacion' },
+        title: { en: 'Touch allocation maps', es: 'Tocar mapas de asignación' },
         detail: {
           en: 'PFS and SGAM are checked to find free space and mixed extents.',
           es: 'Se consultan PFS y SGAM para buscar espacio libre y extents mixtos disponibles.',
@@ -93,14 +93,14 @@ const TEMPDB_WORKLOADS: TempDbWorkload[] = [
         title: { en: 'Latch queue builds', es: 'Se forma la cola de latches' },
         detail: {
           en: 'Concurrent workers stack behind the same hot metadata page.',
-          es: 'Los workers concurrentes se apilan detras de la misma pagina caliente de metadatos.',
+          es: 'Los workers concurrentes se apilan detrás de la misma página caliente de metadatos.',
         },
       },
       {
         title: { en: 'Workload spreads or stalls', es: 'La carga se reparte o se atasca' },
         detail: {
           en: 'With more files the round-robin allocator reduces the hotspot; with one file the queue keeps growing.',
-          es: 'Con mas archivos el round-robin reparte el hotspot; con un solo archivo la cola sigue creciendo.',
+          es: 'Con más archivos el round-robin reparte el hotspot; con un solo archivo la cola sigue creciendo.',
         },
       },
     ],
@@ -137,14 +137,14 @@ const TEMPDB_WORKLOADS: TempDbWorkload[] = [
         title: { en: 'Metadata heats up', es: 'Sube la temperatura de metadatos' },
         detail: {
           en: 'PFS still participates to place pages, while concurrency turns latch waits visible.',
-          es: 'PFS sigue interviniendo para ubicar paginas, y la concurrencia hace visibles las esperas de latch.',
+          es: 'PFS sigue interviniendo para ubicar páginas, y la concurrencia hace visibles las esperas de latch.',
         },
       },
       {
-        title: { en: 'Files absorb pressure', es: 'Los archivos absorben presion' },
+        title: { en: 'Files absorb pressure', es: 'Los archivos absorben presión' },
         detail: {
           en: 'Equal TempDB files split the allocation path and keep the queue shorter.',
-          es: 'Los archivos iguales de TempDB dividen la ruta de asignacion y mantienen la cola mas corta.',
+          es: 'Los archivos iguales de TempDB dividen la ruta de asignación y mantienen la cola más corta.',
         },
       },
     ],
@@ -154,7 +154,7 @@ const TEMPDB_WORKLOADS: TempDbWorkload[] = [
     label: { en: 'Version store burst', es: 'Rafaga de version store' },
     summary: {
       en: 'Snapshot or RCSI activity grows row versions and keeps TempDB metadata hot over time.',
-      es: 'La actividad de Snapshot o RCSI hace crecer row versions y mantiene calientes los metadatos de TempDB durante mas tiempo.',
+      es: 'La actividad de Snapshot o RCSI hace crecer row versions y mantiene calientes los metadatos de TempDB durante más tiempo.',
     },
     query: 'UPDATE dbo.Orders SET status = ...; -- readers under RCSI keep versions alive',
     wait: 'PAGELATCH_EX 2:1:2',
@@ -167,7 +167,7 @@ const TEMPDB_WORKLOADS: TempDbWorkload[] = [
         title: { en: 'Versions start flowing', es: 'Empiezan a fluir versiones' },
         detail: {
           en: 'Writers generate row versions while readers keep them alive longer.',
-          es: 'Los escritores generan row versions mientras los lectores las mantienen vivas durante mas tiempo.',
+          es: 'Los escritores generan row versions mientras los lectores las mantienen vivas durante más tiempo.',
         },
       },
       {
@@ -181,14 +181,14 @@ const TEMPDB_WORKLOADS: TempDbWorkload[] = [
         title: { en: 'Cleanup lags behind', es: 'La limpieza va por detras' },
         detail: {
           en: 'If readers linger, old versions cannot be removed and metadata pressure remains high.',
-          es: 'Si los lectores duran demasiado, las versiones antiguas no se pueden retirar y la presion sobre metadatos se mantiene alta.',
+          es: 'Si los lectores duran demasiado, las versiones antiguas no se pueden retirar y la presión sobre metadatos se mantiene alta.',
         },
       },
       {
         title: { en: 'Layout decides severity', es: 'El layout decide la gravedad' },
         detail: {
           en: 'More files cannot fix every version-store issue, but they do dilute the metadata hotspot.',
-          es: 'Mas archivos no arreglan todos los problemas del version store, pero si diluyen el hotspot de metadatos.',
+          es: 'Más archivos no arreglan todos los problemas del version store, pero sí diluyen el hotspot de metadatos.',
         },
       },
     ],
@@ -198,14 +198,14 @@ const WRITER_STAGE_POSITIONS = ['8%', '37%', '66%', '92%'];
 const WRITER_STAGES: Record<WriterId, WriterStage[]> = {
   checkpoint: [
     {
-      title: { en: 'Dirty pages accumulate', es: 'Se acumulan paginas sucias' },
+      title: { en: 'Dirty pages accumulate', es: 'Se acumulan páginas sucias' },
       detail: {
         en: 'User activity dirties buffers faster than storage has persisted them yet.',
-        es: 'La actividad de usuario ensucia buffers mas rapido de lo que el almacenamiento los ha persistido todavia.',
+        es: 'La actividad de usuario ensucia buffers más rápido de lo que el almacenamiento los ha persistido todavía.',
       },
       signal: {
         en: 'Recovery target says redo debt is growing.',
-        es: 'El objetivo de recovery indica que la deuda de redo esta creciendo.',
+        es: 'El objetivo de recovery indica que la deuda de redo está creciendo.',
       },
       query: 'CHECKPOINT; -- or indirect checkpoint background cycle',
       dirtyPages: 86,
@@ -216,7 +216,7 @@ const WRITER_STAGES: Record<WriterId, WriterStage[]> = {
       title: { en: 'Checkpoint wakes up', es: 'Checkpoint se activa' },
       detail: {
         en: 'The checkpoint worker scans dirty pages according to recovery objectives, not memory pressure.',
-        es: 'El worker de checkpoint recorre paginas sucias segun objetivos de recovery, no por presion inmediata de memoria.',
+        es: 'El worker de checkpoint recorre páginas sucias según objetivos de recovery, no por presión inmediata de memoria.',
       },
       signal: {
         en: 'Target recovery time / recovery interval drives the flush.',
@@ -231,11 +231,11 @@ const WRITER_STAGES: Record<WriterId, WriterStage[]> = {
       title: { en: 'Async writes leave', es: 'Salen escrituras asincronas' },
       detail: {
         en: 'Large batches move dirty pages to disk so restart time stays under control.',
-        es: 'Grandes lotes llevan paginas sucias a disco para que el reinicio siga bajo control.',
+        es: 'Grandes lotes llevan páginas sucias a disco para que el reinicio siga bajo control.',
       },
       signal: {
         en: 'Disk sees a broader write sweep, usually sequential enough to be efficient.',
-        es: 'El disco ve una barrida de escrituras mas amplia, normalmente bastante secuencial para ser eficiente.',
+        es: 'El disco ve una barrida de escrituras más amplia, normalmente bastante secuencial para ser eficiente.',
       },
       query: `SELECT counter_name, cntr_value FROM sys.dm_os_performance_counters WHERE counter_name IN ('Page writes/sec', 'Checkpoint pages/sec');`,
       dirtyPages: 36,
@@ -246,7 +246,7 @@ const WRITER_STAGES: Record<WriterId, WriterStage[]> = {
       title: { en: 'Recovery point advances', es: 'Avanza el punto de recovery' },
       detail: {
         en: 'The restart horizon is now closer to the current LSN, so crash recovery has less redo ahead.',
-        es: 'El horizonte de reinicio queda mas cerca del LSN actual, asi que crash recovery tiene menos redo pendiente.',
+        es: 'El horizonte de reinicio queda más cerca del LSN actual, así que crash recovery tiene menos redo pendiente.',
       },
       signal: {
         en: 'Checkpoint solved restart debt, not a free-buffer emergency.',
@@ -263,7 +263,7 @@ const WRITER_STAGES: Record<WriterId, WriterStage[]> = {
       title: { en: 'Free list shrinks', es: 'La free list se encoge' },
       detail: {
         en: 'The buffer pool starts running short on reusable pages for incoming reads.',
-        es: 'El buffer pool empieza a quedarse corto de paginas reutilizables para lecturas entrantes.',
+        es: 'El buffer pool empieza a quedarse corto de páginas reutilizables para lecturas entrantes.',
       },
       signal: {
         en: 'RESOURCE_MEMPHYSICAL_LOW and free list stalls begin to matter.',
@@ -278,7 +278,7 @@ const WRITER_STAGES: Record<WriterId, WriterStage[]> = {
       title: { en: 'Lazy Writer scans', es: 'Lazy Writer escanea' },
       detail: {
         en: 'It looks for candidates to evict and writes just enough dirty pages to recover breathing room.',
-        es: 'Busca candidatos a expulsar y escribe solo las paginas sucias necesarias para recuperar margen.',
+        es: 'Busca candidatos a expulsar y escribe solo las páginas sucias necesarias para recuperar margen.',
       },
       signal: {
         en: 'This is a memory survival path, not a restart-time optimization path.',
@@ -297,7 +297,7 @@ const WRITER_STAGES: Record<WriterId, WriterStage[]> = {
       },
       signal: {
         en: 'Write volume may be smaller than checkpoint, but the urgency is higher.',
-        es: 'El volumen de escritura puede ser menor que en checkpoint, pero la urgencia es mas alta.',
+        es: 'El volumen de escritura puede ser menor que en checkpoint, pero la urgencia es más alta.',
       },
       query: 'SELECT * FROM sys.dm_os_sys_memory;',
       dirtyPages: 39,
@@ -551,7 +551,7 @@ export function TempDBAndIO() {
       title: language === 'es' ? 'TempDB duele' : 'TempDB is hurting',
       detail:
         language === 'es'
-          ? 'Separa latencia de TempDB de contencion de metadatos.'
+          ? 'Separa latencia de TempDB de contención de metadatos.'
           : 'Separate TempDB latency from allocation contention.',
       baselineIds: ['tempdb-read-ms', 'hot-waiters'] as const,
     },
@@ -578,7 +578,7 @@ export function TempDBAndIO() {
             </h2>
             <p className="text-sm leading-relaxed text-muted-foreground">
               {language === 'es'
-                ? 'TempDB no se rompe solo por tamano: se rompe por como compiten las sesiones sobre PFS, GAM y SGAM. Y en I/O no escribe igual Checkpoint que Lazy Writer. Aqui puedes verlo en movimiento.'
+                ? 'TempDB no se rompe solo por tamaño: se rompe por cómo compiten las sesiones sobre PFS, GAM y SGAM. Y en I/O no escribe igual Checkpoint que Lazy Writer. Aquí puedes verlo en movimiento.'
                 : 'TempDB does not fall apart only because of size: it falls apart because sessions compete over PFS, GAM and SGAM. And in I/O, Checkpoint and Lazy Writer do not write for the same reason. Here you can watch both paths move.'}
             </p>
           </div>
@@ -620,7 +620,7 @@ export function TempDBAndIO() {
             </div>
             <p className="mt-3 max-w-sm text-sm leading-7 text-white/80">
               {language === 'es'
-                ? 'Si el valor sale feo, no actues aun: cruza siempre latencia, wait visible y la query concreta que esta empujando el sintoma.'
+                ? 'Si el valor sale feo, no actúes aún: cruza siempre latencia, wait visible y la query concreta que está empujando el síntoma.'
                 : 'If the value looks bad, do not act yet: always cross latency, visible wait, and the exact query that is pushing the symptom.'}
             </p>
           </div>
@@ -640,7 +640,7 @@ export function TempDBAndIO() {
               className="rounded-3xl border border-white/10 bg-black/20 p-4 text-left transition-all hover:border-white/20 hover:bg-white/[0.05]"
             >
               <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-white/42">
-                {language === 'es' ? 'Empieza por aqui' : 'Start here'}
+                {language === 'es' ? 'Empieza por aquí' : 'Start here'}
               </div>
               <div className="mt-2 text-sm font-bold text-white">{route.title}</div>
               <p className="mt-1 text-xs leading-6 text-white/62">{route.detail}</p>
@@ -855,7 +855,7 @@ export function TempDBAndIO() {
             </p>
             <h3 className="mt-2 text-2xl font-bold text-white">
               {language === 'es'
-                ? 'Pulsa una carga, mira que pagina se calienta y como cambia al repartir TempDB en varios archivos'
+                ? 'Pulsa una carga, mira qué página se calienta y cómo cambia al repartir TempDB en varios archivos'
                 : 'Pick a workload, watch which page heats up and see how the picture changes once TempDB is split across multiple files'}
             </h3>
           </div>
@@ -957,14 +957,14 @@ export function TempDBAndIO() {
                     <p className="mt-3 text-xs leading-6 text-white/55">
                       {heat >= 80
                         ? language === 'es'
-                          ? 'Hot page clara: aqui es donde mas cola ves ahora.'
+                          ? 'Hot page clara: aquí es donde más cola ves ahora.'
                           : 'Clear hot page: this is where the queue is building now.'
                         : heat >= 55
                           ? language === 'es'
                             ? 'Participa mucho en la ruta, pero no es el unico cuello.'
                             : 'This page is heavily involved, but it is not the only bottleneck.'
                           : language === 'es'
-                            ? 'Participa en la asignacion, aunque otra pagina lleva la peor parte.'
+                            ? 'Participa en la asignación, aunque otra página lleva la peor parte.'
                             : 'This page participates in allocation, but another page carries most of the pain.'}
                     </p>
                   </motion.button>
@@ -976,7 +976,7 @@ export function TempDBAndIO() {
               <div className="flex flex-wrap items-start justify-between gap-4">
                 <div className="max-w-3xl">
                   <div className="text-[11px] font-bold uppercase tracking-[0.22em] text-white/40">
-                    {language === 'es' ? 'Que esta entrando ahora' : 'What is coming in now'}
+                    {language === 'es' ? 'Qué está entrando ahora' : 'What is coming in now'}
                   </div>
                   <p className="mt-3 rounded-2xl border border-white/10 bg-black/30 px-4 py-3 font-mono text-xs leading-6 text-cyan-200">
                     {activeWorkload.query}
@@ -1104,7 +1104,7 @@ export function TempDBAndIO() {
 
                         <p className="mt-3 text-xs leading-6 text-white/60">
                           {language === 'es'
-                            ? `Mapa mas tocado ahora: ${String(file.hotPage).toUpperCase()}.`
+                            ? `Mapa más tocado ahora: ${String(file.hotPage).toUpperCase()}.`
                             : `Most touched map right now: ${String(file.hotPage).toUpperCase()}.`}
                         </p>
                       </motion.button>
@@ -1125,7 +1125,7 @@ export function TempDBAndIO() {
                 <h4 className="mt-4 text-xl font-bold text-white">{selectedFile?.id ?? 'tempdev1'}</h4>
                 <p className="mt-3 text-sm leading-7 text-white/80">
                   {language === 'es'
-                    ? `Ahora mismo este archivo soporta aproximadamente ${selectedFile?.queue ?? 0} workers en cola con una presion de ${selectedFile?.pressure ?? 0}%.`
+                    ? `Ahora mismo este archivo soporta aproximadamente ${selectedFile?.queue ?? 0} workers en cola con una presión de ${selectedFile?.pressure ?? 0}%.`
                     : `Right now this file is carrying roughly ${selectedFile?.queue ?? 0} queued workers with ${selectedFile?.pressure ?? 0}% pressure.`}
                 </p>
                 <div className="mt-5 rounded-2xl border border-white/10 bg-black/25 p-4">
@@ -1137,7 +1137,7 @@ export function TempDBAndIO() {
                 <div className="mt-4 rounded-2xl border border-red-500/20 bg-red-500/10 p-4">
                   <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.2em] text-red-300">
                     <AlertTriangle className="h-4 w-4" />
-                    {language === 'es' ? 'Sintoma clasico' : 'Classic symptom'}
+                    {language === 'es' ? 'Síntoma clásico' : 'Classic symptom'}
                   </div>
                   <p className="mt-3 text-sm leading-7 text-white/80">{pick(language, activePage.symptom)}</p>
                 </div>
@@ -1184,7 +1184,7 @@ export function TempDBAndIO() {
               </h4>
               <p className="mt-2 text-sm text-white/60">
                 {language === 'es'
-                  ? 'Primero confirma la espera, despues verifica el reparto por archivos.'
+                  ? 'Primero confirma la espera, después verifica el reparto por archivos.'
                   : 'Confirm the wait first, then verify file distribution.'}
               </p>
               <div className="mt-5 space-y-4">
@@ -1204,7 +1204,7 @@ export function TempDBAndIO() {
             </p>
             <h3 className="mt-2 text-2xl font-bold text-white">
               {language === 'es'
-                ? 'Sigue la misma pagina sucia y veras que Checkpoint persigue recovery mientras Lazy Writer persigue buffers libres'
+                ? 'Sigue la misma página sucia y verás que Checkpoint persigue recovery mientras Lazy Writer persigue buffers libres'
                 : 'Follow the same dirty page and you will see Checkpoint chase recovery while Lazy Writer chases free buffers'}
             </h3>
           </div>
@@ -1359,7 +1359,7 @@ export function TempDBAndIO() {
               <div className="rounded-3xl border border-white/10 bg-black/20 p-5">
                 <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.22em] text-white/40">
                   <ArrowRight className="h-4 w-4" />
-                  {language === 'es' ? 'Lo que esta pasando ahora' : 'What is happening now'}
+                  {language === 'es' ? 'Lo que está pasando ahora' : 'What is happening now'}
                 </div>
                 <div className="mt-4 grid gap-3 md:grid-cols-3">
                   {[
@@ -1412,7 +1412,7 @@ export function TempDBAndIO() {
             </h4>
             <p className="mt-2 text-sm text-white/60">
               {language === 'es'
-                ? 'Copia el bloque y correlacionalo con tus contadores y con el estado del buffer pool.'
+                ? 'Copia el bloque y correlaciónalo con tus contadores y con el estado del buffer pool.'
                 : 'Copy the block and correlate it with your counters and the state of the buffer pool.'}
             </p>
             <div className="mt-5">

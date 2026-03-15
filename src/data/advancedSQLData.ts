@@ -303,15 +303,15 @@ export const TEMPDB_ALLOCATION_PAGES: TempDbAllocationPage[] = [
     name: 'PFS',
     title: {
       en: 'Page Free Space',
-      es: 'Espacio libre por pagina',
+      es: 'Espacio libre por página',
     },
     summary: {
       en: 'Tracks free space and allocation status for pages every 8088 pages.',
-      es: 'Controla espacio libre y estado de asignacion cada 8088 paginas.',
+      es: 'Controla espacio libre y estado de asignación cada 8088 páginas.',
     },
     role: {
       en: 'Heavy temp table create/drop cycles hammer this page first.',
-      es: 'Los ciclos intensos de crear y borrar #temp golpean primero esta pagina.',
+      es: 'Los ciclos intensos de crear y borrar #temp golpean primero esta página.',
     },
     symptom: {
       en: 'PAGELATCH_UP on 2:1:1 while sessions queue behind a single file.',
@@ -319,7 +319,7 @@ export const TEMPDB_ALLOCATION_PAGES: TempDbAllocationPage[] = [
     },
     fix: {
       en: 'Add equally sized TempDB data files so allocations spread out.',
-      es: 'Agregar varios archivos de datos del mismo tamano para repartir las asignaciones.',
+      es: 'Agregar varios archivos de datos del mismo tamaño para repartir las asignaciones.',
     },
     badge: 'PAGELATCH_UP',
   },
@@ -329,7 +329,7 @@ export const TEMPDB_ALLOCATION_PAGES: TempDbAllocationPage[] = [
     name: 'GAM',
     title: {
       en: 'Global Allocation Map',
-      es: 'Mapa global de asignacion',
+      es: 'Mapa global de asignación',
     },
     summary: {
       en: 'Tracks which extents are free or already allocated.',
@@ -341,7 +341,7 @@ export const TEMPDB_ALLOCATION_PAGES: TempDbAllocationPage[] = [
     },
     symptom: {
       en: 'Allocation workers spin and sleep around 2:1:2 under heavy concurrency.',
-      es: 'Los workers de asignacion giran y esperan alrededor de 2:1:2 con alta concurrencia.',
+      es: 'Los workers de asignación giran y esperan alrededor de 2:1:2 con alta concurrencia.',
     },
     fix: {
       en: 'More TempDB files reduce hot extent metadata points.',
@@ -355,15 +355,15 @@ export const TEMPDB_ALLOCATION_PAGES: TempDbAllocationPage[] = [
     name: 'SGAM',
     title: {
       en: 'Shared Global Allocation Map',
-      es: 'Mapa global de asignacion compartida',
+      es: 'Mapa global de asignación compartida',
     },
     summary: {
       en: 'Tracks mixed extents that still have free pages available.',
-      es: 'Controla extents mixtos que aun tienen paginas libres.',
+      es: 'Controla extents mixtos que aún tienen páginas libres.',
     },
     role: {
       en: 'Mixed extent allocation is a classic TempDB metadata hotspot.',
-      es: 'La asignacion de extents mixtos es un hotspot clasico de metadatos en TempDB.',
+      es: 'La asignación de extents mixtos es un hotspot clásico de metadatos en TempDB.',
     },
     symptom: {
       en: 'PAGELATCH_UP or PAGELATCH_EX against SGAM under temp object storms.',
@@ -371,7 +371,7 @@ export const TEMPDB_ALLOCATION_PAGES: TempDbAllocationPage[] = [
     },
     fix: {
       en: 'Distribute activity across multiple files and keep them equally sized.',
-      es: 'Distribuir la actividad entre varios archivos y mantenerlos con el mismo tamano.',
+      es: 'Distribuir la actividad entre varios archivos y mantenerlos con el mismo tamaño.',
     },
     badge: 'SGAM',
   },
@@ -396,32 +396,32 @@ export const TEMPDB_LAYOUT_SCENARIOS: TempDbLayoutScenario[] = [
     },
     summary: {
       en: 'All allocation traffic converges on the same PFS/GAM/SGAM pages.',
-      es: 'Todo el trafico de asignacion converge en las mismas paginas PFS/GAM/SGAM.',
+      es: 'Todo el tráfico de asignación converge en las mismas páginas PFS/GAM/SGAM.',
     },
     files: 1,
     pressure: [96],
     badges: ['2:1:1', '2:1:2', '2:1:3', 'PAGELATCH_UP'],
     note: {
       en: 'The queue is short only when concurrency is low. Under bursts, workers stack on the same file header and allocation maps.',
-      es: 'La cola solo es pequena con poca concurrencia. Bajo rafagas, los workers se amontonan sobre la misma cabecera y mapas de asignacion.',
+      es: 'La cola solo es pequeña con poca concurrencia. Bajo ráfagas, los workers se amontonan sobre la misma cabecera y mapas de asignación.',
     },
   },
   {
     id: 'multiple',
     title: {
       en: 'Four equally sized TempDB files',
-      es: 'Cuatro archivos de TempDB del mismo tamano',
+      es: 'Cuatro archivos de TempDB del mismo tamaño',
     },
     summary: {
       en: 'Allocation rounds spread across files, reducing latch pressure on each metadata page.',
-      es: 'Las rondas de asignacion se reparten entre archivos y bajan la presion de latch en cada pagina de metadatos.',
+      es: 'Las rondas de asignación se reparten entre archivos y bajan la presión de latch en cada página de metadatos.',
     },
     files: 4,
     pressure: [28, 25, 23, 24],
     badges: ['Round-robin', 'Balanced files', 'Lower latch pressure'],
     note: {
       en: 'This does not eliminate every problem, but it removes the classic single-page metadata bottleneck.',
-      es: 'No elimina todos los problemas, pero si quita el cuello de botella clasico de una sola pagina de metadatos.',
+      es: 'No elimina todos los problemas, pero sí quita el cuello de botella clásico de una sola página de metadatos.',
     },
   },
 ];
@@ -456,7 +456,7 @@ export const IO_WRITER_PROFILES: AsyncWriterProfile[] = [
     },
     goal: {
       en: 'Flush dirty pages so crash recovery has less redo work to perform later.',
-      es: 'Escribir paginas sucias para que crash recovery tenga menos redo pendiente despues.',
+      es: 'Escribir páginas sucias para que crash recovery tenga menos redo pendiente después.',
     },
     writePattern: {
       en: 'Large, asynchronous write batches driven by recovery objectives, not by immediate memory shortage.',
@@ -486,19 +486,19 @@ WHERE counter_name IN ('Checkpoint pages/sec', 'Page writes/sec');`,
     },
     trigger: {
       en: 'Triggered when SQL Server needs free buffers and sees memory pressure.',
-      es: 'Se activa cuando SQL Server necesita buffers libres y detecta presion de memoria.',
+      es: 'Se activa cuando SQL Server necesita buffers libres y detecta presión de memoria.',
     },
     goal: {
       en: 'Free cleanable buffers quickly so workers can keep reading new pages.',
-      es: 'Liberar buffers rapidamente para que los workers puedan leer paginas nuevas.',
+      es: 'Liberar buffers rápidamente para que los workers puedan leer páginas nuevas.',
     },
     writePattern: {
       en: 'Selective asynchronous writes focused on pages needed to relieve memory pressure right now.',
-      es: 'Escrituras asincronas selectivas centradas en paginas que alivian la presion de memoria ahora mismo.',
+      es: 'Escrituras asíncronas selectivas centradas en páginas que alivian la presión de memoria ahora mismo.',
     },
     summary: {
       en: 'Lazy Writer is about memory survival. It does not advance the recovery point by design.',
-      es: 'Lazy Writer trata de sobrevivir a la presion de memoria. No existe para adelantar el recovery point.',
+      es: 'Lazy Writer trata de sobrevivir a la presión de memoria. No existe para adelantar el recovery point.',
     },
     badges: ['RESOURCE_MEMPHYSICAL_LOW', 'Lazy writes/sec', 'LAZYWRITER_SLEEP'],
     metrics: [
@@ -561,7 +561,7 @@ export const REPLICATION_ROLES: ReplicationRole[] = [
     },
     detail: {
       en: 'In transactional replication, the publisher commits locally and then the Log Reader Agent extracts marked changes from the transaction log.',
-      es: 'En replicacion transaccional, el publisher hace commit local y luego el Log Reader Agent extrae los cambios marcados desde el transaction log.',
+      es: 'En replicación transaccional, el publisher hace commit local y luego el Log Reader Agent extrae los cambios marcados desde el transaction log.',
     },
     badge: 'Source of change',
   },
@@ -577,7 +577,7 @@ export const REPLICATION_ROLES: ReplicationRole[] = [
     },
     detail: {
       en: 'This server is the traffic hub of replication. Distribution Agent or Merge Agent pulls work from here and pushes it to subscribers.',
-      es: 'Este servidor es el hub de trafico de la replicacion. El Distribution Agent o el Merge Agent toman trabajo desde aqui y lo llevan a los subscribers.',
+      es: 'Este servidor es el hub de tráfico de la replicación. El Distribution Agent o el Merge Agent toman trabajo desde aquí y lo llevan a los subscribers.',
     },
     badge: 'Distribution DB',
   },
@@ -593,7 +593,7 @@ export const REPLICATION_ROLES: ReplicationRole[] = [
     },
     detail: {
       en: 'A subscriber can be push or pull, read-only or update-capable depending on the replication topology and conflict rules.',
-      es: 'Un subscriber puede ser push o pull, solo lectura o con capacidad de actualizacion segun la topologia y las reglas de conflicto.',
+      es: 'Un subscriber puede ser push o pull, solo lectura o con capacidad de actualización según la topología y las reglas de conflicto.',
     },
     badge: 'Destination',
   },
@@ -655,7 +655,7 @@ export const REPLICATION_STAGES: ReplicationStage[] = [
     },
     summary: {
       en: 'Distribution Agent, Merge Agent or peer topology applies the pending work and updates latency counters.',
-      es: 'El Distribution Agent, el Merge Agent o la topologia peer aplican el trabajo pendiente y actualizan la latencia.',
+      es: 'El Distribution Agent, el Merge Agent o la topología peer aplican el trabajo pendiente y actualizan la latencia.',
     },
     actor: 'Distribution / Merge Agent',
     badge: 'Apply',
@@ -710,7 +710,7 @@ export const REPLICATION_MODES: ReplicationMode[] = [
     },
     tradeoff: {
       en: 'The topology depends on healthy log reader and distribution agents; undistributed commands can accumulate quickly.',
-      es: 'La topologia depende de agentes sanos de lectura y distribucion; los comandos sin repartir pueden acumularse muy rapido.',
+      es: 'La topología depende de agentes sanos de lectura y distribución; los comandos sin repartir pueden acumularse muy rápido.',
     },
     latency: 'Near real time',
     badges: ['Log Reader Agent', 'Distribution Agent', 'Ordered commands'],
@@ -723,7 +723,7 @@ export const REPLICATION_MODES: ReplicationMode[] = [
     },
     summary: {
       en: 'Designed for disconnected or mobile scenarios where multiple nodes can update the same data set.',
-      es: 'Pensada para escenarios desconectados o moviles donde varios nodos pueden actualizar el mismo conjunto de datos.',
+      es: 'Pensada para escenarios desconectados o móviles donde varios nodos pueden actualizar el mismo conjunto de datos.',
     },
     strengths: {
       en: 'Supports bidirectional synchronization, partitions and conflict detection/resolution.',
@@ -731,7 +731,7 @@ export const REPLICATION_MODES: ReplicationMode[] = [
     },
     tradeoff: {
       en: 'Conflict metadata and merge processing add complexity and overhead compared with transactional replication.',
-      es: 'Los metadatos de conflicto y el proceso de merge anaden complejidad y mas coste que la replicacion transaccional.',
+      es: 'Los metadatos de conflicto y el proceso de merge añaden complejidad y más coste que la replicación transaccional.',
     },
     latency: 'Scheduled sync',
     badges: ['Merge Agent', 'Conflict resolver', 'Mobile'],
@@ -744,7 +744,7 @@ export const REPLICATION_MODES: ReplicationMode[] = [
     },
     summary: {
       en: 'Extends transactional replication to multiple writable nodes that each own a partition of writes.',
-      es: 'Extiende la replicacion transaccional a varios nodos escribibles donde cada uno debe poseer su particion de escrituras.',
+      es: 'Extiende la replicación transaccional a varios nodos escribibles donde cada uno debe poseer su partición de escrituras.',
     },
     strengths: {
       en: 'Useful for scale-out and site resilience when application routing avoids write conflicts.',
@@ -752,7 +752,7 @@ export const REPLICATION_MODES: ReplicationMode[] = [
     },
     tradeoff: {
       en: 'It is not conflict resolution magic: if two peers write the same row, the application design is already wrong.',
-      es: 'No es magia para resolver conflictos: si dos peers escriben la misma fila, el diseno de la aplicacion ya va mal.',
+      es: 'No es magia para resolver conflictos: si dos peers escriben la misma fila, el diseño de la aplicación ya va mal.',
     },
     latency: 'Near real time',
     badges: ['Peer topology', 'Partitioned writes', 'Conflict avoidance'],
@@ -803,7 +803,7 @@ export const VERSION_UPDATE_TRACKS: VersionUpdateTrack[] = [
     },
     detail: {
       en: 'If you work with SQL Server 2000 through SQL Server 2016, you still hear people classify estates by major Service Pack level because that was the operational language for many years.',
-      es: 'Si trabajas con SQL Server 2000 hasta SQL Server 2016, todavia es habitual clasificar entornos por nivel de Service Pack porque ese fue el lenguaje operativo durante anos.',
+      es: 'Si trabajas con SQL Server 2000 hasta SQL Server 2016, todavía es habitual clasificar entornos por nivel de Service Pack porque ese fue el lenguaje operativo durante años.',
     },
     badges: ['RTM', 'SP', 'Legacy estates'],
   },
@@ -819,7 +819,7 @@ export const VERSION_UPDATE_TRACKS: VersionUpdateTrack[] = [
     },
     detail: {
       en: 'From SQL Server 2017 onward, many production best practices assume you track a recent CU because fixes ship there continuously.',
-      es: 'Desde SQL Server 2017, muchas buenas practicas de produccion asumen que sigues un CU reciente porque las correcciones llegan de forma continua por esa via.',
+      es: 'Desde SQL Server 2017, muchas buenas prácticas de producción asumen que sigues un CU reciente porque las correcciones llegan de forma continua por esa vía.',
     },
     badges: ['CU', 'GDR', 'Build discipline'],
   },
@@ -827,7 +827,7 @@ export const VERSION_UPDATE_TRACKS: VersionUpdateTrack[] = [
     id: 'current',
     label: {
       en: 'Current decision model',
-      es: 'Modelo actual de decision',
+      es: 'Modelo actual de decisión',
     },
     summary: {
       en: 'Choose version by workload features, edition limits, lifecycle, Linux/Azure alignment and engine improvements.',
@@ -835,7 +835,7 @@ export const VERSION_UPDATE_TRACKS: VersionUpdateTrack[] = [
     },
     detail: {
       en: 'For a new deployment, version choice is rarely about syntax only. It is also about Query Store defaults, security, HA options, edition caps and the servicing model your team can sustain.',
-      es: 'En un despliegue nuevo, la decision rara vez depende solo de sintaxis. Tambien pesa Query Store, seguridad, HA, limites por edicion y el modelo de mantenimiento que tu equipo puede sostener.',
+      es: 'En un despliegue nuevo, la decisión rara vez depende solo de sintaxis. También pesa Query Store, seguridad, HA, límites por edición y el modelo de mantenimiento que tu equipo puede sostener.',
     },
     badges: ['Lifecycle', 'Edition limits', 'Operational fit'],
   },
@@ -922,7 +922,7 @@ export const SQL_SERVER_RELEASES: SqlServerRelease[] = [
     },
     history: {
       en: 'Still common in migration stories because many legacy vendor applications stayed on 2008 R2 for years.',
-      es: 'Sigue apareciendo mucho en historias de migracion porque muchas aplicaciones de terceros se quedaron anos en 2008 R2.',
+      es: 'Sigue apareciendo mucho en historias de migración porque muchas aplicaciones de terceros se quedaron años en 2008 R2.',
     },
     highlights: [
       { en: 'Compression and backup improvements', es: 'Mejoras en compresion y backup' },
@@ -995,7 +995,7 @@ export const SQL_SERVER_RELEASES: SqlServerRelease[] = [
     year: 2016,
     era: {
       en: 'Security and operational leap',
-      es: 'Salto en seguridad y operacion',
+      es: 'Salto en seguridad y operación',
     },
     summary: {
       en: 'Microsoft Learn highlights Query Store, temporal tables, JSON, PolyBase and a major security wave with Always Encrypted, Dynamic Data Masking and Row-Level Security.',
@@ -1066,7 +1066,7 @@ export const SQL_SERVER_RELEASES: SqlServerRelease[] = [
     ],
     servicing: {
       en: 'Mature CU era release, still common in current production estates.',
-      es: 'Version madura de la era CU, todavia muy comun en produccion.',
+      es: 'Versión madura de la era CU, todavía muy común en producción.',
     },
     badges: ['ADR', 'UTF-8', 'Big Data'],
   },
@@ -1120,7 +1120,7 @@ export const SQL_SERVER_RELEASES: SqlServerRelease[] = [
     ],
     servicing: {
       en: 'Current branch decision: version choice now includes edition limits, AI features, security defaults and operational maturity.',
-      es: 'Decision de rama actual: la version ya depende tambien de limites por edicion, AI, seguridad por defecto y madurez operativa.',
+      es: 'Decisión de rama actual: la versión ya depende también de límites por edición, AI, seguridad por defecto y madurez operativa.',
     },
     badges: ['Vectors', 'TDS 8.0 / TLS 1.3', 'ZSTD backup'],
   },

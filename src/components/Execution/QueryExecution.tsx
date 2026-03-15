@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Play, Clock, Lock, ShieldAlert, Cpu, Database, Activity, Code2, GitMerge, FileSearch, ChartBar } from 'lucide-react';
+import { useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { cn } from '../../lib/utils';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { TSqlModal } from '../Shared/TSqlModal';
@@ -252,6 +254,7 @@ function pickText(language: 'en' | 'es', text: LocalText) {
 
 export function QueryExecution() {
     const { t, language } = useLanguage();
+    const [searchParams] = useSearchParams();
     const [activeTab, setActiveTab] = useState<'execution' | 'optimizer' | 'dmvs'>('execution');
     const [activeOptimizerPhase, setActiveOptimizerPhase] = useState(2);
     const [activePlanExampleId, setActivePlanExampleId] = useState<OptimizerExampleId>('lookup-loops');
@@ -261,6 +264,13 @@ export function QueryExecution() {
     const [isTsqlOpen, setIsTsqlOpen] = useState(false);
 
     const activeOptimizerExample = OPTIMIZER_EXAMPLES.find((example) => example.id === activePlanExampleId) ?? OPTIMIZER_EXAMPLES[0];
+
+    useEffect(() => {
+        const view = searchParams.get('view');
+        if (view === 'optimizer' || view === 'dmvs' || view === 'execution') {
+            setActiveTab(view);
+        }
+    }, [searchParams]);
 
     const addLog = (msg: string) => setLogs(p => [msg, ...p].slice(0, 5));
 

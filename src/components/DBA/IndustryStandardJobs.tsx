@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Activity, ArrowRight, HeartPulse, Play, Wrench } from 'lucide-react';
+import { useSearchParams } from 'react-router-dom';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { cn } from '../../lib/utils';
 import { FirstResponderKitLab } from './jobs/FirstResponderKitLab';
@@ -23,8 +24,23 @@ const TABS: Array<{
 
 export function IndustryStandardJobs() {
   const { language } = useLanguage();
+  const [searchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState<JobsTabId>('ola');
   const [viewMode, setViewMode] = useState<JobsViewMode>('intro');
+
+  useEffect(() => {
+    const mode = searchParams.get('mode');
+    if (mode === 'intro' || mode === 'play') {
+      setViewMode(mode);
+    }
+  }, [searchParams]);
+
+  useEffect(() => {
+    const view = searchParams.get('view');
+    if (view === 'ola' || view === 'brent' || view === 'practices') {
+      setActiveTab(view);
+    }
+  }, [searchParams]);
 
   if (viewMode === 'intro') {
     return (

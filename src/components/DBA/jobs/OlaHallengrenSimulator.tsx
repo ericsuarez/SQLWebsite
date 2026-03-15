@@ -230,12 +230,12 @@ export function OlaHallengrenSimulator({ compact = false }: OlaHallengrenSimulat
       : phase === 'queue'
         ? {
             en: 'Read the incoming index like an operational object: fragmentation alone is not enough.',
-            es: 'Lee el indice entrante como un objeto operativo: la fragmentacion sola no basta.',
+            es: 'Lee el índice entrante como un objeto operativo: la fragmentación sola no basta.',
           }
         : phase === 'gate'
           ? {
               en: 'Validate the decision gate against size, write rate and maintenance window before touching production.',
-              es: 'Valida la puerta de decision contra tamano, ritmo de escritura y ventana de mantenimiento antes de tocar produccion.',
+              es: 'Valida la puerta de decisión contra tamaño, ritmo de escritura y ventana de mantenimiento antes de tocar producción.',
             }
           : action === 'skip'
             ? {
@@ -249,7 +249,7 @@ export function OlaHallengrenSimulator({ compact = false }: OlaHallengrenSimulat
                 }
               : {
                   en: 'REBUILD is the heavy move. The DBA now checks log capacity, maintenance window and write pressure before letting it run.',
-                  es: 'REBUILD es el movimiento pesado. Ahora el DBA comprueba capacidad de log, ventana de mantenimiento y presion de escrituras antes de dejarlo correr.',
+                  es: 'REBUILD es el movimiento pesado. Ahora el DBA comprueba capacidad de log, ventana de mantenimiento y presión de escrituras antes de dejarlo correr.',
                 };
 
   const dbaActions =
@@ -272,11 +272,11 @@ export function OlaHallengrenSimulator({ compact = false }: OlaHallengrenSimulat
         ? [
             {
               en: 'Check fragmentation, pages and write rate together before deciding whether maintenance is worth the churn.',
-              es: 'Revisa fragmentacion, paginas y ritmo de escritura juntas antes de decidir si el mantenimiento compensa el churn.',
+              es: 'Revisa fragmentación, páginas y ritmo de escritura juntas antes de decidir si el mantenimiento compensa el churn.',
             },
             {
               en: 'Ask whether the query pain is really fragmentation or a missing/covering index problem.',
-              es: 'Preguntate si el dolor de la query es de fragmentacion o realmente de un indice ausente/no cubriente.',
+              es: 'Pregúntate si el dolor de la query es de fragmentación o realmente de un índice ausente/no cubriente.',
             },
             {
               en: 'Confirm the maintenance window and log backup cadence before heavy operations.',
@@ -295,7 +295,7 @@ export function OlaHallengrenSimulator({ compact = false }: OlaHallengrenSimulat
               },
               {
                 en: 'If in doubt, prefer the safer operation and measure its result on the next cycle.',
-                es: 'Si dudas, prefiere la operacion mas segura y mide su resultado en el siguiente ciclo.',
+                es: 'Si dudas, prefiere la operación más segura y mide su resultado en el siguiente ciclo.',
               },
             ]
           : action === 'skip'
@@ -306,7 +306,7 @@ export function OlaHallengrenSimulator({ compact = false }: OlaHallengrenSimulat
                 },
                 {
                   en: 'Watch whether user complaints point to plan shape or lookups instead of fragmentation.',
-                  es: 'Observa si las quejas de usuarios apuntan a forma de plan o lookups y no a fragmentacion.',
+                  es: 'Observa si las quejas de usuarios apuntan a forma de plan o lookups y no a fragmentación.',
                 },
                 {
                   en: 'Recheck next cycle instead of spending log and IO now for no return.',
@@ -317,21 +317,21 @@ export function OlaHallengrenSimulator({ compact = false }: OlaHallengrenSimulat
               ? [
                   {
                     en: 'Track elapsed time and log churn to confirm REORGANIZE really stays lighter here.',
-                    es: 'Sigue tiempo acumulado y churn de log para confirmar que aqui REORGANIZE de verdad es mas ligero.',
+                    es: 'Sigue tiempo acumulado y churn de log para confirmar que aquí REORGANIZE de verdad es más ligero.',
                   },
                   {
                     en: 'Validate whether stats still need a separate update after the operation.',
-                    es: 'Valida si despues de la operacion siguen necesitando un update stats aparte.',
+                    es: 'Valida si después de la operación siguen necesitando un update stats aparte.',
                   },
                   {
                     en: 'If fragmentation rebounds quickly, the root cause may be fillfactor or insert pattern.',
-                    es: 'Si la fragmentacion reaparece rapido, la causa raiz puede ser fillfactor o patron de insercion.',
+                    es: 'Si la fragmentación reaparece rápido, la causa raíz puede ser fillfactor o patrón de inserción.',
                   },
                 ]
               : [
                   {
                     en: 'Check log size, VLF shape and backup cadence before a heavy rebuild starts.',
-                    es: 'Comprueba tamano del log, forma de VLFs y cadencia de backups antes de que arranque un rebuild pesado.',
+                    es: 'Comprueba tamaño del log, forma de VLFs y cadencia de backups antes de que arranque un rebuild pesado.',
                   },
                   {
                     en: 'Confirm the window really tolerates CPU, IO and locking side effects.',
@@ -339,7 +339,7 @@ export function OlaHallengrenSimulator({ compact = false }: OlaHallengrenSimulat
                   },
                   {
                     en: 'After the rebuild, validate whether the pain was fragmentation or really an index-design problem.',
-                    es: 'Tras el rebuild, valida si el dolor era de fragmentacion o realmente de diseno de indice.',
+                    es: 'Tras el rebuild, valida si el dolor era de fragmentación o realmente de diseño de índice.',
                   },
                 ];
 
@@ -355,7 +355,7 @@ export function OlaHallengrenSimulator({ compact = false }: OlaHallengrenSimulat
               </h3>
               <p className="mt-2 text-sm text-muted-foreground">
                 {language === 'es'
-                  ? 'Simula como el job decide entre SKIP/REORGANIZE/REBUILD segun fragmentacion, y compara contra el clasico Maintenance Plan: REBUILD ALL.'
+                  ? 'Simula cómo el job decide entre SKIP/REORGANIZE/REBUILD según fragmentación, y compara contra el clásico Maintenance Plan: REBUILD ALL.'
                   : 'Simulate how the job decides SKIP/REORGANIZE/REBUILD by fragmentation, and compare against the classic Maintenance Plan: REBUILD ALL.'}
               </p>
             </div>
@@ -366,7 +366,7 @@ export function OlaHallengrenSimulator({ compact = false }: OlaHallengrenSimulat
               </div>
               <p className="mt-2 text-sm text-white/75">
                 {language === 'es'
-                  ? 'Veras la query que entra y la decision del job en tiempo real.'
+                  ? 'Verás la query que entra y la decisión del job en tiempo real.'
                   : 'You will see incoming query text and job decision in real time.'}
               </p>
             </div>
@@ -579,7 +579,7 @@ export function OlaHallengrenSimulator({ compact = false }: OlaHallengrenSimulat
                 <div className="rounded-3xl border border-white/10 bg-black/30 p-4">
                   <div className="text-xs font-bold text-white/70">{language === 'es' ? 'Decision' : 'Decision'}</div>
                   <div className="mt-2 text-[11px] text-white/55">
-                    {language === 'es' ? 'Regla por fragmentacion' : 'Fragmentation rule'}
+                    {language === 'es' ? 'Regla por fragmentación' : 'Fragmentation rule'}
                   </div>
                   <div className={cn('mt-4 min-h-[92px]', compact && 'lg:min-h-[140px]')}>
                     {sample && phase === 'gate' && (
@@ -593,7 +593,7 @@ export function OlaHallengrenSimulator({ compact = false }: OlaHallengrenSimulat
                 <div className="rounded-3xl border border-white/10 bg-black/30 p-4">
                   <div className="text-xs font-bold text-white/70">{language === 'es' ? 'Salida' : 'Output'}</div>
                   <div className="mt-2 text-[11px] text-white/55">
-                    {language === 'es' ? 'Se desvía a la operacion' : 'Routed to operation'}
+                    {language === 'es' ? 'Se desvía a la operación' : 'Routed to operation'}
                   </div>
                   <div className="mt-4 grid gap-3">
                     {(['skip', 'reorganize', 'rebuild'] as const).map((id) => {
@@ -667,7 +667,7 @@ export function OlaHallengrenSimulator({ compact = false }: OlaHallengrenSimulat
               </h4>
               <p className="mt-2 text-sm text-muted-foreground">
                 {language === 'es'
-                  ? 'Ejemplo de ejecucion tipica del job. (No incluye el instalador; en produccion se usa la SQL Server Maintenance Solution).'
+                  ? 'Ejemplo de ejecución típica del job. (No incluye el instalador; en producción se usa la SQL Server Maintenance Solution).'
                   : 'Example of a typical job execution. (Not an installer; production uses the SQL Server Maintenance Solution).'}
               </p>
               <div className="mt-5 space-y-4">
@@ -704,7 +704,7 @@ export function OlaHallengrenSimulator({ compact = false }: OlaHallengrenSimulat
             actions={dbaActions}
             caution={{
               en: 'Do not treat fragmentation percentage as the only truth. Size, writes, recovery objectives and log pressure matter too.',
-              es: 'No trates el porcentaje de fragmentacion como la unica verdad. Tambien importan tamano, escrituras, recovery objectives y presion sobre el log.',
+              es: 'No trates el porcentaje de fragmentación como la única verdad. También importan tamaño, escrituras, recovery objectives y presión sobre el log.',
             }}
           />
 
@@ -722,7 +722,7 @@ export function OlaHallengrenSimulator({ compact = false }: OlaHallengrenSimulat
       {!compact ? (
       <div className="glass-panel rounded-2xl border border-white/10 p-6">
         <div className="flex items-center justify-between gap-3">
-          <h4 className="text-lg font-bold text-white">{language === 'es' ? 'Por que es mejor que Maintenance Plans' : 'Why this beats Maintenance Plans'}</h4>
+          <h4 className="text-lg font-bold text-white">{language === 'es' ? 'Por qué es mejor que Maintenance Plans' : 'Why this beats Maintenance Plans'}</h4>
           <span className="rounded-full border border-white/10 bg-black/25 px-3 py-1 text-xs font-bold text-white/70">
             {language === 'es' ? 'Menos IO y menos Log' : 'Less IO + less Log'}
           </span>
@@ -733,7 +733,7 @@ export function OlaHallengrenSimulator({ compact = false }: OlaHallengrenSimulat
               title: { en: 'Do no harm', es: 'No hagas dano' },
               body: {
                 en: 'Skip low-fragmentation indexes so you do not generate log, IO and CPU for nothing.',
-                es: 'Salta indices con poca fragmentacion para no generar log, IO y CPU sin necesidad.',
+                es: 'Salta índices con poca fragmentación para no generar log, IO y CPU sin necesidad.',
               },
             },
             {
@@ -747,7 +747,7 @@ export function OlaHallengrenSimulator({ compact = false }: OlaHallengrenSimulat
               title: { en: 'Operational visibility', es: 'Visibilidad operativa' },
               body: {
                 en: 'Logging to table and consistent job design makes auditing and debugging much easier.',
-                es: 'Loguear a tabla y un diseno consistente de jobs hace mas facil auditar y depurar.',
+                es: 'Loguear a tabla y un diseño consistente de jobs hace más fácil auditar y depurar.',
               },
             },
           ].map((card) => (

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Activity, AlertTriangle, ArrowRight, Pause, Play, Radar, RotateCcw, Search } from 'lucide-react';
+import { useSearchParams } from 'react-router-dom';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { XEVENT_LABS, type LocalizedCaseText } from './realCasesData';
 import { cn } from '../../lib/utils';
@@ -236,6 +237,7 @@ function pick(language: 'en' | 'es', value: LocalizedCaseText) {
 
 export function ExtendedEventsLab() {
   const { language, t } = useLanguage();
+  const [searchParams] = useSearchParams();
   const [viewMode, setViewMode] = useState<ViewMode>('intro');
   const [activeLabId, setActiveLabId] = useState(XEVENT_LABS[0]?.id ?? '');
   const [activeStage, setActiveStage] = useState(0);
@@ -271,6 +273,20 @@ export function ExtendedEventsLab() {
     setActiveStage(0);
     setAutoPlay(false);
   }, [activeLabId]);
+
+  useEffect(() => {
+    const mode = searchParams.get('mode');
+    if (mode === 'intro' || mode === 'play') {
+      setViewMode(mode);
+    }
+  }, [searchParams]);
+
+  useEffect(() => {
+    const view = searchParams.get('view');
+    if (view && XEVENT_LABS.some((lab) => lab.id === view)) {
+      setActiveLabId(view);
+    }
+  }, [searchParams]);
 
   if (!activeLab) {
     return null;

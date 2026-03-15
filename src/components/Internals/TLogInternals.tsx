@@ -35,7 +35,7 @@ const VLF_ACTIONS: Array<{ id: VlfActionId; label: LocalizedText; summary: Local
   },
   {
     id: 'truncate',
-    label: { en: 'Log reuse', es: 'Reutilizacion' },
+    label: { en: 'Log reuse', es: 'Reutilización' },
     summary: { en: 'Old VLFs become reusable after truncation/backups.', es: 'Los VLFs viejos pasan a ser reutilizables tras truncado/backups.' },
   },
   {
@@ -46,7 +46,7 @@ const VLF_ACTIONS: Array<{ id: VlfActionId; label: LocalizedText; summary: Local
   {
     id: 'growth',
     label: { en: 'Autogrowth', es: 'Autogrowth' },
-    summary: { en: 'Tiny growth creates many new small VLFs.', es: 'Un growth pequeno crea muchos VLFs pequenos.' },
+    summary: { en: 'Tiny growth creates many new small VLFs.', es: 'Un growth pequeño crea muchos VLFs pequeños.' },
   },
 ];
 
@@ -104,7 +104,7 @@ function stateLabel(language: 'en' | 'es', state: VlfState) {
     reusable: { en: 'Reusable', es: 'Reutilizable' },
     active: { en: 'Active chain', es: 'Cadena activa' },
     current: { en: 'Current write head', es: 'Cabezal actual' },
-    future: { en: 'Not used yet', es: 'Aun sin usar' },
+    future: { en: 'Not used yet', es: 'Aún sin usar' },
     new: { en: 'New from growth', es: 'Nuevo por growth' },
     scan: { en: 'Recovery scan', es: 'Lectura de recovery' },
   };
@@ -113,12 +113,12 @@ function stateLabel(language: 'en' | 'es', state: VlfState) {
 
 function stateDetail(language: 'en' | 'es', state: VlfState) {
   const map: Record<VlfState, LocalizedText> = {
-    reusable: { en: 'Already free to be reused when the log wraps.', es: 'Ya esta libre para reutilizarse cuando el log haga wrap.' },
+    reusable: { en: 'Already free to be reused when the log wraps.', es: 'Ya está libre para reutilizarse cuando el log haga wrap.' },
     active: { en: 'Still part of the active chain that recovery must walk.', es: 'Sigue dentro de la cadena activa que recovery debe recorrer.' },
-    current: { en: 'This is where the next flushed log block lands.', es: 'Aqui cae el siguiente bloque vaciado del log.' },
-    future: { en: 'This slice exists but the active chain has not reached it yet.', es: 'Esta porcion existe pero la cadena activa aun no ha llegado.' },
+    current: { en: 'This is where the next flushed log block lands.', es: 'Aquí cae el siguiente bloque vaciado del log.' },
+    future: { en: 'This slice exists but the active chain has not reached it yet.', es: 'Esta porción existe pero la cadena activa aún no ha llegado.' },
     new: { en: 'Created by autogrowth. Too many of these fragment the log.', es: 'Creado por autogrowth. Tener demasiados fragmenta el log.' },
-    scan: { en: 'Recovery is reading this VLF now.', es: 'Recovery esta leyendo este VLF ahora.' },
+    scan: { en: 'Recovery is reading this VLF now.', es: 'Recovery está leyendo este VLF ahora.' },
   };
   return pick(language, map[state]);
 }
@@ -167,7 +167,7 @@ export function TLogInternals() {
             </h2>
             <p className="text-sm leading-relaxed text-muted-foreground">
               {language === 'es'
-                ? 'Desde la regla Write-Ahead Logging hasta el tamano de los VLFs: aqui se ve por que WRITELOG, crash recovery y autogrowth pequeno pueden cambiar por completo el comportamiento de una base.'
+                ? 'Desde la regla Write-Ahead Logging hasta el tamaño de los VLFs: aquí se ve por qué WRITELOG, crash recovery y un autogrowth pequeño pueden cambiar por completo el comportamiento de una base.'
                 : 'From the Write-Ahead Logging rule to VLF sizing: this module shows why WRITELOG, crash recovery and tiny autogrowth increments can completely change database behavior.'}
             </p>
           </div>
@@ -183,7 +183,7 @@ export function TLogInternals() {
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-white/40">{language === 'es' ? 'Write-Ahead Logging (WAL)' : 'Write-Ahead Logging'}</p>
-              <h3 className="mt-2 text-2xl font-bold text-white">{language === 'es' ? 'El commit no ocurre hasta que el log esta endurecido' : 'Commit does not complete until the log is hardened'}</h3>
+              <h3 className="mt-2 text-2xl font-bold text-white">{language === 'es' ? 'El commit no ocurre hasta que el log está endurecido' : 'Commit does not complete until the log is hardened'}</h3>
             </div>
             <button
               onClick={() => setActiveStage((current) => (current + 1) % TLOG_WAL_STAGES.length)}
@@ -252,14 +252,14 @@ export function TLogInternals() {
                 <p className="mt-4 text-sm leading-7 text-white/80">
                   {activeStageData.id === 'log-buffer'
                     ? language === 'es'
-                      ? 'Si el worker todavia no ha endurecido el bloque, el commit no es durable y el cliente aun no debe recibir OK.'
+                      ? 'Si el worker todavía no ha endurecido el bloque, el commit no es durable y el cliente aún no debe recibir OK.'
                       : 'If the worker has not hardened the block yet, the commit is not durable and the client must not receive success.'
                     : activeStageData.id === 'log-flush'
                       ? language === 'es'
-                        ? 'Aqui aparece WRITELOG: la latencia del dispositivo del log determina cuanto tarda el commit en salir.'
+                        ? 'Aquí aparece WRITELOG: la latencia del dispositivo del log determina cuánto tarda el commit en salir.'
                         : 'This is where WRITELOG shows up: the log device latency decides how long the commit takes.'
                       : language === 'es'
-                        ? 'Despues de un crash, el motor escanea VLF por VLF para rehacer o deshacer lo necesario.'
+                        ? 'Después de un crash, el motor escanea VLF por VLF para rehacer o deshacer lo necesario.'
                         : 'After a crash, the engine scans VLF by VLF to redo or undo what is required.'}
                 </p>
               </div>
@@ -271,7 +271,7 @@ export function TLogInternals() {
           <h3 className="text-xl font-bold text-orange-300">{language === 'es' ? 'T-SQL de log listo para copiar' : 'Ready-to-paste log T-SQL'}</h3>
           <p className="mt-2 text-sm text-muted-foreground">
             {language === 'es'
-              ? 'Consulta tamano activo del log, razon de truncado y recuento de VLFs sin salir de DMVs modernas.'
+              ? 'Consulta tamaño activo del log, razón de truncado y recuento de VLFs sin salir de DMVs modernas.'
               : 'Inspect active log size, truncation blockers and VLF count from modern DMVs.'}
           </p>
           <div className="mt-5 space-y-4">
@@ -285,10 +285,10 @@ export function TLogInternals() {
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="max-w-4xl">
             <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-white/40">{language === 'es' ? 'Archivos virtuales de log (VLFs)' : 'Virtual Log Files'}</p>
-            <h3 className="mt-2 text-2xl font-bold text-white">{language === 'es' ? 'Que es un VLF y por que demasiados rompen recovery' : 'What a VLF is and why too many hurt recovery'}</h3>
+            <h3 className="mt-2 text-2xl font-bold text-white">{language === 'es' ? 'Qué es un VLF y por qué demasiados rompen recovery' : 'What a VLF is and why too many hurt recovery'}</h3>
             <p className="mt-3 text-sm leading-7 text-white/72">
               {language === 'es'
-                ? 'Un VLF no es otro archivo. Es una porcion interna del mismo .ldf. SQL Server divide el log en varios VLFs para escribir, reutilizar y recorrer crash recovery por tramos.'
+                ? 'Un VLF no es otro archivo. Es una porción interna del mismo .ldf. SQL Server divide el log en varios VLFs para escribir, reutilizar y recorrer crash recovery por tramos.'
                 : 'A VLF is not another file. It is an internal slice inside the same .ldf. SQL Server divides the log into multiple VLFs so it can write, reuse and scan crash recovery in chunks.'}
             </p>
           </div>
@@ -318,7 +318,7 @@ export function TLogInternals() {
               </div>
               <div className="rounded-2xl border border-white/10 bg-black/30 p-4">
                 <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-emerald-300">{language === 'es' ? '3. Growth importa' : '3. Growth matters'}</div>
-                <p className="mt-2 text-sm leading-6 text-white/75">{language === 'es' ? 'Si el autogrowth es pequeno y repetido, acabas con muchos VLFs diminutos.' : 'If autogrowth is tiny and repeated, you end up with many tiny VLFs.'}</p>
+                <p className="mt-2 text-sm leading-6 text-white/75">{language === 'es' ? 'Si el autogrowth es pequeño y repetido, acabas con muchos VLFs diminutos.' : 'If autogrowth is tiny and repeated, you end up with many tiny VLFs.'}</p>
               </div>
             </div>
 
@@ -380,13 +380,13 @@ export function TLogInternals() {
             <div className="mt-3 flex items-start justify-between gap-3">
               <div>
                 <div className="text-xl font-black text-white">{selectedVlf.label}</div>
-                <p className="mt-2 text-sm leading-7 text-white/75">{language === 'es' ? 'Cada caja es una porcion interna del mismo archivo de log.' : 'Each box is an internal slice of the same log file.'}</p>
+                <p className="mt-2 text-sm leading-7 text-white/75">{language === 'es' ? 'Cada caja es una porción interna del mismo archivo de log.' : 'Each box is an internal slice of the same log file.'}</p>
               </div>
               <span className={cn('rounded-full border px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.18em]', VLF_STATE_STYLE[selectedVlf.state])}>{stateLabel(language, selectedVlf.state)}</span>
             </div>
 
             <div className="mt-4 rounded-2xl border border-white/10 bg-black/30 p-4">
-              <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-white/45">{language === 'es' ? 'Que significa este estado' : 'What this state means'}</div>
+              <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-white/45">{language === 'es' ? 'Qué significa este estado' : 'What this state means'}</div>
               <p className="mt-3 text-sm leading-7 text-white/80">{stateDetail(language, selectedVlf.state)}</p>
             </div>
 
@@ -395,7 +395,7 @@ export function TLogInternals() {
               <p className="mt-3 text-sm leading-7 text-white/80">
                 {activeVlfAction === 'write'
                   ? language === 'es'
-                    ? 'El commit sigue esta cadena. Si el storage del log es lento, WRITELOG sube aunque el resto del motor este sano.'
+                    ? 'El commit sigue esta cadena. Si el storage del log es lento, WRITELOG sube aunque el resto del motor esté sano.'
                     : 'Commit follows this chain. If log storage is slow, WRITELOG rises even when the rest of the engine is healthy.'
                   : activeVlfAction === 'truncate'
                     ? language === 'es'
@@ -403,10 +403,10 @@ export function TLogInternals() {
                       : 'Truncation does not delete the file: it frees old VLFs so they can be reused later.'
                     : activeVlfAction === 'recover'
                       ? language === 'es'
-                        ? 'Recovery camina desde el inicio util de la cadena activa hasta el final. Muchos VLFs pequenos implican mas pasos.'
+                        ? 'Recovery camina desde el inicio útil de la cadena activa hasta el final. Muchos VLFs pequeños implican más pasos.'
                         : 'Recovery walks from the useful start of the active chain to the end. Many tiny VLFs mean more steps.'
                       : language === 'es'
-                        ? 'El growth pequeno crea mas VLFs nuevos y deja una topologia interna mas fragmentada.'
+                        ? 'El growth pequeño crea más VLFs nuevos y deja una topología interna más fragmentada.'
                         : 'Tiny growth creates more new VLFs and leaves a more fragmented internal topology.'}
               </p>
             </div>
@@ -422,7 +422,7 @@ export function TLogInternals() {
                     ? 'Cadena corta y growth grande: recovery y log backup escanean menos nodos internos.'
                     : 'Short chain and larger growth: recovery and log backup scan fewer internal nodes.'
                   : language === 'es'
-                    ? 'Cadena larga con muchos trozos pequenos: recovery, redo y arranque tardan mas.'
+                    ? 'Cadena larga con muchos trozos pequeños: recovery, redo y arranque tardan más.'
                     : 'Long chain with many tiny pieces: recovery, redo and startup take longer.'}
               </p>
             </div>
