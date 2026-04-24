@@ -596,7 +596,7 @@ WHERE name IN ('min server memory (MB)', 'max server memory (MB)');`;
                         onClick={() => setActiveTab('bufferpool')}
                         className={cn(
                             "px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2",
-                            activeTab === 'bufferpool' ? "bg-purple-500 text-white shadow-glow" : "text-muted-foreground hover:text-white hover:bg-white/5"
+                            activeTab === 'bufferpool' ? "bg-purple-500 text-white" : "text-muted-foreground hover:text-white hover:bg-white/5"
                         )}
                     >
                         <Cpu className="w-4 h-4" />
@@ -606,7 +606,7 @@ WHERE name IN ('min server memory (MB)', 'max server memory (MB)');`;
                         onClick={() => setActiveTab('clerks')}
                         className={cn(
                             "px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2",
-                            activeTab === 'clerks' ? "bg-pink-500 text-white shadow-glow" : "text-muted-foreground hover:text-white hover:bg-white/5"
+                            activeTab === 'clerks' ? "bg-pink-500 text-white" : "text-muted-foreground hover:text-white hover:bg-white/5"
                         )}
                     >
                         <PieChart className="w-4 h-4" />
@@ -616,7 +616,7 @@ WHERE name IN ('min server memory (MB)', 'max server memory (MB)');`;
                         onClick={() => setActiveTab('memory-config')}
                         className={cn(
                             "px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2",
-                            activeTab === 'memory-config' ? "bg-indigo-500 text-white shadow-glow" : "text-muted-foreground hover:text-white hover:bg-white/5"
+                            activeTab === 'memory-config' ? "bg-indigo-500 text-white" : "text-muted-foreground hover:text-white hover:bg-white/5"
                         )}
                     >
                         <Sliders className="w-4 h-4" />

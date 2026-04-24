@@ -364,8 +364,87 @@ export function ArchitectureOverview() {
                             exit={{ opacity: 0, y: -10 }}
                             className="h-full w-full overflow-y-auto pb-8"
                         >
-                            <div className="grid gap-6 xl:grid-cols-[320px_minmax(0,1fr)]">
-                                <div className="space-y-6">
+                            <div className="space-y-5">
+                                <div className="glass-panel rounded-2xl p-4">
+                                    <div className="flex flex-col gap-4 2xl:flex-row 2xl:items-start 2xl:justify-between">
+                                        <div className="max-w-2xl">
+                                            <div className="text-[11px] font-bold uppercase tracking-[0.22em] text-white/40">
+                                                {language === 'es' ? 'Bases del sistema' : 'System databases'}
+                                            </div>
+                                            <p className="mt-2 text-sm leading-7 text-white/66">{t('sysDbsDesc')}</p>
+                                        </div>
+
+                                        <div className="grid min-w-0 flex-1 gap-2 sm:grid-cols-2 xl:grid-cols-4">
+                                            {SYSTEM_DATABASE_GUIDES.map((guide) => {
+                                                const style = systemDbStyles[guide.id];
+                                                const Icon = style.icon;
+                                                const isActive = activeSystemDb === guide.id;
+
+                                                return (
+                                                    <button
+                                                        key={guide.id}
+                                                        onClick={() => {
+                                                            setActiveSystemDb(guide.id);
+                                                            const relatedAction = SYSTEM_DATABASE_ACTIONS.find((action) => action.target === guide.id);
+                                                            if (relatedAction) {
+                                                                setActiveSystemAction(relatedAction.id);
+                                                            }
+                                                        }}
+                                                        className={cn(
+                                                            'flex min-h-[86px] items-center gap-3 rounded-xl border p-3 text-left transition-all',
+                                                            isActive ? style.card : 'border-white/10 bg-black/25 hover:border-white/20 hover:bg-white/[0.06]'
+                                                        )}
+                                                    >
+                                                        <div className={cn('flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border', style.badge)}>
+                                                            <Icon className="h-4 w-4" />
+                                                        </div>
+                                                        <div className="min-w-0">
+                                                            <div className="font-mono text-base font-bold text-white">{guide.name}</div>
+                                                            <div className="mt-1 line-clamp-2 text-xs font-bold uppercase tracking-[0.14em] text-white/45">
+                                                                {pick(guide.headline)}
+                                                            </div>
+                                                        </div>
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+
+                                    <div className="mt-4 border-t border-white/10 pt-4">
+                                        <div className="mb-2 text-[10px] font-bold uppercase tracking-[0.2em] text-white/38">
+                                            {language === 'es' ? 'Ruta de una accion' : 'Action route'}
+                                        </div>
+                                        <div className="flex gap-2 overflow-x-auto pb-1">
+                                            {SYSTEM_DATABASE_ACTIONS.map((action) => {
+                                                const isActive = activeSystemAction === action.id;
+                                                const targetStyle = systemDbStyles[action.target];
+
+                                                return (
+                                                    <button
+                                                        key={action.id}
+                                                        onClick={() => {
+                                                            setActiveSystemAction(action.id);
+                                                            setActiveSystemDb(action.target);
+                                                        }}
+                                                        className={cn(
+                                                            'inline-flex min-w-fit items-center gap-2 rounded-lg border px-3 py-2 text-xs font-bold transition-all',
+                                                            isActive
+                                                                ? `${targetStyle.badge} border-current`
+                                                                : 'border-white/10 bg-black/20 text-white/55 hover:border-white/20 hover:bg-white/[0.06] hover:text-white'
+                                                        )}
+                                                    >
+                                                        <span className="max-w-[220px] truncate">{pick(action.label)}</span>
+                                                        <span className={cn('rounded-md border px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.14em]', targetStyle.badge)}>
+                                                            {action.target}
+                                                        </span>
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="hidden">
                                     <div className="glass-panel rounded-3xl p-5">
                                         <p className="text-sm leading-relaxed text-muted-foreground">
                                             {t('sysDbsDesc')}
