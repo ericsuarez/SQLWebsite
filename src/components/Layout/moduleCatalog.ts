@@ -85,7 +85,6 @@ export interface SurfaceSectionDefinition {
   outcome: LocalizedText;
   moduleIds: ModuleId[];
   level?: Exclude<LearnLevel, null>;
-  xp?: number;
 }
 
 export interface SurfaceGuideDefinition {
@@ -503,7 +502,6 @@ export const SURFACE_SECTIONS: Record<SurfaceId, SurfaceSectionDefinition[]> = {
       },
       moduleIds: ['architecture', 'storage', 'memory', 'execution', 'incident-labs'],
       level: 1,
-      xp: 320,
     },
     {
       id: 'level-2',
@@ -523,7 +521,6 @@ export const SURFACE_SECTIONS: Record<SurfaceId, SurfaceSectionDefinition[]> = {
       },
       moduleIds: ['indexes', 'sqlos', 'perfmon', 'osconfig', 'jobs'],
       level: 2,
-      xp: 520,
     },
     {
       id: 'level-3',
@@ -543,7 +540,6 @@ export const SURFACE_SECTIONS: Record<SurfaceId, SurfaceSectionDefinition[]> = {
       },
       moduleIds: ['tlog-internals', 'tempdb-io', 'modern', 'replication', 'version-history', 'ha'],
       level: 3,
-      xp: 610,
     },
   ],
   labs: [

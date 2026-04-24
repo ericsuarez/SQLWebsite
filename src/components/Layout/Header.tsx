@@ -1,11 +1,14 @@
 import { useMemo, useState } from 'react';
-import { Activity, Database, Menu, Search } from 'lucide-react';
+import { Activity, BookOpen, ChevronDown, Database, Search } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useSqlVersion, type SqlVersion } from '../../contexts/SqlVersionContext';
 import {
   ALL_MODULES,
   SURFACE_DEFINITIONS,
+  SURFACE_SECTIONS,
+  getModuleDefinition,
+  getModuleStepIndex,
   getPrimarySectionForModule,
   normalizeSearchValue,
   type ModuleId,
@@ -15,10 +18,10 @@ import {
 interface HeaderProps {
   currentSurface: SurfaceId;
   currentModule: ModuleId | null;
+  onSurfaceChange: (surface: SurfaceId) => void;
   onNavigateToModule: (surface: SurfaceId, moduleId: ModuleId) => void;
   searchQuery: string;
   onSearchQueryChange: (value: string) => void;
-  onOpenSidebar: () => void;
 }
 
 function pick(language: 'en' | 'es', value: { en: string; es: string }) {
@@ -28,14 +31,28 @@ function pick(language: 'en' | 'es', value: { en: string; es: string }) {
 export function Header({
   currentSurface,
   currentModule,
+  onSurfaceChange,
   onNavigateToModule,
   searchQuery,
   onSearchQueryChange,
-  onOpenSidebar,
 }: HeaderProps) {
   const { t, language, setLanguage } = useLanguage();
   const { version, setVersion } = useSqlVersion();
   const [isSearchFocused, setIsSearchFocused] = useState(false);
+  const [isModuleMenuOpen, setIsModuleMenuOpen] = useState(false);
+  const navigationSurfaces: SurfaceId[] = ['learn', 'diagnose'];
+
+  const currentSurfaceModules = useMemo(
+    () =>
+      SURFACE_SECTIONS[currentSurface].flatMap((section) =>
+        section.moduleIds
+          .map((moduleId) => getModuleDefinition(moduleId))
+          .filter((module): module is NonNullable<typeof module> => Boolean(module))
+      ),
+    [currentSurface]
+  );
+
+  const activeModule = currentModule ? getModuleDefinition(currentModule) : undefined;
 
   const searchResults = useMemo(() => {
     const normalizedQuery = normalizeSearchValue(searchQuery);
@@ -89,6 +106,7 @@ export function Header({
     onNavigateToModule(surface, moduleId);
     onSearchQueryChange('');
     setIsSearchFocused(false);
+    setIsModuleMenuOpen(false);
   };
 
   return (
@@ -96,14 +114,43 @@ export function Header({
       <div className="flex flex-col gap-3">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
           <div className="flex w-full min-w-0 items-center gap-3 lg:flex-1">
-            <button
-              type="button"
-              onClick={onOpenSidebar}
-              className="inline-flex rounded-xl border border-white/10 bg-white/5 p-2 text-white/55 transition-colors hover:bg-white/10 hover:text-white lg:hidden"
-              aria-label={language === 'es' ? 'Abrir navegación' : 'Open navigation'}
-            >
-              <Menu className="h-5 w-5" />
-            </button>
+            <div className="flex min-w-0 shrink-0 items-center gap-3">
+              <div className="rounded-xl border border-teal-500/25 bg-teal-500/10 p-2 shadow-[0_0_30px_rgba(20,184,166,0.08)]">
+                <Database className="h-5 w-5 text-teal-300" />
+              </div>
+              <div className="hidden min-w-0 text-left sm:block">
+                <h1 className="truncate bg-gradient-to-r from-teal-200 via-amber-100 to-lime-200 bg-clip-text text-lg font-black tracking-tight text-transparent">
+                  {t('appTitle')}
+                </h1>
+                <p className="truncate text-[10px] font-bold uppercase tracking-[0.18em] text-white/40">
+                  {pick(language, SURFACE_DEFINITIONS[currentSurface].title)}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex shrink-0 items-center gap-1 rounded-xl border border-white/10 bg-white/5 p-1">
+              {navigationSurfaces.map((surface) => {
+                const meta = SURFACE_DEFINITIONS[surface];
+                const Icon = meta.icon;
+                const isActive = surface === currentSurface;
+
+                return (
+                  <button
+                    key={surface}
+                    type="button"
+                    onClick={() => onSurfaceChange(surface)}
+                    className={cn(
+                      'inline-flex min-w-10 items-center justify-center gap-2 rounded-lg px-3 py-1.5 text-xs font-black transition-all',
+                      isActive ? meta.chipClassName : 'text-white/55 hover:bg-white/8 hover:text-white'
+                    )}
+                    title={pick(language, meta.title)}
+                  >
+                    <Icon className="h-4 w-4" />
+                    <span className="hidden xl:inline">{pick(language, meta.title)}</span>
+                  </button>
+                );
+              })}
+            </div>
 
             <div className="relative min-w-0 flex-1 lg:max-w-sm xl:max-w-md">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/38" />
@@ -171,6 +218,71 @@ export function Header({
                         : 'No matches found. Try tempdb, sqlos, jobs, xevents, or indexes.'}
                     </div>
                   )}
+                </div>
+              ) : null}
+            </div>
+
+            <div
+              className="relative w-full sm:w-72"
+              onBlur={() => window.setTimeout(() => setIsModuleMenuOpen(false), 120)}
+            >
+              <button
+                type="button"
+                onClick={() => setIsModuleMenuOpen((current) => !current)}
+                className="flex w-full items-center justify-between gap-3 rounded-xl border border-white/12 bg-[#11191a] px-3 py-2 text-left text-white shadow-[0_14px_34px_rgba(0,0,0,0.28)] transition-all hover:bg-[#162021]"
+              >
+                <div className="flex min-w-0 items-center gap-3">
+                  <BookOpen className="h-4 w-4 shrink-0 text-teal-300" />
+                  <div className="min-w-0">
+                    <div className="text-[10px] font-black uppercase tracking-[0.16em] text-white/38">
+                      {language === 'es' ? 'Modulos' : 'Modules'}
+                    </div>
+                    <div className="truncate text-sm font-black">
+                      {activeModule ? t(activeModule.titleKey) : language === 'es' ? 'Elegir modulo' : 'Choose module'}
+                    </div>
+                  </div>
+                </div>
+                <ChevronDown
+                  className={cn(
+                    'h-4 w-4 shrink-0 text-white/45 transition-transform',
+                    isModuleMenuOpen ? 'rotate-180' : 'rotate-0'
+                  )}
+                />
+              </button>
+
+              {isModuleMenuOpen ? (
+                <div className="absolute left-0 right-0 z-50 mt-2 max-h-[68dvh] overflow-y-auto rounded-2xl border border-white/12 bg-[#0b1112] p-2 shadow-[0_24px_80px_rgba(0,0,0,0.72)]">
+                  {currentSurfaceModules.map((module) => {
+                    const Icon = module.icon;
+                    const isCurrent = module.id === currentModule;
+                    const stepIndex = getModuleStepIndex(currentSurface, module.id);
+
+                    return (
+                      <button
+                        key={`${currentSurface}-${module.id}`}
+                        onMouseDown={() => goToModule(currentSurface, module.id)}
+                        className={cn(
+                          'w-full rounded-xl border px-3 py-2 text-left transition-all',
+                          isCurrent
+                            ? 'border-teal-500/45 bg-[#062f2b] text-white'
+                            : 'border-transparent bg-[#0f1718] text-white/72 hover:border-white/12 hover:bg-[#172122] hover:text-white'
+                        )}
+                      >
+                        <div className="flex items-center gap-3">
+                          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-white/10 bg-black/25 text-[10px] font-black text-white/55">
+                            {stepIndex + 1}
+                          </span>
+                          <Icon className={cn('h-4 w-4 shrink-0', isCurrent ? module.color : 'text-white/42')} />
+                          <div className="min-w-0">
+                            <div className="truncate text-sm font-semibold">{t(module.titleKey)}</div>
+                            <div className="mt-0.5 truncate text-xs text-white/42">
+                              {module.level ? `L${module.level}` : pick(language, SURFACE_DEFINITIONS[module.primaryHome].title)}
+                            </div>
+                          </div>
+                        </div>
+                      </button>
+                    );
+                  })}
                 </div>
               ) : null}
             </div>

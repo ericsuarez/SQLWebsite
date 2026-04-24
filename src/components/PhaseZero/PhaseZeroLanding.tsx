@@ -17,8 +17,8 @@ export function PhaseZeroLanding() {
       surface: SURFACE_DEFINITIONS.learn,
       preview:
         language === 'es'
-          ? ['Arquitectura y bases del motor', 'Memoria, índices y optimizador', 'Ruta por niveles con XP visual']
-          : ['Engine architecture and storage', 'Memory, indexes, and optimizer', 'Level-based path with visual XP'],
+          ? ['Arquitectura y bases del motor', 'Memoria, índices y optimizador', 'Ruta por niveles guiada']
+          : ['Engine architecture and storage', 'Memory, indexes, and optimizer', 'Guided level-based path'],
     },
     {
       surface: SURFACE_DEFINITIONS.labs,

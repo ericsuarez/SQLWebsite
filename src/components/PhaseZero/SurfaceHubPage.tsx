@@ -5,7 +5,6 @@ import { useLanguage } from '../../contexts/LanguageContext';
 import { cn } from '../../lib/utils';
 import {
   SURFACE_DEFINITIONS,
-  SURFACE_GUIDES,
   SURFACE_SECTIONS,
   buildModulePath,
   getModuleDefinition,
@@ -33,7 +32,6 @@ export function SurfaceHubPage({ surface }: { surface: SurfaceId }) {
   const { language, t } = useLanguage();
 
   const surfaceMeta = SURFACE_DEFINITIONS[surface];
-  const surfaceGuide = SURFACE_GUIDES[surface];
   const sections = SURFACE_SECTIONS[surface];
   const [activeSectionIndex, setActiveSectionIndex] = useState(0);
 
@@ -82,7 +80,7 @@ export function SurfaceHubPage({ surface }: { surface: SurfaceId }) {
     <div className="flex min-h-full flex-col gap-4">
       <section className="glass-panel border border-white/10 p-4 sm:p-5">
         <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
-          <div className="min-w-0">
+          <div className="min-w-0 flex-1">
             <div
               className={cn(
                 'inline-flex items-center gap-2 rounded-lg border px-3 py-1 text-[11px] font-black uppercase tracking-[0.18em]',
@@ -97,6 +95,55 @@ export function SurfaceHubPage({ surface }: { surface: SurfaceId }) {
               {pick(language, activeSection.label)}
             </h1>
             <p className="mt-2 max-w-4xl text-sm leading-7 text-white/68">{pick(language, activeSection.description)}</p>
+
+            <div className="mt-4 flex flex-col gap-3 rounded-lg border border-white/10 bg-black/20 p-2 sm:flex-row sm:items-center">
+              <div className="flex shrink-0 items-center gap-2 px-2 text-[10px] font-black uppercase tracking-[0.16em] text-white/42">
+                <Compass className="h-4 w-4 text-teal-300" />
+                {language === 'es' ? 'Etapas' : 'Stages'}
+              </div>
+
+              <div className="flex min-w-0 flex-1 gap-2 overflow-x-auto">
+                {sections.map((section, index) => {
+                  const isActive = index === activeSectionIndex;
+
+                  return (
+                    <button
+                      key={section.id}
+                      onClick={() => setActiveSectionIndex(index)}
+                      className={cn(
+                        'inline-flex min-w-fit items-center gap-2 rounded-lg border px-3 py-2 text-xs font-black transition-all',
+                        isActive
+                          ? surfaceMeta.chipClassName
+                          : 'border-white/10 bg-white/[0.04] text-white/55 hover:bg-white/[0.08] hover:text-white'
+                      )}
+                    >
+                      <span>{index + 1}</span>
+                      <span className="max-w-[9rem] truncate sm:max-w-[11rem]">{pick(language, section.label)}</span>
+                    </button>
+                  );
+                })}
+              </div>
+
+              <div className="flex shrink-0 gap-2">
+                <button
+                  onClick={() => setActiveSectionIndex((current) => Math.max(0, current - 1))}
+                  disabled={!canGoBack}
+                  aria-label={language === 'es' ? 'Etapa anterior' : 'Previous stage'}
+                  className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-white/70 transition-all hover:bg-white/10 hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  <ArrowLeft className="h-4 w-4" />
+                </button>
+
+                <button
+                  onClick={() => setActiveSectionIndex((current) => Math.min(sections.length - 1, current + 1))}
+                  disabled={!canGoForward}
+                  aria-label={language === 'es' ? 'Siguiente etapa' : 'Next stage'}
+                  className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-white/70 transition-all hover:bg-white/10 hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  <ArrowRight className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
           </div>
 
           <div className="w-full rounded-lg border border-white/10 bg-black/20 p-3 xl:w-[280px]">
@@ -216,76 +263,6 @@ export function SurfaceHubPage({ surface }: { surface: SurfaceId }) {
       </section>
 
       <section className="glass-panel border border-white/10 p-4 sm:p-5">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-          <div>
-            <div className="flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.18em] text-white/42">
-              <Compass className="h-4 w-4 text-teal-300" />
-              {language === 'es' ? 'Cambiar etapa' : 'Change stage'}
-            </div>
-            <p className="mt-2 text-sm leading-7 text-white/62">{pick(language, surfaceGuide.intro)}</p>
-          </div>
-
-          <div className="flex flex-wrap gap-2">
-            <button
-              onClick={() => setActiveSectionIndex((current) => Math.max(0, current - 1))}
-              disabled={!canGoBack}
-              className="inline-flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-sm font-black text-white/70 transition-all hover:bg-white/10 hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              {language === 'es' ? 'Anterior' : 'Previous'}
-            </button>
-
-            <button
-              onClick={() => setActiveSectionIndex((current) => Math.min(sections.length - 1, current + 1))}
-              disabled={!canGoForward}
-              className="inline-flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-sm font-black text-white/70 transition-all hover:bg-white/10 hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
-            >
-              {language === 'es' ? 'Siguiente' : 'Next'}
-              <ArrowRight className="h-4 w-4" />
-            </button>
-          </div>
-        </div>
-
-        <div className="mt-4 grid gap-3 xl:grid-cols-3">
-          {sections.map((section, index) => {
-            const isActive = index === activeSectionIndex;
-
-            return (
-              <button
-                key={section.id}
-                onClick={() => setActiveSectionIndex(index)}
-                className={cn(
-                  'rounded-lg border p-4 text-left transition-all',
-                  isActive
-                    ? 'border-white/15 bg-white/[0.08] text-white shadow-[0_18px_42px_rgba(0,0,0,0.18)]'
-                    : 'border-white/10 bg-black/20 text-white/70 hover:border-white/20 hover:bg-white/[0.05]'
-                )}
-              >
-                <div className="flex items-center justify-between gap-3">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 bg-black/25 text-xs font-black text-white/70">
-                    {index + 1}
-                  </div>
-                  <span
-                    className={cn(
-                      'rounded-lg border px-2 py-1 text-[10px] font-black uppercase tracking-[0.14em]',
-                      isActive ? surfaceMeta.chipClassName : 'border-white/10 bg-black/25 text-white/40'
-                    )}
-                  >
-                    {section.level
-                      ? `${language === 'es' ? 'Nivel' : 'Level'} ${section.level}`
-                      : `${section.moduleIds.length} ${language === 'es' ? 'modulos' : 'items'}`}
-                  </span>
-                </div>
-
-                <div className="mt-4 text-base font-black text-white">{pick(language, section.label)}</div>
-                <p className="mt-2 text-sm leading-7 text-white/62">{pick(language, section.goal)}</p>
-              </button>
-            );
-          })}
-        </div>
-      </section>
-
-      <section className="glass-panel border border-white/10 p-4 sm:p-5">
         <div className="grid gap-5 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
           <div>
             <div className="flex flex-wrap items-center gap-3">
@@ -300,11 +277,6 @@ export function SurfaceHubPage({ surface }: { surface: SurfaceId }) {
               {activeSection.level ? (
                 <span className="rounded-lg border border-white/10 bg-black/20 px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em] text-white/45">
                   {language === 'es' ? 'Nivel' : 'Level'} {activeSection.level}
-                </span>
-              ) : null}
-              {activeSection.xp ? (
-                <span className="rounded-lg border border-white/10 bg-black/20 px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em] text-white/45">
-                  XP {activeSection.xp}
                 </span>
               ) : null}
             </div>
