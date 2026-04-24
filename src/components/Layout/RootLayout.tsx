@@ -20,7 +20,7 @@ export function RootLayout({
   onNavigateToModule,
   children,
 }: RootLayoutProps) {
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(true);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -30,7 +30,7 @@ export function RootLayout({
   };
 
   return (
-    <div className="relative flex min-h-dvh w-full overflow-x-clip bg-[#0b1011] font-sans text-zinc-50 selection:bg-teal-500/30">
+    <div className="relative flex h-dvh w-full overflow-hidden bg-[#0b1011] font-sans text-zinc-50 selection:bg-teal-500/30">
       <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
         <div className="absolute left-[-12%] top-[-12%] h-[34rem] w-[34rem] rounded-full bg-teal-500/12 blur-[140px]" />
         <div className="absolute right-[-10%] top-[8%] h-[30rem] w-[30rem] rounded-full bg-amber-500/10 blur-[140px]" />
@@ -58,7 +58,7 @@ export function RootLayout({
         onCloseMobile={() => setIsMobileSidebarOpen(false)}
       />
 
-      <div className="relative z-0 flex min-w-0 flex-1 flex-col overflow-x-clip">
+      <div className="relative z-0 flex min-w-0 flex-1 flex-col overflow-hidden">
         <Header
           currentSurface={currentSurface}
           currentModule={currentModule}
@@ -68,8 +68,8 @@ export function RootLayout({
           onOpenSidebar={() => setIsMobileSidebarOpen(true)}
         />
 
-        <main className="relative flex-1 overflow-x-clip overflow-y-auto overscroll-y-auto px-3 py-3 sm:px-4 md:px-6 md:py-5">
-          <div className="min-h-full w-full pb-6">{children}</div>
+        <main className="relative min-h-0 flex-1 overflow-x-clip overflow-y-auto overscroll-y-auto px-3 py-3 sm:px-4 md:px-6 md:py-5">
+          <div className="w-full pb-6">{children}</div>
         </main>
       </div>
     </div>

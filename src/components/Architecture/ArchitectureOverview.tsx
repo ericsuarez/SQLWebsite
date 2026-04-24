@@ -137,9 +137,9 @@ export function ArchitectureOverview() {
                 </div>
             </div>
 
-            <div className="grid min-h-0 flex-1 gap-6 xl:grid-cols-[280px_minmax(0,1fr)]">
-                <aside className="space-y-4">
-                    <div className="glass-panel rounded-3xl p-5">
+            <div className="grid min-h-0 flex-1 gap-4">
+                <aside className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_280px]">
+                    <div className="glass-panel rounded-2xl p-4">
                         <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.22em] text-white/40">
                             <BookOpen className="h-4 w-4 text-teal-300" />
                             {language === 'es' ? 'Subapartados' : 'Subsections'}
@@ -150,7 +150,7 @@ export function ArchitectureOverview() {
                                 : 'Go through one block at a time. Choose the architecture area you want and move with previous or next.'}
                         </p>
 
-                        <div className="mt-5 space-y-3">
+                        <div className="mt-4 grid gap-3 md:grid-cols-3">
                             {architectureSections.map((section) => {
                                 const Icon = section.icon;
                                 const isActive = section.id === activeTab;
@@ -160,14 +160,14 @@ export function ArchitectureOverview() {
                                         key={section.id}
                                         onClick={() => setActiveTab(section.id)}
                                         className={cn(
-                                            'w-full rounded-3xl border p-4 text-left transition-all',
+                                            'w-full rounded-2xl border p-3 text-left transition-all',
                                             isActive
                                                 ? `${section.panel} shadow-[0_20px_50px_rgba(0,0,0,0.18)]`
                                                 : 'border-white/10 bg-black/20 hover:border-white/20 hover:bg-white/[0.06]'
                                         )}
                                     >
                                         <div className="flex items-start gap-3">
-                                            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-white/10 bg-black/25">
+                                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-black/25">
                                                 <Icon className={cn('h-5 w-5', isActive ? 'text-white' : 'text-white/50')} />
                                             </div>
                                             <div className="min-w-0 flex-1">
@@ -191,7 +191,7 @@ export function ArchitectureOverview() {
                         </div>
                     </div>
 
-                    <div className="glass-panel rounded-3xl p-5">
+                    <div className="glass-panel rounded-2xl p-4">
                         <div className="text-[11px] font-bold uppercase tracking-[0.22em] text-white/40">
                             {language === 'es' ? 'Progreso del bloque' : 'Block progress'}
                         </div>
@@ -204,11 +204,11 @@ export function ArchitectureOverview() {
                         </div>
                         <p className="mt-4 text-sm leading-7 text-white/62">{pick(currentSection.summary)}</p>
 
-                        <div className="mt-5 flex flex-col gap-3">
+                        <div className="mt-4 flex gap-2 xl:flex-col">
                             <button
                                 onClick={() => previousSection && setActiveTab(previousSection.id)}
                                 disabled={!previousSection}
-                                className="inline-flex items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-bold text-white/70 transition-all hover:bg-white/10 hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
+                                className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm font-bold text-white/70 transition-all hover:bg-white/10 hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
                             >
                                 <ArrowLeft className="h-4 w-4" />
                                 {language === 'es' ? 'Anterior' : 'Previous'}
@@ -216,7 +216,7 @@ export function ArchitectureOverview() {
                             <button
                                 onClick={() => nextSection && setActiveTab(nextSection.id)}
                                 disabled={!nextSection}
-                                className="inline-flex items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-bold text-white/70 transition-all hover:bg-white/10 hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
+                                className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm font-bold text-white/70 transition-all hover:bg-white/10 hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
                             >
                                 {language === 'es' ? 'Siguiente' : 'Next'}
                                 <ArrowRight className="h-4 w-4" />
@@ -246,7 +246,7 @@ export function ArchitectureOverview() {
                             </div>
                             <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1.1fr)_minmax(360px,0.9fr)] gap-6 flex-1">
                                 {/* Interactive Diagram */}
-                                <div className="glass-panel relative flex min-h-[420px] flex-col justify-center gap-4 overflow-hidden rounded-2xl p-6 sm:min-h-[540px] sm:p-8">
+                                <div className="glass-panel relative flex min-h-[520px] flex-col justify-center gap-3 rounded-2xl p-4 sm:min-h-[560px] sm:p-5 xl:min-h-[600px]">
                                     <div className="absolute inset-0 bg-gradient-to-b from-white/5 to-transparent pointer-events-none" />
 
                                     {layers.map((layer, index) => {
@@ -258,7 +258,7 @@ export function ArchitectureOverview() {
                                                     onClick={() => setActiveLayer(layer.id)}
                                                     whileHover={{ scale: 1.02, y: -2 }}
                                                     whileTap={{ scale: 0.98 }}
-                                                    className={`w-full p-6 rounded-xl border-2 cursor-pointer transition-all duration-300 relative z-10 ${isActive ? `${layer.bg} ${layer.color} shadow-glow` : 'border-white/10 bg-white/5 hover:border-white/30'}`}
+                                                    className={`w-full rounded-xl border-2 p-4 cursor-pointer transition-all duration-300 relative z-10 sm:p-5 ${isActive ? `${layer.bg} ${layer.color} shadow-glow` : 'border-white/10 bg-white/5 hover:border-white/30'}`}
                                                 >
                                                     <div className="flex items-center gap-4">
                                                         <div className="p-3 rounded-lg bg-black/20">
@@ -277,7 +277,7 @@ export function ArchitectureOverview() {
 
                                                 {/* Arrow between layers */}
                                                 {index < layers.length - 1 && (
-                                                    <div className="flex flex-col items-center justify-center h-8 z-0 opacity-50">
+                                                    <div className="flex h-5 flex-col items-center justify-center z-0 opacity-50 sm:h-6">
                                                         <div className="w-0.5 h-full bg-gradient-to-b from-white/30 to-transparent" />
                                                         <ChevronRight className="w-4 h-4 text-white/50 rotate-90 -mt-2" />
                                                     </div>
@@ -288,7 +288,7 @@ export function ArchitectureOverview() {
                                 </div>
 
                                 {/* Details Panel */}
-                                <div className="glass-panel relative flex min-h-[420px] flex-col rounded-2xl p-6 sm:min-h-[540px] sm:p-8">
+                                <div className="glass-panel relative flex min-h-[520px] flex-col rounded-2xl p-5 sm:min-h-[560px] sm:p-6 xl:min-h-[600px]">
                                     <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-blue-500/10 via-transparent to-transparent pointer-events-none" />
 
                                     {activeLayer ? (

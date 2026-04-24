@@ -10,7 +10,6 @@ import {
   useSearchParams,
   type NavigateFunction,
 } from 'react-router-dom';
-import { MarketingLayout } from './components/Layout/MarketingLayout';
 import { RootLayout } from './components/Layout/RootLayout';
 import {
   SURFACE_DEFINITIONS,
@@ -20,7 +19,6 @@ import {
   type ModuleId,
   type SurfaceId,
 } from './components/Layout/moduleCatalog';
-import { PhaseZeroLanding } from './components/PhaseZero/PhaseZeroLanding';
 import { SurfaceHubPage } from './components/PhaseZero/SurfaceHubPage';
 
 type ModuleComponent = LazyExoticComponent<ComponentType>;
@@ -159,24 +157,40 @@ function LegacyLibraryRedirect() {
   );
 }
 
+function LegacyLabsRedirect() {
+  const params = useParams();
+  const [searchParams] = useSearchParams();
+  const routeModuleId = params.moduleId as ModuleId | undefined;
+  const moduleDefinition = routeModuleId ? getModuleDefinition(routeModuleId) : undefined;
+
+  if (!routeModuleId || !moduleDefinition) {
+    return <Navigate to={SURFACE_DEFINITIONS.learn.route} replace />;
+  }
+
+  const targetSurface = moduleSupportsSurface(moduleDefinition, 'learn') ? 'learn' : moduleDefinition.primaryHome;
+
+  return (
+    <Navigate
+      to={buildModulePath(targetSurface, moduleDefinition.id, {
+        view: searchParams.get('view') ?? moduleDefinition.defaultSubview,
+        mode: searchParams.get('mode') ?? moduleDefinition.defaultMode,
+      })}
+      replace
+    />
+  );
+}
+
 function AppRoutes() {
   return (
     <Routes>
-      <Route
-        path="/"
-        element={
-          <MarketingLayout>
-            <PhaseZeroLanding />
-          </MarketingLayout>
-        }
-      />
+      <Route path="/" element={<Navigate to="/learn" replace />} />
 
       <Route path="/learn" element={<RootLayoutShell surface="learn" />} />
-      <Route path="/labs" element={<RootLayoutShell surface="labs" />} />
+      <Route path="/labs" element={<Navigate to="/learn" replace />} />
       <Route path="/diagnose" element={<RootLayoutShell surface="diagnose" />} />
 
       <Route path="/learn/:moduleId" element={<WorkspaceModuleRoute surface="learn" />} />
-      <Route path="/labs/:moduleId" element={<WorkspaceModuleRoute surface="labs" />} />
+      <Route path="/labs/:moduleId" element={<LegacyLabsRedirect />} />
       <Route path="/diagnose/:moduleId" element={<WorkspaceModuleRoute surface="diagnose" />} />
       <Route path="/library" element={<Navigate to="/learn" replace />} />
       <Route path="/library/:moduleId" element={<LegacyLibraryRedirect />} />

@@ -12,7 +12,7 @@ interface LanguageContextType {
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
-    const [language, setLanguage] = useState<Language>('en'); // Default to English as per new request
+    const [language, setLanguage] = useState<Language>('es');
 
     const t = (key: TranslationKey): string => {
         const activeTranslations = translations[language] as Partial<Record<TranslationKey, string>>;

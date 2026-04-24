@@ -5,11 +5,9 @@ import { useLanguage } from '../../contexts/LanguageContext';
 import {
   ALL_MODULES,
   SURFACE_DEFINITIONS,
-  SURFACE_GUIDES,
   SURFACE_SECTIONS,
   getModuleDefinition,
   getModuleStepIndex,
-  getSurfaceSequence,
   normalizeSearchValue,
   type ModuleId,
   type SurfaceId,
@@ -67,15 +65,7 @@ export function Sidebar({
   const hasSearch = normalizedQuery.length > 0;
   const showModuleIndex = Boolean(currentModule) || hasSearch;
   const accents = SURFACE_ACCENTS[currentSurface];
-  const guide = SURFACE_GUIDES[currentSurface];
-  const sequence = getSurfaceSequence(currentSurface);
-  const starterModule = sequence.length > 0 ? getModuleDefinition(sequence[0]) : undefined;
-  const currentDefinition = currentModule ? getModuleDefinition(currentModule) : undefined;
-  const currentStepIndex = currentModule ? getModuleStepIndex(currentSurface, currentModule) : -1;
-  const nextModule =
-    currentModule && currentStepIndex >= 0 && currentStepIndex < sequence.length - 1
-      ? getModuleDefinition(sequence[currentStepIndex + 1])
-      : undefined;
+  const navigationSurfaces: SurfaceId[] = ['learn', 'diagnose'];
 
   const sections = useMemo(() => {
     const baseSections = SURFACE_SECTIONS[currentSurface].map((section) => ({
@@ -209,7 +199,7 @@ export function Sidebar({
 
         {!showCompact ? (
           <div className="mt-4 grid gap-2">
-            {(Object.keys(SURFACE_DEFINITIONS) as SurfaceId[]).map((surface) => {
+            {navigationSurfaces.map((surface) => {
               const meta = SURFACE_DEFINITIONS[surface];
               const Icon = meta.icon;
               const isActive = surface === currentSurface;
@@ -243,66 +233,6 @@ export function Sidebar({
           </div>
         ) : null}
 
-        {!showCompact ? (
-          <div className="mt-4 rounded-2xl border border-white/10 bg-slate-950/60 p-3">
-            <div className="flex items-center justify-between gap-3">
-              <div>
-                <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-white/38">
-                  {language === 'es' ? 'Ruta activa' : 'Active route'}
-                </div>
-                <div className="mt-1 text-sm font-black text-white">{pick(language, guide.title)}</div>
-              </div>
-              <span className={cn('rounded-full border px-2 py-1 text-[10px] font-black uppercase tracking-[0.14em]', accents.chip)}>
-                {currentSurface}
-              </span>
-            </div>
-
-            <p className="mt-3 text-xs leading-6 text-white/58">{pick(language, guide.coaching)}</p>
-
-            <div className="mt-3 rounded-2xl border border-white/10 bg-black/25 p-3">
-              {currentModule ? (
-                <>
-                  <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-white/38">
-                    {language === 'es' ? 'Ahora vas por aqui' : 'You are here now'}
-                  </div>
-                  <div className="mt-1 text-sm font-black text-white">
-                    {currentDefinition ? t(currentDefinition.titleKey) : currentModule}
-                  </div>
-                  <div className="mt-2 text-xs text-white/52">
-                    {language === 'es'
-                      ? `Paso ${currentStepIndex + 1} de ${sequence.length}`
-                      : `Step ${currentStepIndex + 1} of ${sequence.length}`}
-                  </div>
-                  {nextModule ? (
-                    <div className="mt-2 text-xs leading-6 text-white/58">
-                      {language === 'es' ? 'Siguiente:' : 'Next:'} {t(nextModule.titleKey)}
-                    </div>
-                  ) : null}
-                </>
-              ) : starterModule ? (
-                <>
-                  <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-white/38">
-                    {language === 'es' ? 'Punto de entrada' : 'Entry point'}
-                  </div>
-                  <div className="mt-1 text-sm font-black text-white">{t(starterModule.titleKey)}</div>
-                  <div className="mt-2 text-xs leading-6 text-white/58">{pick(language, starterModule.summary)}</div>
-                </>
-              ) : null}
-            </div>
-
-            {starterModule ? (
-              <button
-                onClick={() => onModuleChange(nextModule?.id ?? currentModule ?? starterModule.id)}
-                className={cn(
-                  'mt-3 inline-flex w-full items-center justify-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-black transition-all',
-                  accents.button
-                )}
-              >
-                {currentModule ? pick(language, guide.continueLabel) : pick(language, guide.startLabel)}
-              </button>
-            ) : null}
-          </div>
-        ) : null}
       </div>
 
       <nav className={cn('flex-1 overflow-y-auto', showCompact ? 'p-3' : 'p-4')}>
